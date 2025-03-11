@@ -80,8 +80,6 @@ body{
 .contentContainer{
     background-image: linear-gradient(to bottom, rgba(162, 123, 92, .65)20%, rgba(63, 79, 68, .65) 100%);
 }
-
-
 .modal {
     display: none; 
     position: fixed;
@@ -95,15 +93,23 @@ body{
     background-color: rgba(0,0,0,.4);
 }
   .modal-content {
-    background-image: linear-gradient(to bottom, rgba(162, 123, 92, .85)20%, rgba(63, 79, 68, .85) 100%);
-    margin: 15% auto; 
+    background-image: linear-gradient(to bottom, rgba(162, 123, 92, .85)0%, rgba(63, 79, 68, .85) 100%);
+    margin: 0 0; 
     padding: 20px;
     border: none;
-    border-radius: 10px;
-    width: 80%;
+    width: 25%;
+    height: 100%;
   }
-  
-  /* The Close Button */
+  .modalList{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    list-style: none;
+    font-size: 20px;
+  }
+  .listItem{
+    padding-bottom: 30px;
+  }
   .close {
     color: #aaa;
     float: right;
