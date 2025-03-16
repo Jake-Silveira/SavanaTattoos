@@ -7,7 +7,7 @@ var socialsList = document.getElementById("socialsList");
 // Get the button that opens the modal
 var menuBtn = document.getElementById("menuBtn");
 var socialsBtn = document.getElementById("socialsBtn");
-var galleryBtn = document.getElementById("galleryBtn");
+var flashBtn = document.getElementById("flashBtn");
 
 // Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
@@ -29,7 +29,7 @@ socialsBtn.onclick = function() {
   socialsList.style.display = "flex";
 }
 
-galleryBtn.onclick = function() {
+flashBtn.onclick = function() {
   wideModal();
   socialsList.style.display = "none";
 }

@@ -108,7 +108,7 @@ body{
   .listItem{
     padding-bottom: 30px;
   }
-  .socialLinkContainer{
+  .listItem p{
     padding-left: 20%;
   }
   .socialLink{
