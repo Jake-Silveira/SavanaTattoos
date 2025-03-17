@@ -114,6 +114,24 @@ body{
   .socialLink{
     font-weight: 200;
   }
+  .socialLogo{
+    padding-left: 70%;
+  }
+  #flashModal p{
+    font-size: 2rem;
+    text-decoration: underline;
+    font-weight: 900;
+    text-align: center;
+  }
+  .flashGridContainer{
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  }
+  .flashGridContainer img{
+    height: 100px;
+    width: auto;
+  }
   a{
     text-decoration: none;
     color: rgb(3, 12, 5);
@@ -129,7 +147,6 @@ body{
     font-weight: bold;
     align-self: flex-end;
   }
-  
   .close:hover,
   .close:focus {
     color: rgb(3, 12, 5);

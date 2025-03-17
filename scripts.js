@@ -3,6 +3,7 @@ var modal = document.getElementById("menuModal");
 var modalContent = document.getElementById("modalContent");
 var menuList = document.getElementById("menuList");
 var socialsList = document.getElementById("socialsList");
+var flashModal = document.getElementById("flashModal");
 
 // Get the button that opens the modal
 var menuBtn = document.getElementById("menuBtn");
@@ -21,16 +22,19 @@ menuBtn.onclick = function() {
   modalContent.style.borderRadius = "0px";
   modalContent.style.padding = "4px";
   socialsList.style.display = "none";
+  flashModal.style.display = "none";
   menuList.style.display = "flex";
 }
 
 socialsBtn.onclick = function() {
   wideModal();
   socialsList.style.display = "flex";
+  flashModal.style.display = "none"
 }
 
 flashBtn.onclick = function() {
   wideModal();
+  flashModal.style.display = "block";
   socialsList.style.display = "none";
 }
 
@@ -56,9 +60,9 @@ const wideModal = function(){
   modal.style.display = "flex";
   modal.style.alignItems = "center";
   modal.style.justifyContent = "center";
-  modalContent.style.width = "80%";
+  modalContent.style.width = "fit-content";
   modalContent.style.minWidth = "300px";
-  modalContent.style.height = "80%";
+  modalContent.style.height = "auto";
   modalContent.style.minHeight = "300px";
   modalContent.style.borderRadius = "20px";
   modalContent.style.padding = "20px";
