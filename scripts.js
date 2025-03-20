@@ -36,6 +36,7 @@ flashBtn.onclick = function() {
   wideModal();
   flashModal.style.display = "block";
   socialsList.style.display = "none";
+  modalContent.style.width = "80%"
 }
 
 // When the user clicks on <span> (x), close the modal

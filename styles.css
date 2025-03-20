@@ -124,13 +124,18 @@ body{
     text-align: center;
   }
   .flashGridContainer{
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+
   }
   .flashGridContainer img{
-    height: 100px;
+    height: 300px;
     width: auto;
+    border: solid;
+    border-radius: 10px;
+    border-color: rgb(3, 12, 5);
+    border-width: 5px;
   }
   a{
     text-decoration: none;
