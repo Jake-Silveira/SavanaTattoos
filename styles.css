@@ -117,6 +117,11 @@ body{
   .socialLogo{
     padding-left: 70%;
   }
+  #flashModal{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   #flashModal p{
     font-size: 2rem;
     text-decoration: underline;
@@ -124,18 +129,25 @@ body{
     text-align: center;
   }
   .flashGridContainer{
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-
+    max-height: 100vh;
+    justify-content: center;
+    align-items: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
   }
   .flashGridContainer img{
-    height: 300px;
-    width: auto;
+    height: 200px;
+    width: 200px;
     border: solid;
     border-radius: 10px;
     border-color: rgb(3, 12, 5);
     border-width: 5px;
+  }
+  .flashPhoto{
+    align-self: center;
+    justify-self: center;
   }
   a{
     text-decoration: none;
