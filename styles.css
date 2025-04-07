@@ -106,7 +106,12 @@ body{
   .listItem{
     padding-bottom: 30px;
   }
-  .listItem p{
+  .listItem:hover{
+    text-decoration: underline;
+    color: #aaa;
+    cursor: pointer;
+  }
+  .socialsListItem p{
     padding-left: 20%;
   }
   .socialLink{
