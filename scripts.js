@@ -49,7 +49,7 @@ savana.onclick = function() {
   savanaModal.style.display = "flex";
   flashModal.style.display = "none";
   socialsList.style.display = "none";
-  modalContent.style.width = "70%";
+  modalContent.style.width = "80%";
 }
 
 // When the user clicks on <span> (x), close the modal
@@ -76,7 +76,7 @@ const wideModal = function(){
   modal.style.justifyContent = "center";
   modalContent.style.width = "fit-content";
   modalContent.style.minWidth = "300px";
-  modalContent.style.height = "fit-content";
+  modalContent.style.height = "auto";
   modalContent.style.minHeight = "300px";
   modalContent.style.borderRadius = "20px";
   modalContent.style.padding = "20px";
