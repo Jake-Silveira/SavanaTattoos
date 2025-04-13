@@ -50,6 +50,8 @@ body{
     cursor: pointer;
     font-weight: 600;
     font-size: 16px;
+    -webkit-text-stroke-width: .75px;
+    -webkit-text-stroke-color: #aaa;
 }
 #titleBackground{
     background-image: url('images/background.gif');
@@ -105,6 +107,8 @@ body{
   }
   .listItem{
     padding-bottom: 30px;
+    -webkit-text-stroke-width: .75px;
+    -webkit-text-stroke-color: #aaa;
   }
   .listItem:hover{
     text-decoration: underline;
@@ -136,8 +140,8 @@ body{
     justify-content: center;
     align-items: center;
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-rows: repeat(auto-fill, minmax(200px, 1fr));
     gap: 10px;
   }
   .flashGridContainer img{
@@ -155,6 +159,8 @@ body{
   a{
     text-decoration: none;
     color: rgb(3, 12, 5);
+    -webkit-text-stroke-width: .3px;
+    -webkit-text-stroke-color: #aaa;
   }
   a:hover {
     text-decoration: underline;

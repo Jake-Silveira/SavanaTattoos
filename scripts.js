@@ -34,6 +34,8 @@ socialsBtn.onclick = function() {
   socialsList.style.display = "flex";
   flashModal.style.display = "none";
   savanaModal.style.display = "none";
+  modalContent.style.marginTop = "auto";
+  modalContent.style.marginBottom = "auto";
 };
 
 flashBtn.onclick = function() {
@@ -42,6 +44,8 @@ flashBtn.onclick = function() {
   socialsList.style.display = "none";
   savanaModal.style.display = "none";
   modalContent.style.width = "80%";
+  modalContent.style.marginTop = "30vh";
+  modalContent.style.marginBottom = "2vh";
 };
 
 savana.onclick = function() {
@@ -50,6 +54,8 @@ savana.onclick = function() {
   flashModal.style.display = "none";
   socialsList.style.display = "none";
   modalContent.style.width = "80%";
+  modalContent.style.marginTop = "20vh";
+  modalContent.style.marginBottom = "2vh";
 }
 
 // When the user clicks on <span> (x), close the modal
@@ -80,5 +86,6 @@ const wideModal = function(){
   modalContent.style.minHeight = "300px";
   modalContent.style.borderRadius = "20px";
   modalContent.style.padding = "20px";
+  modalContent.style.overflow = "auto";
   menuList.style.display = "none";
 };
