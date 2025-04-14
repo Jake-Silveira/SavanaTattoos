@@ -31,6 +31,7 @@ body{
     display: flex;
     flex-direction: row;
     align-items: center;
+    text-align: center;
     margin: 0 0;
     border-style: none;
     justify-content: space-evenly;
@@ -41,16 +42,14 @@ body{
     cursor: pointer;
 }
 .navBtn{
-    margin-right: 15px;
     border-style: none;
     background: none;
     color: #030c05d9;
-    justify-content: center;
     padding: 0;
     cursor: pointer;
     font-weight: 600;
     font-size: 16px;
-    -webkit-text-stroke-width: .75px;
+    -webkit-text-stroke-width: .3px;
     -webkit-text-stroke-color: #aaa;
 }
 #titleBackground{
@@ -107,7 +106,7 @@ body{
   }
   .listItem{
     padding-bottom: 30px;
-    -webkit-text-stroke-width: .75px;
+    -webkit-text-stroke-width: .3px;
     -webkit-text-stroke-color: #aaa;
   }
   .listItem:hover{
