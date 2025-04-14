@@ -5,12 +5,14 @@ var menuList = document.getElementById("menuList");
 var socialsList = document.getElementById("socialsList");
 var flashModal = document.getElementById("flashModal");
 var savanaModal = document.getElementById("savanaModal");
+var inquiryModal = document.getElementById("inquiryModal");
 
 // Get the button that opens the modal
 var menuBtn = document.getElementById("menuBtn");
 var socialsBtn = document.getElementById("socialsBtn");
 var flashBtn = document.getElementById("flashBtn");
 var savana = document.getElementById("savana");
+var inquiryBtn = document.getElementById("inquiry");
 
 // Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
@@ -26,6 +28,7 @@ menuBtn.onclick = function() {
   socialsList.style.display = "none";
   flashModal.style.display = "none";
   savanaModal.style.display = "none";
+  inquiryModal.style.display = "none";
   menuList.style.display = "flex";
 }
 
@@ -34,6 +37,7 @@ socialsBtn.onclick = function() {
   socialsList.style.display = "flex";
   flashModal.style.display = "none";
   savanaModal.style.display = "none";
+  inquiryModal.style.display = "none";
   modalContent.style.marginTop = "auto";
   modalContent.style.marginBottom = "auto";
 };
@@ -43,6 +47,7 @@ flashBtn.onclick = function() {
   flashModal.style.display = "block";
   socialsList.style.display = "none";
   savanaModal.style.display = "none";
+  inquiryModal.style.display = "none";
   modalContent.style.width = "80%";
   modalContent.style.marginTop = "30vh";
   modalContent.style.marginBottom = "2vh";
@@ -53,6 +58,18 @@ savana.onclick = function() {
   savanaModal.style.display = "flex";
   flashModal.style.display = "none";
   socialsList.style.display = "none";
+  inquiryModal.style.display = "none";
+  modalContent.style.width = "80%";
+  modalContent.style.marginTop = "20vh";
+  modalContent.style.marginBottom = "2vh";
+}
+
+inquiryBtn.onclick = function() {
+  wideModal();
+  savanaModal.style.display = "none";
+  flashModal.style.display = "none";
+  socialsList.style.display = "none";
+  inquiryModal.style.display = "flex";
   modalContent.style.width = "80%";
   modalContent.style.marginTop = "20vh";
   modalContent.style.marginBottom = "2vh";

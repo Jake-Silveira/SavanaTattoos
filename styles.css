@@ -178,14 +178,16 @@ body{
     text-decoration: none;
     cursor: pointer;
   }
-  #savanaModal{
+  #savanaModal, #inquiryModal{
     flex-direction: column;
     align-items: center;
     min-width: 270px;
     height: auto;
     text-align: center;
+    justify-content: center;
   }
-  #savanaModalHeader{
+  #savanaModalHeader, #inquiryModalHeader{
+    text-decoration: underline;
     font-size: 2rem;
     font-weight: 600;
   }
@@ -197,4 +199,23 @@ body{
     border-radius: 10px;
     border-color: rgb(3, 12, 5);
     border-width: 5px;
+  }
+  .inquiryForm{
+    align-items: center;
+    display: flex;
+    flex-wrap: wrap;
+    flex-direction: row;
+    min-width: 270px;
+    height: auto;
+  }
+  .required:after {
+    content: "*";
+    display: inline;
+    color: red;
+  }
+  .inquiryForm fieldset{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
   }
