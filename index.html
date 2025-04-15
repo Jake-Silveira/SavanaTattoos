@@ -78,13 +78,13 @@
                         <p><span style="color: red;">*</span> Indicates a required field</p>
                     <form class="inquiryForm">
                     <fieldset>
-                        <label for="inquiryLocation" class="inquiryLabel required">Location</label>
+                        <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
                         <select id="inquiryLocation" class="inquiryInput" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Forearm">Forearm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
                         <label for="inquirySize" class="inquiryLabel required">Size</label>
                         <input id="inquirySize" class="inquiryInput" type="text" placeholder='W"xH"' maxlength="10" required>
-                        <label for="inquiryDesc" class="inquiryLabel">Description</label>
-                        <input id="inquiryDesc" class="inquiryInput" type="text" placeholder="What are you looking to get..." maxlength="256" required>
-                        <label for="inquiryExample" class="inquiryLabel">Have a Photo?</label>
+                        <label for="inquiryDesc" class="inquiryLabel required">Description</label>
+                        <textarea id="inquiryDesc" class="inquiryInput" placeholder="What are you looking to get..." maxlength="512" required></textarea>
+                        <label class="inquiryLabel">Have a Photo?</label>
                         <input id="inquiryExample" class="inquiryInput" type="file">
                     </fieldset>
                     <fieldset>
@@ -93,14 +93,15 @@
                         <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
                         <input id="inquiryLastName" class="inquiryInput" type="text" placeholder="Doe" required>
                         <label for="inquiryEmail" class="inquiryLabel required">Email</label>
-                        <input id="inquiryEmail" class="inquiryInput" type="email" required>
+                        <input id="inquiryEmail" class="inquiryInput" type="email" placeholder="JohnDoe@gmail.com" required>
                         <label for="inquiryPhone" class="inquiryLabel">Phone</label>
                         <input id="inquiryPhone" class="inquiryInput" maxlength="10" placeholder="+1" type="tel">
-                        <label for="inquiryAvailability" class="inquiryLabel">Availability</label>
+                        <label for="inquiryAvailability" class="inquiryLabel required">Availability</label>
                         <select id="inquiryAvailability" class="inquiryInput" required multiple=""><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option></select>
                     </fieldset>
+                    <button value="submit">Submit</button>
                 </form>
-                        <button value="submit">Submit</button>
+                        
                     
             </div>        
 <script src="scripts.js"></script>

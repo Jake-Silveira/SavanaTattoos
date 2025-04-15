@@ -49,7 +49,7 @@ flashBtn.onclick = function() {
   savanaModal.style.display = "none";
   inquiryModal.style.display = "none";
   modalContent.style.width = "80%";
-  modalContent.style.marginTop = "30vh";
+  modalContent.style.marginTop = "50vh";
   modalContent.style.marginBottom = "2vh";
 };
 
@@ -60,7 +60,7 @@ savana.onclick = function() {
   socialsList.style.display = "none";
   inquiryModal.style.display = "none";
   modalContent.style.width = "80%";
-  modalContent.style.marginTop = "20vh";
+  modalContent.style.marginTop = "40vh";
   modalContent.style.marginBottom = "2vh";
 }
 
@@ -71,7 +71,7 @@ inquiryBtn.onclick = function() {
   socialsList.style.display = "none";
   inquiryModal.style.display = "flex";
   modalContent.style.width = "80%";
-  modalContent.style.marginTop = "20vh";
+  modalContent.style.marginTop = "50vh";
   modalContent.style.marginBottom = "2vh";
 }
 

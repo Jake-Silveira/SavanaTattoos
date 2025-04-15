@@ -88,6 +88,7 @@ body{
   .modalContent {
     display: flex;
     flex-direction: column;
+    position: absolute;
     background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 0%, rgba(63, 79, 68, .65) 100%);
     margin: 0 0; 
     padding: 4px;
@@ -202,10 +203,12 @@ body{
   }
   .inquiryForm{
     align-items: center;
+    justify-content: center;
     display: flex;
     flex-wrap: wrap;
     flex-direction: row;
     min-width: 270px;
+    max-width: 800px;
     height: auto;
   }
   .required:after {
@@ -218,4 +221,18 @@ body{
     flex-direction: column;
     justify-content: space-between;
     width: 100%;
+    border-radius: 10px;
+    border-color: rgba(99, 70, 64, .65);
+  }
+  .inquiryInput{
+    border-radius: 10px;
+    background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 0%, rgba(63, 79, 68, .65) 100%);
+  }
+  #inquiryExample{
+    align-self: center;
+    border-radius: 0px;
+  }
+  #inquiryDesc{
+    max-width: 760px;
+    max-height: 100px;
   }
