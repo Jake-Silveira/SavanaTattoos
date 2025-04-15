@@ -118,3 +118,36 @@ const wideModal = function(){
   modalContent.style.overflow = "auto";
   menuList.style.display = "none";
 };
+
+const galleryPhotos = document.querySelector(".galleryPhotos");
+const gallery = [];
+var galleryIndex = 0;
+
+function addPhotoToGallery() {
+  var photoName = "index" + galleryIndex;
+  const galleryPhoto = new Photo(photoName);
+  gallery.push(galleryPhoto);
+};
+
+function Photo(indexName) {
+  this.name = indexName;
+  galleryIndex = galleryIndex + 1;
+};
+
+
+function displayGallery(){
+  for (let i = 0; i < gallery.length; i++) {
+      let cell = document.createElement('div');
+      galleryPhotos.appendChild(cell).className = "grid-item";
+      cell.id = gallery[i].name;
+      cell.style.padding = '1vw';
+      let icon = document.createElement('img');
+      icon.className = 'grid-item-icon';
+      icon.id = 'grid-item-icon' + i;
+      icon.src = 'images/flash1.JPG';
+      cell.appendChild(icon);
+      /*icon.addEventListener("click", () => {
+        openModal(myLibrary[i].title, myLibrary[i].author, myLibrary[i].pages, i);
+      });*/
+  };
+};

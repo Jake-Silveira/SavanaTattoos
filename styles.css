@@ -241,3 +241,26 @@ body{
     max-width: 760px;
     max-height: 100px;
   }
+  #galleryModal{
+    display: flex;
+    flex-direction: column;
+  }
+  .galleryNav{
+    display: flex;
+    width: 100%;
+    justify-content: space-around;
+  }
+  #galleryLeft, #galleryRight{
+    color: #aaa;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  .galleryPhotos{
+    display: grid;
+    grid-template-columns: (1, minmax(300px, 1fr));
+    overflow-x: scroll;
+  }
+  .grid-item-icon{
+    max-width: 100px;
+    height: auto;
+  }
