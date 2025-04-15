@@ -6,6 +6,7 @@ var socialsList = document.getElementById("socialsList");
 var flashModal = document.getElementById("flashModal");
 var savanaModal = document.getElementById("savanaModal");
 var inquiryModal = document.getElementById("inquiryModal");
+var galleryModal = document.getElementById("galleryModal");
 
 // Get the button that opens the modal
 var menuBtn = document.getElementById("menuBtn");
@@ -13,6 +14,7 @@ var socialsBtn = document.getElementById("socialsBtn");
 var flashBtn = document.getElementById("flashBtn");
 var savana = document.getElementById("savana");
 var inquiryBtn = document.getElementById("inquiry");
+var galleryBtn = document.getElementById("gallery");
 
 // Get the <span> element that closes the modal
 var span = document.getElementsByClassName("close")[0];
@@ -29,6 +31,7 @@ menuBtn.onclick = function() {
   flashModal.style.display = "none";
   savanaModal.style.display = "none";
   inquiryModal.style.display = "none";
+  galleryModal.style.display = "none";
   menuList.style.display = "flex";
 }
 
@@ -38,8 +41,7 @@ socialsBtn.onclick = function() {
   flashModal.style.display = "none";
   savanaModal.style.display = "none";
   inquiryModal.style.display = "none";
-  modalContent.style.marginTop = "auto";
-  modalContent.style.marginBottom = "auto";
+  galleryModal.style.display = "none";
 };
 
 flashBtn.onclick = function() {
@@ -48,9 +50,9 @@ flashBtn.onclick = function() {
   socialsList.style.display = "none";
   savanaModal.style.display = "none";
   inquiryModal.style.display = "none";
+  galleryModal.style.display = "none";
   modalContent.style.width = "80%";
-  modalContent.style.marginTop = "50vh";
-  modalContent.style.marginBottom = "2vh";
+  modalContent.style.height = "90%";
 };
 
 savana.onclick = function() {
@@ -59,21 +61,31 @@ savana.onclick = function() {
   flashModal.style.display = "none";
   socialsList.style.display = "none";
   inquiryModal.style.display = "none";
+  galleryModal.style.display = "none";
   modalContent.style.width = "80%";
-  modalContent.style.marginTop = "40vh";
-  modalContent.style.marginBottom = "2vh";
-}
+  modalContent.style.height = "90%";
+};
 
 inquiryBtn.onclick = function() {
   wideModal();
   savanaModal.style.display = "none";
   flashModal.style.display = "none";
   socialsList.style.display = "none";
+  galleryModal.style.display = "none";
   inquiryModal.style.display = "flex";
   modalContent.style.width = "80%";
-  modalContent.style.marginTop = "50vh";
-  modalContent.style.marginBottom = "2vh";
-}
+  modalContent.style.height = "90%";
+};
+galleryBtn.onclick = function() {
+  wideModal();
+  savanaModal.style.display = "none";
+  flashModal.style.display = "none";
+  socialsList.style.display = "none";
+  inquiryModal.style.display = "none";
+  galleryModal.style.display = "flex";
+  modalContent.style.width = "80%";
+  modalContent.style.height = "90%";
+};
 
 // When the user clicks on <span> (x), close the modal
 span.onclick = function() {
@@ -99,7 +111,7 @@ const wideModal = function(){
   modal.style.justifyContent = "center";
   modalContent.style.width = "fit-content";
   modalContent.style.minWidth = "300px";
-  modalContent.style.height = "auto";
+  modalContent.style.height = "fit-content";
   modalContent.style.minHeight = "300px";
   modalContent.style.borderRadius = "20px";
   modalContent.style.padding = "20px";

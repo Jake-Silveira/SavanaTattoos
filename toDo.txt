@@ -1,5 +1,5 @@
-Get Bio from Savana
-Create Form for Inquiries
+Get Bio from Savana -
+Create Form for Inquiries -
 Create Modal for gallery
 Import pictures to gallery
 Testimonials - Google reviews?

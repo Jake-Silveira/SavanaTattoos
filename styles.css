@@ -93,6 +93,11 @@ body{
     margin: 0 0; 
     padding: 4px;
     border: none;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  .modalContent::-webkit-scrollbar {
+    display: none;
   }
   .modalList{
     height: 100%;
