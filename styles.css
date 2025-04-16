@@ -259,9 +259,7 @@ body{
   .galleryPhotos{
     display: flex;
     flex-direction: row;
-    overflow-x: scroll;
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    overflow-x: auto;
   }
   .grid-item-icon{
     max-width: 100px;
