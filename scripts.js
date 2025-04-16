@@ -121,33 +121,80 @@ const wideModal = function(){
 
 const galleryPhotos = document.querySelector(".galleryPhotos");
 const gallery = [];
-var galleryIndex = 0;
+const galleryPopup = document.getElementById("galleryPopup");
+const leftBtn = document.getElementById("galleryLeft");
+const rightBtn = document.getElementById("galleryRight");
 
-function addPhotoToGallery() {
-  var photoName = "index" + galleryIndex;
-  const galleryPhoto = new Photo(photoName);
-  gallery.push(galleryPhoto);
-};
+let currentPopupIndex = 0;
 
-function Photo(indexName) {
-  this.name = indexName;
-  galleryIndex = galleryIndex + 1;
-};
+async function loadGalleryImages() {
+  const response = await fetch("images/images.json");
+  const imageNames = await response.json();
 
+  for (let i = 0; i < imageNames.length; i++) {
+    const photo = new Photo(imageNames[i]);
+    gallery.push(photo);
+  }
 
-function displayGallery(){
+  displayGallery();
+  startGallery();
+}
+
+function Photo(filename) {
+  this.name = filename;
+}
+
+function displayGallery() {
   for (let i = 0; i < gallery.length; i++) {
-      let cell = document.createElement('div');
-      galleryPhotos.appendChild(cell).className = "grid-item";
-      cell.id = gallery[i].name;
-      cell.style.padding = '1vw';
-      let icon = document.createElement('img');
-      icon.className = 'grid-item-icon';
-      icon.id = 'grid-item-icon' + i;
-      icon.src = 'images/flash1.JPG';
-      cell.appendChild(icon);
-      /*icon.addEventListener("click", () => {
-        openModal(myLibrary[i].title, myLibrary[i].author, myLibrary[i].pages, i);
-      });*/
-  };
-};
+    let cell = document.createElement('div');
+    cell.className = "grid-item";
+    cell.id = `photo-${i}`;
+    cell.style.padding = '1vw';
+
+    let icon = document.createElement('img');
+    icon.className = 'grid-item-icon';
+    icon.id = 'grid-item-icon' + i;
+    icon.src = `images/${gallery[i].name}`;
+    cell.appendChild(icon);
+
+    icon.addEventListener("click", () => {
+      currentPopupIndex = i;
+      updatePopupImage();
+    });
+
+    galleryPhotos.appendChild(cell);
+  }
+}
+
+function startGallery() {
+  if (gallery.length > 0) {
+    currentPopupIndex = 0;
+    updatePopupImage();
+  }
+}
+
+function updatePopupImage() {
+  galleryPopup.innerHTML = ''; // clear existing content
+
+  const popupIcon = document.createElement('img');
+  popupIcon.className = 'popupImg';
+  popupIcon.src = `images/${gallery[currentPopupIndex].name}`;
+  galleryPopup.appendChild(popupIcon);
+}
+
+// Navigation buttons
+leftBtn.addEventListener("click", () => {
+  if (gallery.length === 0) return;
+  currentPopupIndex = (currentPopupIndex - 1 + gallery.length) % gallery.length;
+  updatePopupImage();
+});
+
+rightBtn.addEventListener("click", () => {
+  if (gallery.length === 0) return;
+  currentPopupIndex = (currentPopupIndex + 1) % gallery.length;
+  updatePopupImage();
+});
+
+loadGalleryImages(); // start everything
+
+

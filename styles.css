@@ -244,6 +244,7 @@ body{
   #galleryModal{
     display: flex;
     flex-direction: column;
+    height: 90%;
   }
   .galleryNav{
     display: flex;
@@ -256,11 +257,59 @@ body{
     font-weight: bold;
   }
   .galleryPhotos{
-    display: grid;
-    grid-template-columns: (1, minmax(300px, 1fr));
+    display: flex;
+    flex-direction: row;
     overflow-x: scroll;
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
   .grid-item-icon{
     max-width: 100px;
-    height: auto;
+    max-height: 100px;
+  }
+  #galleryPopup{
+    width: 100%;
+    height: 50%;
+    text-align: center;
+    border-style: solid;
+    border-right: 0;
+    border-left: 0;
+    border-top: 0;
+    border-width: 1px;
+    border-bottom-color: #aaa;
+    padding: 10px;
+  }
+  #galleryLeft, #galleryRight{
+    margin:5px;
+    cursor: pointer;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #aaa;
+    border-radius: 5px;
+    padding: 10px;
+  }
+   .popupImg{
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+   }
+   html:not(.mobile) .popupImg:hover {
+    cursor: zoom-in;
+    transition: .5s;
+    transition-delay: 90s; /* how long before the img automatically returns to original size */
+    transition-property: -webkit-transform;
+    -webkit-transform: scale(1); 
+    transform: scale(1);
+    z-index: 999; 
+    position: sticky; /* this and z-index should ensure that the zoomed img is always displayed on top of any other element */
+  }
+  
+  html:not(.mobile) .popupImg:active { 
+   cursor: zoom-out;
+   overflow: auto;
+   transition: 0s;
+   transition-delay: 0.05s;
+   -webkit-transform: scale(200%); /* set zoom level */
+   -webkit-transform-origin: 0 0; /* set img position */
+   z-index: 1000; 
   }
