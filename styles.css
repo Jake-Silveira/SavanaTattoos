@@ -265,6 +265,7 @@ body{
     display: flex;
     flex-direction: row;
     overflow-x: auto;
+    overflow-y: hidden;
   }
   .grid-item-icon{
     max-width: 100px;
