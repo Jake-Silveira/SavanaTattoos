@@ -42,6 +42,8 @@ socialsBtn.onclick = function() {
   savanaModal.style.display = "none";
   inquiryModal.style.display = "none";
   galleryModal.style.display = "none";
+  modalContent.style.width = "auto";
+  modalContent.style.height = "90%";
 };
 
 flashBtn.onclick = function() {
