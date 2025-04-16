@@ -11,21 +11,22 @@
  <div id="titleBackground">
     <div class="contentContainer">
         <div class="navBtnContainer">
-            <input type="button" id="socialsBtn" class="navBtn" value="Socials">
             <svg viewBox="0 0 24 24" fill="none" id="menuBtn" class="navBtn">
-                <path d="M4 6H20M4 12H20M4 18H20" 
-                        stroke="#aaa" 
-                        stroke-width="2.6" 
-                        stroke-linecap="round" 
-                        stroke-linejoin="round"/>
-                  <path d="M4 6H20M4 12H20M4 18H20" 
-                        stroke="#030c05d9" 
-                        stroke-width="2" 
-                        stroke-linecap="round" 
-                        stroke-linejoin="round"/>
-                </svg>
-            <input type="button" id="flashBtn" class="navBtn" value="Current Flash">
-        </div>
+              <path d="M4 6H20M4 12H20M4 18H20" 
+                    stroke="#aaa" 
+                    stroke-width="3.3" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"/>
+              <path d="M4 6H20M4 12H20M4 18H20" 
+                    stroke="#030c05d9" 
+                    stroke-width="2" 
+                    stroke-linecap="round" 
+                    stroke-linejoin="round"/>
+            </svg>
+              <input type="button" id="socialsBtn" class="navBtn" value="Socials">
+              <input type="button" id="flashBtn" class="navBtn" value="Current Flash">
+          </div>
+          
         <div class="title">
             <img src="images/Savana Tattoos.png" id="titleLogo">
         </div>
@@ -48,7 +49,7 @@
                 <li class="socialsListItem">@TikTok<p><a href="https://www.tiktok.com/@skin_doodleist?lang=en" id="tikTokLink" class="socialLink" target="_blank">skin_doodleist</a></p><img src="images/tiktok_logo.svg" alt="tiktok logo" class="socialLogo"></li>
             </ul>
             <div id="flashModal">
-                <p>Available designs</p>
+                <p id="flashModalHeader">Available designs</p>
                 <div class="flashGridContainer">
                     <img class="flashPhoto" src="images/flash1.JPG">
                     <img class="flashPhoto" src="images/flash2.jpeg">
@@ -75,7 +76,7 @@
             </div>
             <div id="inquiryModal">
                 <p id="inquiryModalHeader">Have Something In Mind?</p>
-                        <p><span style="color: red;">*</span> Indicates a required field</p>
+                        <p class="indicatorSpan"><span class="indicatorSpan" style="color: red;">*</span> Indicates a required field</p>
                     <form class="inquiryForm">
                     <fieldset>
                         <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
@@ -97,9 +98,8 @@
                         <label for="inquiryPhone" class="inquiryLabel">Phone</label>
                         <input id="inquiryPhone" class="inquiryInput" maxlength="10" placeholder="+1" type="tel">
                         <label for="inquiryAvailability" class="inquiryLabel required">Availability</label>
-                        <select id="inquiryAvailability" class="inquiryInput" required multiple=""><option value="Monday">Monday</option><option value="Tuesday">Tuesday</option><option value="Wednesday">Wednesday</option><option value="Thursday">Thursday</option><option value="Friday">Friday</option><option value="Saturday">Saturday</option><option value="Sunday">Sunday</option></select>
-                    </fieldset>
-                    <button value="submit">Submit</button>
+                        <input id="inquiryAvailability" class="inquiryInput" type="date" required placeholder="mm/dd/yyy">                    </fieldset>
+                    <button id="inquirySubmitBtn" value="submit">Submit</button>
                 </form>
             </div>
             <div id="galleryModal">

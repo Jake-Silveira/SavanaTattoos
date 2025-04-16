@@ -25,20 +25,18 @@ body{
     mix-blend-mode: source-in;
     pointer-events: none;
 }
-.navBtnContainer{
-    width: 100%;
-    height: auto;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    text-align: center;
-    margin: 0 0;
-    border-style: none;
-    justify-content: space-evenly;
+.navBtnContainer {
+  background-color: rgba(44, 54, 57, 0.39);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
 }
+
 #menuBtn{
-    min-height: 1rem;
-    max-height: 2rem;
+    min-height: 2rem;
+    max-height: 3rem;
     cursor: pointer;
 }
 .navBtn{
@@ -48,8 +46,8 @@ body{
     padding: 0;
     cursor: pointer;
     font-weight: 600;
-    font-size: 16px;
-    -webkit-text-stroke-width: .3px;
+    font-size: 30px;
+    -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
 }
 #titleBackground{
@@ -105,14 +103,14 @@ body{
     display: flex;
     flex-direction: column;
     list-style: none;
-    font-size: 20px;
+    font-size: 30px;
     color: rgb(3, 12, 5);
     justify-content: space-between;
     font-weight: 900;
   }
   .listItem{
     padding-bottom: 30px;
-    -webkit-text-stroke-width: .3px;
+    -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
   }
   .listItem:hover{
@@ -131,13 +129,6 @@ body{
   }
   #flashModal{
     display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  #flashModal p{
-    font-size: 2rem;
-    text-decoration: underline;
-    font-weight: 900;
     text-align: center;
   }
   .flashGridContainer{
@@ -164,7 +155,7 @@ body{
   a{
     text-decoration: none;
     color: rgb(3, 12, 5);
-    -webkit-text-stroke-width: .3px;
+    -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
   }
   a:hover {
@@ -192,10 +183,15 @@ body{
     text-align: center;
     justify-content: center;
   }
-  #savanaModalHeader, #inquiryModalHeader{
+  #savanaModalHeader, #inquiryModalHeader, #flashModalHeader{
     text-decoration: underline;
     font-size: 2rem;
     font-weight: 600;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #aaa;
+  }
+  #savanaModalBio{
+    font-size: 2rem;
   }
   .modalPhoto{
     width: 30%;
@@ -229,8 +225,17 @@ body{
     border-radius: 10px;
     border-color: rgba(99, 70, 64, .65);
   }
-  .inquiryInput{
-    border-radius: 10px;
+  .indicatorSpan{
+    font-size: 1rem;
+    font-style: italic;
+  }
+  .inquiryLabel{
+    font-size: 2rem;
+  }
+  #inquirySubmitBtn, .inquiryInput{
+    border-radius: 20px;
+    padding: .5rem;
+    font-size: 1rem;
     background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 0%, rgba(63, 79, 68, .65) 100%);
   }
   #inquiryExample{
