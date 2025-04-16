@@ -296,23 +296,3 @@ body{
     max-width: 100%;
     height: 100%;
    }
-   html:not(.mobile) .popupImg:hover {
-    cursor: zoom-in;
-    transition: .5s;
-    transition-delay: 90s; /* how long before the img automatically returns to original size */
-    transition-property: -webkit-transform;
-    -webkit-transform: scale(1); 
-    transform: scale(1);
-    z-index: 999; 
-    position: sticky; /* this and z-index should ensure that the zoomed img is always displayed on top of any other element */
-  }
-  
-  html:not(.mobile) .popupImg:active { 
-   cursor: zoom-out;
-   overflow: auto;
-   transition: 0s;
-   transition-delay: 0.05s;
-   -webkit-transform: scale(200%); /* set zoom level */
-   -webkit-transform-origin: 0 0; /* set img position */
-   z-index: 1000; 
-  }
