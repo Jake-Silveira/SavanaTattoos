@@ -130,7 +130,7 @@ const rightBtn = document.getElementById("galleryRight");
 let currentPopupIndex = 0;
 
 async function loadGalleryImages() {
-  const response = await fetch("images/images.json");
+  const response = await fetch("images/galleryImages/galleryImages.json");
   const imageNames = await response.json();
 
   for (let i = 0; i < imageNames.length; i++) {
@@ -156,7 +156,7 @@ function displayGallery() {
     let icon = document.createElement('img');
     icon.className = 'grid-item-icon';
     icon.id = 'grid-item-icon' + i;
-    icon.src = `images/${gallery[i].name}`;
+    icon.src = `images/galleryImages/${gallery[i].name}`;
     cell.appendChild(icon);
 
     icon.addEventListener("click", () => {
@@ -180,7 +180,7 @@ function updatePopupImage() {
 
   const popupIcon = document.createElement('img');
   popupIcon.className = 'popupImg';
-  popupIcon.src = `images/${gallery[currentPopupIndex].name}`;
+  popupIcon.src = `images/galleryImages/${gallery[currentPopupIndex].name}`;
   galleryPopup.appendChild(popupIcon);
 }
 
