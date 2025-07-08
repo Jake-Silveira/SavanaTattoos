@@ -176,12 +176,26 @@ function startGallery() {
 }
 
 function updatePopupImage() {
-  galleryPopup.innerHTML = ''; // clear existing content
+  const modal = document.getElementById("galleryPopup");
+  modal.innerHTML = ''; // Clear previous content
 
   const popupIcon = document.createElement('img');
   popupIcon.className = 'popupImg';
   popupIcon.src = `images/galleryImages/${gallery[currentPopupIndex].name}`;
-  galleryPopup.appendChild(popupIcon);
+
+popupIcon.addEventListener("click", (e) => {
+  if (e.target === popupIcon) {
+    if (modal.classList.contains("fullscreen")) {
+      modal.classList.remove("fullscreen");
+      popupIcon.classList.remove("zoomed");
+    } else {
+      modal.classList.add("fullscreen");
+      popupIcon.classList.add("zoomed");
+    }
+  }
+});
+
+  modal.appendChild(popupIcon);
 }
 
 // Navigation buttons
