@@ -51,15 +51,6 @@
             <div id="flashModal">
                 <p id="flashModalHeader">Available designs</p>
                 <div class="flashGridContainer">
-                    <img class="flashPhoto" src="images/flash1.JPG">
-                    <img class="flashPhoto" src="images/flash2.jpeg">
-                    <img class="flashPhoto" src="images/flash3.jpeg">
-                    <img class="flashPhoto" src="images/flash4.jpeg">
-                    <img class="flashPhoto" src="images/flash5.jpeg">
-                    <img class="flashPhoto" src="images/flash6.JPG">
-                    <img class="flashPhoto" src="images/flash7.JPG">
-                    <img class="flashPhoto" src="images/flash8.JPG">
-                    <img class="flashPhoto" src="images/flash9.JPG">
                 </div>
             </div>
             <div id="savanaModal">
@@ -80,7 +71,7 @@
                     <form class="inquiryForm">
                     <fieldset>
                         <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
-                        <select id="inquiryLocation" class="inquiryInput" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Forearm">Forearm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
+                        <select id="inquiryLocation" class="inquiryInput" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
                         <label for="inquirySize" class="inquiryLabel required">Size</label>
                         <input id="inquirySize" class="inquiryInput" type="text" placeholder='W"xH"' maxlength="10" required>
                         <label for="inquiryDesc" class="inquiryLabel required">Description</label>
@@ -90,15 +81,21 @@
                     </fieldset>
                     <fieldset>
                         <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
-                        <input id="inquiryFirstName" class="inquiryInput" type="text" placeholder="John" required>
+                        <input id="inquiryFirstName" class="inquiryInput" type="text" placeholder="John" maxlength="20"required>
                         <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
-                        <input id="inquiryLastName" class="inquiryInput" type="text" placeholder="Doe" required>
+                        <input id="inquiryLastName" class="inquiryInput" type="text" placeholder="Doe" maxlength="20" required>
                         <label for="inquiryEmail" class="inquiryLabel required">Email</label>
-                        <input id="inquiryEmail" class="inquiryInput" type="email" placeholder="JohnDoe@gmail.com" required>
+                        <input id="inquiryEmail" class="inquiryInput" type="email" placeholder="JohnDoe@gmail.com" maxlength="50"required>
                         <label for="inquiryPhone" class="inquiryLabel">Phone</label>
-                        <input id="inquiryPhone" class="inquiryInput" maxlength="10" placeholder="+1" type="tel">
-                        <label for="inquiryAvailability" class="inquiryLabel required">Availability</label>
-                        <input id="inquiryAvailability" class="inquiryInput" type="date" required placeholder="mm/dd/yyy">                    </fieldset>
+                        <input id="inquiryPhone" class="inquiryInput" maxlength="10" placeholder="(111)8675309" type="tel">
+                    </fieldset>
+                    <fieldset>
+                        <label for="inquiryAvailabilityFrom" class="inquiryLabel required">Availability</label>
+                        <label for="inquiryAvailabilityFrom">From:</label>
+                        <input id="inquiryAvailabilityFrom" class="inquiryInput" type="date" required placeholder="mm/dd/yyy">
+                        <label for="inquiryAvailabilityFrom">To:</label>
+                        <input id="inquiryAvailabilityTo" class="inquiryInput" type="date" required placeholder="mm/dd/yyy">                    
+                    </fieldset>
                     <button id="inquirySubmitBtn" class="inquiryInput" value="submit">Submit</button>
                 </form>
             </div>

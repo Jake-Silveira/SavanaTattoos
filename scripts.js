@@ -121,6 +121,7 @@ const wideModal = function(){
   menuList.style.display = "none";
 };
 
+//Gallery Generation//
 const galleryPhotos = document.querySelector(".galleryPhotos");
 const gallery = [];
 const galleryPopup = document.getElementById("galleryPopup");
@@ -140,11 +141,13 @@ async function loadGalleryImages() {
 
   displayGallery();
   startGallery();
-}
+};
 
-function Photo(filename) {
-  this.name = filename;
-}
+class Photo {
+  constructor(filename) {
+    this.name = filename;
+  }
+};
 
 function displayGallery() {
   for (let i = 0; i < gallery.length; i++) {
@@ -191,8 +194,8 @@ popupIcon.addEventListener("click", (e) => {
     } else {
       modal.classList.add("fullscreen");
       popupIcon.classList.add("zoomed");
-    }
-  }
+    };
+  };
 });
 
   modal.appendChild(popupIcon);
@@ -213,4 +216,61 @@ rightBtn.addEventListener("click", () => {
 
 loadGalleryImages(); // start everything
 
+//FlashGrid Generation//
+const flashGridContainer = document.querySelector(".flashGridContainer");
+const flashGrid = [];
 
+async function loadFlashGridImages() {
+  const response = await fetch("images/flashImages/flashImages.json");
+
+  if (!response.ok) {
+    console.error("Failed to fetch flashImages.json:", response.statusText);
+    return;
+  }
+
+  const imageNames = await response.json();
+  console.log("Fetched flash image names:", imageNames);
+
+  for (let i = 0; i < imageNames.length; i++) {
+    const photo = new Photo(imageNames[i]);
+    flashGrid.push(photo);
+  }
+
+  console.log("flashGrid after load:", flashGrid);
+  displayFlashGrid();
+}
+
+
+function displayFlashGrid() {
+  for (let i = 0; i < flashGrid.length; i++) {
+    let cell = document.createElement('div');
+    cell.className = "flash-grid-item";
+    cell.id = `flashPhoto-${i}`;
+    cell.style.padding = '1vw';
+
+    let icon = document.createElement('img');
+    icon.className = 'flash-grid-item-icon';
+    icon.id = 'flash-grid-item-icon' + i;
+    icon.src = `images/flashImages/${flashGrid[i].name}`;
+    cell.appendChild(icon);
+
+    icon.addEventListener("click", () => {
+      // Find any other zoomed images and reset them
+      const zoomedImages = document.querySelectorAll(".flash-grid-item-icon.zoomed");
+      zoomedImages.forEach(img => {
+        if (img !== icon) {
+          img.classList.remove("zoomed");
+        }
+      });
+
+  // Toggle zoom on the clicked image
+  icon.classList.toggle("zoomed");
+});
+
+    flashGridContainer.appendChild(cell);
+  };
+};
+
+loadFlashGridImages();
+console.log("flashGridContainer:", flashGridContainer);
+console.log("flashGrid length:", flashGrid.length);
