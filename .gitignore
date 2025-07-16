@@ -1,0 +1,6 @@
+# Node modules (huge, auto-generated)
+/backend/node_modules/
+
+# Environment secrets
+/backend/.env
+

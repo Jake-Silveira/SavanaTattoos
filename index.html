@@ -70,33 +70,33 @@
             <div id="inquiryModal">
                 <p id="inquiryModalHeader">Have Something In Mind?</p>
                         <p class="indicatorSpan"><span class="indicatorSpan" style="color: red;">*</span> Indicates a required field</p>
-                    <form class="inquiryForm">
+                    <form class="inquiryForm" id="inquiryForm">
                     <fieldset>
                         <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
-                        <select id="inquiryLocation" class="inquiryInput" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
+                        <select id="inquiryLocation" class="inquiryInput" name="placement" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
                         <label for="inquirySize" class="inquiryLabel required">Size</label>
-                        <input id="inquirySize" class="inquiryInput" type="text" placeholder='W"xH"' maxlength="10" required>
+                        <input id="inquirySize" class="inquiryInput" name="size" type="text" placeholder='W"xH"' maxlength="10" required>
                         <label for="inquiryDesc" class="inquiryLabel required">Description</label>
-                        <textarea id="inquiryDesc" class="inquiryInput" placeholder="What are you looking to get..." maxlength="512" required></textarea>
+                        <textarea id="inquiryDesc" class="inquiryInput" name="desc" placeholder="What are you looking to get..." maxlength="512" required></textarea>
                         <label class="inquiryLabel">Have a Photo?</label>
-                        <input id="inquiryExample" class="inquiryInput" type="file">
+                        <input id="inquiryExample" class="inquiryInput" name="file" type="file">
                     </fieldset>
                     <fieldset>
                         <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
-                        <input id="inquiryFirstName" class="inquiryInput" type="text" placeholder="John" maxlength="20"required>
+                        <input id="inquiryFirstName" class="inquiryInput" name="firstName" type="text" placeholder="John" maxlength="20"required>
                         <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
-                        <input id="inquiryLastName" class="inquiryInput" type="text" placeholder="Doe" maxlength="20" required>
+                        <input id="inquiryLastName" class="inquiryInput" name="lastName" type="text" placeholder="Doe" maxlength="20" required>
                         <label for="inquiryEmail" class="inquiryLabel required">Email</label>
-                        <input id="inquiryEmail" class="inquiryInput" type="email" placeholder="JohnDoe@gmail.com" maxlength="50"required>
-                        <label for="inquiryPhone" class="inquiryLabel">Phone</label>
-                        <input id="inquiryPhone" class="inquiryInput" maxlength="10" placeholder="(111)8675309" type="tel">
+                        <input id="inquiryEmail" class="inquiryInput" name="email" type="email" placeholder="JohnDoe@gmail.com" maxlength="50"required>
+                        <label for="inquiryPhone" class="inquiryLabel" >Phone</label>
+                        <input id="inquiryPhone" class="inquiryInput" name="phone" pattern="\d{10}" maxlength="10" placeholder="1118675309" type="tel">
                     </fieldset>
                     <fieldset>
                         <label for="inquiryAvailabilityFrom" class="inquiryLabel required">Availability</label>
                         <label for="inquiryAvailabilityFrom">From:</label>
-                        <input id="inquiryAvailabilityFrom" class="inquiryInput" type="date" required placeholder="mm/dd/yyy">
+                        <input id="inquiryAvailabilityFrom" class="inquiryInput" name="dateFrom" type="date" required placeholder="mm/dd/yyy">
                         <label for="inquiryAvailabilityTo">To:</label>
-                        <input id="inquiryAvailabilityTo" class="inquiryInput" type="date" required placeholder="mm/dd/yyy">                    
+                        <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required placeholder="mm/dd/yyy">                    
                     </fieldset>
                     <button id="inquirySubmitBtn" class="inquiryInput" value="submit">Submit</button>
                 </form>

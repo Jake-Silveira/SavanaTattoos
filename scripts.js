@@ -274,3 +274,52 @@ function displayFlashGrid() {
 loadFlashGridImages();
 console.log("flashGridContainer:", flashGridContainer);
 console.log("flashGrid length:", flashGrid.length);
+
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('inquiryForm');
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+  if (!form.checkValidity()) {
+    form.reportValidity(); // Triggers browser UI for validation errors
+    return;
+  }
+
+
+      const data = {
+        placement: form.placement.value,
+        size: form.size.value,
+        desc: form.desc.value || '',
+        //file: form.file.file,
+        firstName: form.firstName.value,
+        lastName: form.lastName.value,
+        email: form.email.value,
+        phone: form.phone.value,
+        dateFrom: form.dateFrom.value,
+        dateTo: form.dateTo.value
+      };
+
+      try {
+        const res = await fetch('http://localhost:3000/submit-form', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        alert(result.message);
+        form.reset();
+        modal.style.display = 'none';
+      } catch (err) {
+        alert('Submission failed: ' + err.message);
+      }
+    });
+  }
+});
+
+
