@@ -303,7 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       try {
-        const res = await fetch('https://ravensnest.ink/submit-form', {
+        const res = await fetch('/submit-form', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
