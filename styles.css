@@ -49,6 +49,8 @@ body{
     font-size: 30px;
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
+    min-width: 20%;
+    max-width: 300px;
 }
 #titleBackground{
     background-image: url('images/background.gif');
@@ -64,6 +66,8 @@ body{
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-direction: column;
+    gap: 20%;
 }
 .contentContainer{
     overflow:auto;
@@ -201,6 +205,13 @@ body{
     border-radius: 10px;
     border-color: rgb(3, 12, 5);
     border-width: 5px;
+  }
+  #inquiry{
+    border-style: solid;
+    border-radius: 20px;
+    padding: 10px;
+    background-color: rgba(44, 54, 57, 0.91);
+    text-align: center;
   }
   .inquiryForm{
     align-items: center;
