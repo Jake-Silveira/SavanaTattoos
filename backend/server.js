@@ -4,6 +4,9 @@ const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
 
+const { createClient } = require('@supabase/supabase-js');
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -19,7 +22,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-
 app.post('/submit-form', async (req, res) => {
   const { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo } = req.body;
 
@@ -28,6 +30,27 @@ app.post('/submit-form', async (req, res) => {
   }
 
   try {
+    // 1. Insert into Supabase
+    const { data, error } = await supabase
+      .from('inquiries')
+      .insert([{
+        first_name: firstName,
+        last_name: lastName,
+        email,
+        phone,
+        placement,
+        size,
+        desc,
+        date_from: dateFrom,
+        date_to: dateTo
+      }]);
+
+    if (error) {
+      console.error('Supabase insert error:', error);
+      return res.status(500).json({ message: 'Failed to save inquiry to database.' });
+    }
+
+    // 2. Send email via Resend
     const response = await axios.post('https://api.resend.com/emails', {
       from: process.env.FROM_EMAIL,
       to: process.env.TO_EMAIL,
@@ -50,10 +73,10 @@ app.post('/submit-form', async (req, res) => {
     });
 
     console.log('Email sent via Resend:', response.data);
-    res.json({ message: 'Inquiry submitted and email sent!' });
+    res.json({ message: 'Inquiry submitted, email sent, and data saved!' });
 
-  } catch (error) {
-    console.error('Failed to send email:', error.response?.data || error.message);
+  } catch (err) {
+    console.error('Error handling submission:', err.response?.data || err.message);
     res.status(500).json({ message: 'Submission failed. Try again later.' });
   }
 });
@@ -61,5 +84,3 @@ app.post('/submit-form', async (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });
-
-
