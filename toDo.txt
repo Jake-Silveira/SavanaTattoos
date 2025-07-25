@@ -1,5 +1,9 @@
-Get Bio from Savana -
-Create Form for Inquiries -
-Create Modal for gallery
-Import pictures to gallery
+rate-limiting
+reCAPTCHA
+Log IPs of frequest abusers
+Admin Dashboard
+Sign in prior to Booking Requests
+File entry change to pictures only
+Auto Respond to Inquiries?
+Booking/Calendar feature with admin right to block off days
 Testimonials - Google reviews?

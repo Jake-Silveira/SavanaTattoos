@@ -326,19 +326,6 @@ function sanitizeInput(str) {
   return str.replace(/[<>&"'\/]/g, ''); // Remove potentially harmful characters
 }
 
-function formatPhone(input) {
-  const cleaned = input.replace(/\D/g, ''); // Only digits
-  const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
-
-  if (!match) return input;
-
-  let formatted = '';
-  if (match[1]) formatted += `(${match[1]}`;
-  if (match[2]) formatted += `) ${match[2]}`;
-  if (match[3]) formatted += `-${match[3]}`;
-  return formatted;
-}
-
 function stripEmojis(str) {
   return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD800-\uDFFF])/g, '');
 }
