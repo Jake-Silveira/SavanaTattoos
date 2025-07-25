@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const path = require('path');
+const validator = require('validator');
 
 const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
@@ -23,34 +24,40 @@ app.get('/', (req, res) => {
 });
 
 app.post('/submit-form', async (req, res) => {
-  const { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo } = req.body;
-
-  if (!placement || !size || !desc || !firstName || !lastName || !email) {
-    return res.status(400).json({ message: 'Missing required fields.' });
-  }
-
   try {
-    // 1. Insert into Supabase
-    const { data, error } = await supabase
-      .from('inquiries')
-      .insert([{
-        first_name: firstName,
-        last_name: lastName,
-        email,
-        phone,
-        placement,
-        size,
-        desc,
-        date_from: dateFrom,
-        date_to: dateTo
-      }]);
+    let { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo } = req.body;
 
-    if (error) {
-      console.error('Supabase insert error:', error);
-      return res.status(500).json({ message: 'Failed to save inquiry to database.' });
+    // Trim & sanitize
+    placement = validator.escape(placement.trim());
+    size = validator.escape(size.trim());
+    desc = validator.escape(desc.trim());
+    firstName = validator.escape(firstName.trim());
+    lastName = validator.escape(lastName.trim());
+    email = email.trim();
+    phone = phone ? validator.escape(phone.trim()) : '';
+
+    // Validation
+    if (
+      !placement || !size || !desc || !firstName || !lastName || !email ||
+      !validator.isEmail(email)
+    ) {
+      return res.status(400).json({ message: 'Invalid or missing required fields.' });
     }
 
-    // 2. Send email via Resend
+    // Date validation
+    const today = new Date();
+    const from = new Date(dateFrom);
+    const to = new Date(dateTo);
+
+    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+      return res.status(400).json({ message: 'Invalid date format.' });
+    }
+
+    if (from < today || to < from || (to - from) / (1000 * 60 * 60 * 24) > 60) {
+      return res.status(400).json({ message: 'Invalid date range.' });
+    }
+
+    // Send email via Resend
     const response = await axios.post('https://api.resend.com/emails', {
       from: process.env.FROM_EMAIL,
       to: process.env.TO_EMAIL,
@@ -73,13 +80,14 @@ app.post('/submit-form', async (req, res) => {
     });
 
     console.log('Email sent via Resend:', response.data);
-    res.json({ message: 'Inquiry submitted, email sent, and data saved!' });
+    res.json({ message: 'Inquiry submitted!' });
 
   } catch (err) {
     console.error('Error handling submission:', err.response?.data || err.message);
     res.status(500).json({ message: 'Submission failed. Try again later.' });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);

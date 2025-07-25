@@ -322,4 +322,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+function sanitizeInput(str) {
+  return str.replace(/[<>&"'\/]/g, ''); // Remove potentially harmful characters
+}
 
+function formatPhone(input) {
+  const cleaned = input.replace(/\D/g, ''); // Only digits
+  const match = cleaned.match(/^(\d{0,3})(\d{0,3})(\d{0,4})$/);
+
+  if (!match) return input;
+
+  let formatted = '';
+  if (match[1]) formatted += `(${match[1]}`;
+  if (match[2]) formatted += `) ${match[2]}`;
+  if (match[3]) formatted += `-${match[3]}`;
+  return formatted;
+}
+
+function stripEmojis(str) {
+  return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD800-\uDFFF])/g, '');
+}
+
+  function validateDates() {
+    const fromInput = document.getElementById('inquiryAvailabilityFrom');
+    const toInput = document.getElementById('inquiryAvailabilityTo');
+
+    const fromDate = new Date(fromInput.value);
+    const toDate = new Date(toInput.value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Normalize today's time
+
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      alert("Please select valid dates.");
+      return false;
+    }
+
+    if (fromDate < today) {
+      alert("Start date cannot be in the past.");
+      fromInput.focus();
+      return false;
+    }
+
+    if (toDate < fromDate) {
+      alert("End date cannot be before start date.");
+      toInput.focus();
+      return false;
+    }
+
+    const diffDays = (toDate - fromDate) / (1000 * 60 * 60 * 24);
+    if (diffDays > 60) {
+      alert("The range cannot exceed 60 days.");
+      toInput.focus();
+      return false;
+    }
+
+    return true;
+  }
+function cleanInput(value) {
+  return sanitizeInput(stripEmojis(value.trim()));
+}

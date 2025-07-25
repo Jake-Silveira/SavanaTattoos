@@ -232,6 +232,7 @@ body{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
     border-radius: 10px;
     border-color: rgba(99, 70, 64, .65);
