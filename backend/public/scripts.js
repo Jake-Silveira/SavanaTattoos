@@ -299,6 +299,10 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', form.file.files[0]);
       }
 
+      // Append reCAPTCHA token
+      const recaptchaToken = grecaptcha.getResponse();
+      formData.append('g-recaptcha-response', recaptchaToken);
+
       try {
         const res = await fetch('/submit-form', {
           method: 'POST',
@@ -308,6 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await res.json();
         alert(result.message);
         form.reset();
+
+        // Reset reCAPTCHA widget after submission
+        grecaptcha.reset();
 
         // Optional: close modal if you're using one
         if (typeof modal !== 'undefined') {
@@ -320,6 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
 
 
 function sanitizeInput(str) {
