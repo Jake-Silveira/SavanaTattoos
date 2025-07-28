@@ -324,11 +324,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function sanitizeInput(str) {
   return str.replace(/[<>&"'\/]/g, ''); // Remove potentially harmful characters
-}
+};
 
 function stripEmojis(str) {
-  return str.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD800-\uDFFF])/g, '');
-}
+  return str.replace(
+    /([\u203C-\u3299]|[\uD83C-\uDBFF\uDC00-\uDFFF])+/g,
+    ''
+)};
 
   function validateDates() {
     const fromInput = document.getElementById('inquiryAvailabilityFrom');
@@ -342,35 +344,35 @@ function stripEmojis(str) {
     if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
       alert("Please select valid dates.");
       return false;
-    }
+    };
 
     if (fromDate < today) {
       alert("Start date cannot be in the past.");
       fromInput.focus();
       return false;
-    }
+    };
 
     if (toDate < fromDate) {
       alert("End date cannot be before start date.");
       toInput.focus();
       return false;
-    }
+    };
 
     const diffDays = (toDate - fromDate) / (1000 * 60 * 60 * 24);
     if (diffDays > 60) {
       alert("The range cannot exceed 60 days.");
       toInput.focus();
       return false;
-    }
+    };
 
     return true;
-  }
+  };
 function cleanInput(value) {
   return sanitizeInput(stripEmojis(value.trim()));
-}
+};
 function enableSubmit(){
   document.getElementById('inquirySubmitBtn').disabled = false;
-}
+};
 
 document.getElementById("inquiryExample").addEventListener("change", function () {
   const file = this.files[0];
