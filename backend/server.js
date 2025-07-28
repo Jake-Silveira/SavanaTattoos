@@ -139,4 +139,6 @@ app.post('/submit-form', upload.single('file'), async (req, res) => {
     res.status(500).json({ message: 'Something went wrong with your submission.' });
   }
 });
-
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
