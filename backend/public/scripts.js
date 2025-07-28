@@ -271,51 +271,56 @@ function displayFlashGrid() {
 loadFlashGridImages();
 
 
-
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('inquiryForm');
   if (form) {
     form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+      e.preventDefault();
 
-  if (!form.checkValidity()) {
-    form.reportValidity(); // Triggers browser UI for validation errors
-    return;
-  }
+      if (!form.checkValidity()) {
+        form.reportValidity(); // Show built-in validation messages
+        return;
+      }
 
+      const formData = new FormData();
 
-      const data = {
-        placement: form.placement.value,
-        size: form.size.value,
-        desc: form.desc.value || '',
-        //file: form.file.file,
-        firstName: form.firstName.value,
-        lastName: form.lastName.value,
-        email: form.email.value,
-        phone: form.phone.value,
-        dateFrom: form.dateFrom.value,
-        dateTo: form.dateTo.value
-      };
+      formData.append('placement', form.placement.value);
+      formData.append('size', form.size.value);
+      formData.append('desc', form.desc.value || '');
+      formData.append('firstName', form.firstName.value);
+      formData.append('lastName', form.lastName.value);
+      formData.append('email', form.email.value);
+      formData.append('phone', form.phone.value);
+      formData.append('dateFrom', form.dateFrom.value);
+      formData.append('dateTo', form.dateTo.value);
+
+      // Append image file if selected
+      if (form.file.files[0]) {
+        formData.append('file', form.file.files[0]);
+      }
 
       try {
         const res = await fetch('/submit-form', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(data)
+          body: formData // Don't set Content-Type manually!
         });
 
         const result = await res.json();
         alert(result.message);
         form.reset();
-        modal.style.display = 'none';
+
+        // Optional: close modal if you're using one
+        if (typeof modal !== 'undefined') {
+          modal.style.display = 'none';
+        }
+
       } catch (err) {
         alert('Submission failed: ' + err.message);
       }
     });
   }
 });
+
 
 function sanitizeInput(str) {
   return str.replace(/[<>&"'\/]/g, ''); // Remove potentially harmful characters
