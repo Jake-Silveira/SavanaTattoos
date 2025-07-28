@@ -375,6 +375,9 @@ function cleanInput(value) {
 function enableSubmit(){
   document.getElementById('inquirySubmitBtn').disabled = false;
 };
+function disableSubmit(){
+  document.getElementById('inquirySubmitBtn').disabled = true;
+}
 
 document.getElementById("inquiryExample").addEventListener("change", function () {
   const file = this.files[0];

@@ -98,7 +98,7 @@
                         <label for="inquiryAvailabilityTo">To:</label>
                         <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required>                    
                     </fieldset>
-                    <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="() => document.getElementById('submitBtn').disabled = true"></div>
+                    <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="disableSubmit"></div>
                     <button id="inquirySubmitBtn" class="inquiryInput" value="submit" onclick="validateDates()" disabled>Submit</button>
                 </form>
             </div>
