@@ -70,7 +70,7 @@
             <div id="inquiryModal">
                 <p id="inquiryModalHeader">Consultation Request</p>
                         <p class="indicatorSpan"><span class="indicatorSpan" style="color: red;">*</span> Indicates a required field</p>
-                    <form class="inquiryForm" id="inquiryForm">
+                    <form class="inquiryForm" id="inquiryForm" action="/submit-form" method="POST" enctype="multipart/form-data">
                     <fieldset>
                         <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
                         <select id="inquiryLocation" class="inquiryInput" name="placement" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
@@ -79,7 +79,8 @@
                         <label for="inquiryDesc" class="inquiryLabel required">Description</label>
                         <textarea id="inquiryDesc" class="inquiryInput" name="desc" placeholder="What are you looking to get..." maxlength="512" oninput="this.value = cleanInput(this.value)" required></textarea>
                         <label class="inquiryLabel">Have a Photo?</label>
-                        <input id="inquiryExample" class="inquiryInput" name="file" type="file">
+                        <input id="inquiryExample" class="inquiryInput" name="file" type="file" accept="image/*">
+                        <img id="imagePreview" style="max-width: 200px; display: none;" />
                     </fieldset>
                     <fieldset>
                         <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
@@ -97,8 +98,8 @@
                         <label for="inquiryAvailabilityTo">To:</label>
                         <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required>                    
                     </fieldset>
-                    <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm"></div>
-                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" onclick="validateDates()">Submit</button>
+                    <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="() => document.getElementById('submitBtn').disabled = true"></div>
+                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" onclick="validateDates()" disabled>Submit</button>
                 </form>
             </div>
             <div id="galleryModal">

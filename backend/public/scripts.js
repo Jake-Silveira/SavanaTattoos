@@ -224,19 +224,16 @@ async function loadFlashGridImages() {
   const response = await fetch("images/flashImages/flashImages.json");
 
   if (!response.ok) {
-    console.error("Failed to fetch flashImages.json:", response.statusText);
     return;
   }
 
   const imageNames = await response.json();
-  console.log("Fetched flash image names:", imageNames);
 
   for (let i = 0; i < imageNames.length; i++) {
     const photo = new Photo(imageNames[i]);
     flashGrid.push(photo);
   }
 
-  console.log("flashGrid after load:", flashGrid);
   displayFlashGrid();
 }
 
@@ -272,8 +269,6 @@ function displayFlashGrid() {
 };
 
 loadFlashGridImages();
-console.log("flashGridContainer:", flashGridContainer);
-console.log("flashGrid length:", flashGrid.length);
 
 
 
@@ -368,3 +363,22 @@ function stripEmojis(str) {
 function cleanInput(value) {
   return sanitizeInput(stripEmojis(value.trim()));
 }
+function enableSubmit(){
+  document.getElementById('inquirySubmitBtn').disabled = false;
+}
+
+document.getElementById("inquiryExample").addEventListener("change", function () {
+  const file = this.files[0];
+  const preview = document.getElementById("imagePreview");
+
+  if (file && file.type.startsWith("image/")) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      preview.src = e.target.result;
+      preview.style.display = "block";
+    };
+    reader.readAsDataURL(file);
+  } else {
+    preview.style.display = "none";
+  }
+});

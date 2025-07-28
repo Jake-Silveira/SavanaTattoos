@@ -1,9 +1,7 @@
 rate-limiting
-reCAPTCHA
 Log IPs of frequest abusers
 Admin Dashboard
 Sign in prior to Booking Requests
-File entry change to pictures only image upload preview
 Auto Respond to Inquiries?
 Booking/Calendar feature with admin right to block off days
 Testimonials - Google reviews?
