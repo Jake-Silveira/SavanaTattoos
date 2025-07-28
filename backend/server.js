@@ -24,7 +24,19 @@ app.get('/', (req, res) => {
 });
 
 app.post('/submit-form', async (req, res) => {
-  try {
+    try {
+    const token = req.body['g-recaptcha-response'];
+    if (!token) {
+      return res.status(400).json({ message: 'reCAPTCHA not completed.' });
+    }
+
+    // Verify reCAPTCHA
+    const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`;
+    const captchaRes = await axios.post(verifyURL);
+
+    if (!captchaRes.data.success || captchaRes.data.score < 0.5) {
+      return res.status(400).json({ message: 'Failed reCAPTCHA verification.' });
+    }
     let { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo } = req.body;
 
     // Trim & sanitize
@@ -83,8 +95,8 @@ app.post('/submit-form', async (req, res) => {
     res.json({ message: 'Inquiry submitted!' });
 
   } catch (err) {
-    console.error('Error handling submission:', err.response?.data || err.message);
-    res.status(500).json({ message: 'Submission failed. Try again later.' });
+    console.error('reCAPTCHA error:', err.message);
+    return res.status(500).json({ message: 'reCAPTCHA verification failed.' });
   }
 });
 
