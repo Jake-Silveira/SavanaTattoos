@@ -70,7 +70,7 @@
             <div id="inquiryModal">
                 <p id="inquiryModalHeader">Consultation Request</p>
                         <p class="indicatorSpan"><span class="indicatorSpan" style="color: red;">*</span> Indicates a required field</p>
-                    <form class="inquiryForm" id="inquiryForm" action="/submit-form" method="POST" enctype="multipart/form-data">
+                    <form class="inquiryForm" id="inquiryForm" enctype="multipart/form-data">
                     <fieldset>
                         <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
                         <select id="inquiryLocation" class="inquiryInput" name="placement" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
@@ -86,7 +86,7 @@
                         <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
                         <input id="inquiryFirstName" class="inquiryInput" name="firstName" type="text" placeholder="John" maxlength="20" oninput="this.value = cleanInput(this.value)" required>
                         <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
-                        <input id="inquiryLastName" class="inquiryInput" name="lastName" type="text" placeholder="Doe" maxlength="20" oninput="this.value = sanitizeInput(this.value)" oninput="this.value = cleanInput(this.value)" required>
+                        <input id="inquiryLastName" class="inquiryInput" name="lastName" type="text" placeholder="Doe" maxlength="20" oninput="this.value = cleanInput(this.value)" required>
                         <label for="inquiryEmail" class="inquiryLabel required">Email</label>
                         <input id="inquiryEmail" class="inquiryInput" name="email" type="email" placeholder="JohnDoe@gmail.com" maxlength="50" oninput="this.value = stripEmojis(this.value.trim())" required>
                         <label for="inquiryPhone" class="inquiryLabel" >Phone</label>
@@ -99,7 +99,7 @@
                         <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required>                    
                     </fieldset>
                     <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="disableSubmit"></div>
-                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" onclick="validateDates()" disabled>Submit</button>
+                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" type="submit" onclick="validateDates()" disabled>Submit</button>
                 </form>
             </div>
             <div id="galleryModal">
