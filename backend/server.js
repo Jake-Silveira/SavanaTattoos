@@ -12,65 +12,46 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === Multer setup for image uploads ===
+// === Multer setup ===
 const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png|gif/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+    const allowed = /jpeg|jpg|png|gif/;
+    const extname = allowed.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowed.test(file.mimetype);
     if (mimetype && extname) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files (jpg, jpeg, png, gif) are allowed.'));
+      cb(new Error('Only image files are allowed.'));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 });
 
-// === Middleware ===
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// === Root Route ===
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// === POST: Form Submission ===
-app.post('/submit-form', (req, res, next) => {
-  upload.single('file')(req, res, function (err) {
-    if (err instanceof multer.MulterError) {
-      console.error('Multer error:', err);
-      return res.status(400).json({ message: 'File upload failed: ' + err.message });
-    } else if (err) {
-      console.error('Unknown multer error:', err);
-      return res.status(400).json({ message: err.message });
-    }
-    next(); // continue to the next middleware
-  });
-}, async (req, res) => {
+app.post('/submit-form', upload.single('file'), async (req, res) => {
   try {
     const token = req.body['g-recaptcha-response'];
-    if (!token) return res.status(400).json({ message: 'reCAPTCHA not completed.' });
+    if (!token) {
+      return res.status(400).json({ message: 'reCAPTCHA not completed.' });
+    }
 
-    // === Verify reCAPTCHA ===
     const verifyURL = `https://www.google.com/recaptcha/api/siteverify?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${token}`;
     const captchaRes = await axios.post(verifyURL);
-
     if (!captchaRes.data.success || captchaRes.data.score < 0.5) {
       return res.status(400).json({ message: 'Failed reCAPTCHA verification.' });
     }
 
-    // === Destructure and validate form fields ===
-    let {
-      placement, size, desc,
-      firstName, lastName, email,
-      phone, dateFrom, dateTo
-    } = req.body;
-
+    // === Sanitize and validate form fields ===
+    let { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo } = req.body;
     placement = validator.escape(placement.trim());
     size = validator.escape(size.trim());
     desc = validator.escape(desc.trim());
@@ -83,20 +64,18 @@ app.post('/submit-form', (req, res, next) => {
       return res.status(400).json({ message: 'Invalid or missing required fields.' });
     }
 
-    // === Date validation ===
-    const today = new Date();
     const from = new Date(dateFrom);
     const to = new Date(dateTo);
+    const today = new Date();
 
-    if (isNaN(from.getTime()) || isNaN(to.getTime())) {
+    if (isNaN(from) || isNaN(to)) {
       return res.status(400).json({ message: 'Invalid date format.' });
     }
-
     if (from < today || to < from || (to - from) / (1000 * 60 * 60 * 24) > 60) {
       return res.status(400).json({ message: 'Invalid date range.' });
     }
 
-    // === Handle uploaded file ===
+    // === Upload file to Supabase ===
     let fileUrl = null;
     const file = req.file;
 
@@ -104,59 +83,66 @@ app.post('/submit-form', (req, res, next) => {
       const timestamp = Date.now();
       const filename = `${timestamp}-${file.originalname}`;
 
-      const uploadResult = await supabase.storage
+      const { data, error } = await supabase.storage
         .from(process.env.SUPABASE_BUCKET)
         .upload(filename, file.buffer, {
           contentType: file.mimetype,
-          upsert: false,
+          upsert: false
         });
 
-      if (uploadResult.error) {
-        console.error('Supabase upload error:', uploadResult.error.message);
-        throw new Error(`Failed to upload image: ${uploadResult.error.message}`);
+      if (error) {
+        console.error('Supabase upload error:', error);
+        return res.status(500).json({ message: 'File upload failed.', error: error.message });
       }
 
-      // Get public URL
-      const { data: publicURL } = supabase.storage
+      // Generate public URL
+      const { data: publicURL, error: urlError } = supabase.storage
         .from(process.env.SUPABASE_BUCKET)
         .getPublicUrl(filename);
 
+      if (urlError) {
+        console.error('Supabase URL error:', urlError);
+        return res.status(500).json({ message: 'Could not generate public URL.' });
+      }
+
       fileUrl = publicURL.publicUrl;
     }
+
+    // === Email content ===
+    const emailBody = `
+      <h2>New Tattoo Inquiry</h2>
+      <p><strong>Name:</strong> ${firstName} ${lastName}</p>
+      <p><strong>Email:</strong> ${email}</p>
+      <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
+      <p><strong>Placement:</strong> ${placement}</p>
+      <p><strong>Size:</strong> ${size}</p>
+      <p><strong>Description:</strong> ${desc}</p>
+      <p><strong>Availability:</strong> ${dateFrom} - ${dateTo}</p>
+      ${fileUrl ? `<p><strong>Image:</strong> <a href="${fileUrl}" target="_blank">View Uploaded Image</a></p>` : ''}
+    `;
 
     // === Send email via Resend ===
     const emailRes = await axios.post('https://api.resend.com/emails', {
       from: process.env.FROM_EMAIL,
       to: process.env.TO_EMAIL,
       subject: `New Inquiry from ${firstName} ${lastName}`,
-      html: `
-        <h2>New Tattoo Inquiry</h2>
-        <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-        <p><strong>Email:</strong> ${email}</p>
-        <p><strong>Phone:</strong> ${phone || 'N/A'}</p>
-        <p><strong>Placement:</strong> ${placement}</p>
-        <p><strong>Size:</strong> ${size}</p>
-        <p><strong>Description:</strong> ${desc}</p>
-        <p><strong>Availability:</strong> ${dateFrom} - ${dateTo}</p>
-        ${fileUrl ? `<p><strong>Image:</strong> <a href="${fileUrl}" target="_blank">View Uploaded Image</a></p>` : ''}
-      `
+      html: emailBody
     }, {
       headers: {
-        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         'Content-Type': 'application/json'
       }
     });
 
-    console.log('Email sent via Resend:', emailRes.data);
-    res.json({ message: 'Inquiry submitted successfully!' });
+    console.log('Email sent:', emailRes.data);
+    res.status(200).json({ message: 'Inquiry submitted successfully!' });
 
   } catch (err) {
-    console.error('Submission error:', err);
-    res.status(500).json({ message: 'Something went wrong with your submission.' });
+    console.error('Server error:', err);
+    res.status(500).json({ message: 'Something went wrong with your submission.', error: err.message });
   }
 });
 
-// === Start Server ===
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
