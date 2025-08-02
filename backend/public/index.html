@@ -74,10 +74,13 @@
                     <fieldset>
                         <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
                         <select id="inquiryLocation" class="inquiryInput" name="placement" required><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
+                        <div id="locationError" class="error-msg"></div>
                         <label for="inquirySize" class="inquiryLabel required">Size</label>
                         <input id="inquirySize" class="inquiryInput" name="size" type="text" placeholder='W"xH"' maxlength="10" oninput="this.value = cleanInput(this.value)" required>
+                        <div id="sizeError" class="error-msg"></div>
                         <label for="inquiryDesc" class="inquiryLabel required">Description</label>
-                        <textarea id="inquiryDesc" class="inquiryInput" name="desc" placeholder="What are you looking to get..." maxlength="512" oninput="this.value = cleanInput(this.value)" required></textarea>
+                        <textarea id="inquiryDesc" class="inquiryInput" name="desc" placeholder="What kind of tattoo do you want?" maxlength="512" oninput="this.value = cleanInput(this.value)" required></textarea>
+                        <div id="descError" class="error-msg"></div>
                         <label class="inquiryLabel">Have a Photo?</label>
                         <input id="inquiryExample" class="inquiryInput" name="file" type="file" accept="image/*">
                         <img id="imagePreview" style="max-width: 200px; display: none;" />
@@ -85,21 +88,27 @@
                     <fieldset>
                         <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
                         <input id="inquiryFirstName" class="inquiryInput" name="firstName" type="text" placeholder="John" maxlength="20" oninput="this.value = cleanInput(this.value)" required>
+                        <div id="firstNameError" class="error-msg"></div>
                         <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
                         <input id="inquiryLastName" class="inquiryInput" name="lastName" type="text" placeholder="Doe" maxlength="20" oninput="this.value = cleanInput(this.value)" required>
+                        <div id="lastNameError" class="error-msg"></div>
                         <label for="inquiryEmail" class="inquiryLabel required">Email</label>
                         <input id="inquiryEmail" class="inquiryInput" name="email" type="email" placeholder="JohnDoe@gmail.com" maxlength="50" oninput="this.value = stripEmojis(this.value.trim())" required>
+                        <div id="emailError" class="error-msg"></div>
                         <label for="inquiryPhone" class="inquiryLabel" >Phone</label>
-                        <input id="inquiryPhone" class="inquiryInput" name="phone" pattern="\d{10}" maxlength="10" placeholder="1118675309" type="tel" oninput="this.value = this.value.replace(/\D/g, '')">
+                        <input id="inquiryPhone" class="inquiryInput" name="phone" pattern="\d{10}" maxlength="14" placeholder="1118675309" type="tel" oninput="this.value = this.value.replace(/\D/g, '')">
+                        <div id="phoneError" class="error-msg"></div>
                     <fieldset>
                         <label for="inquiryAvailabilityFrom" class="inquiryLabel required">Availability</label>
                         <label for="inquiryAvailabilityFrom">From:</label>
                         <input id="inquiryAvailabilityFrom" class="inquiryInput" name="dateFrom" type="date" required>
+                        <div id="fromDateError" class="error-msg"></div>
                         <label for="inquiryAvailabilityTo">To:</label>
-                        <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required>                    
+                        <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required>     
+                        <div id="toDateError" class="error-msg"></div>               
                     </fieldset>
                     <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="disableSubmit"></div>
-                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" type="submit" onclick="validateDates()" disabled>Submit</button>
+                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" type="submit" disabled>Submit</button>
                 </form>
             </div>
             <div id="galleryModal">
@@ -114,6 +123,12 @@
 
                 </div>
             </div>
+
+<!-- custom script -->
 <script src="scripts.js"></script>
+
+<!-- Captcha  -->
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+
 </html>

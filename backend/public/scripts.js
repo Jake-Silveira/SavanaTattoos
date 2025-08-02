@@ -273,60 +273,165 @@ loadFlashGridImages();
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('inquiryForm');
-  if (form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
 
-      if (!form.checkValidity()) {
-        form.reportValidity(); // Show built-in validation messages
+   if (!form) return;
+
+  form.setAttribute('novalidate', true); // disable native validation
+
+  const fields = [
+      { id: "inquiryLocation", errorId: "locationError", name: "placement" },
+      { id: "inquirySize", errorId: "sizeError", name: "size" },
+      { id: "inquiryDesc", errorId: "descError", name: "desc" },
+      { id: "inquiryFirstName", errorId: "firstNameError", name: "firstName" },
+      { id: "inquiryLastName", errorId: "lastNameError", name: "lastName" },
+      { id: "inquiryEmail", errorId: "emailError", name: "email" },
+      { id: "inquiryPhone", errorId: "phoneError", name: "phone" },
+      { id: "inquiryAvailabilityFrom", errorId: "fromDateError", name: "dateFrom" },
+      { id: "inquiryAvailabilityTo", errorId: "toDateError", name: "dateTo" },
+    ];
+
+  // --- Phone Mask ---
+  const phoneInput = document.getElementById("inquiryPhone");
+  if (phoneInput) {
+    phoneInput.addEventListener("input", (e) => {
+      let x = e.target.value.replace(/\D/g, "").substring(0, 10);
+      let formatted = "";
+      if (x.length > 0) formatted += "(" + x.substring(0, 3);
+      if (x.length >= 4) formatted += ") " + x.substring(3, 6);
+      if (x.length >= 7) formatted += "-" + x.substring(6, 10);
+      e.target.value = formatted;
+    });
+  }
+
+  // --- Size Mask (e.g., 5"x7") ---
+  const sizeInput = document.getElementById("inquirySize");
+  if (sizeInput) {
+    sizeInput.addEventListener("input", (e) => {
+      let v = e.target.value.replace(/[^\d]/g, "").substring(0, 4);
+      let formatted = "";
+      if (v.length <= 2) {
+        formatted = v;
+      } else {
+        formatted = v.substring(0, 2) + `"x` + v.substring(2) + '"';
+      }
+      e.target.value = formatted;
+    });
+  }
+
+const showError = (input, errorId, message) => {
+  input.classList.add("invalid");
+  const errorEl = document.getElementById(errorId);
+  if (errorEl) {
+    errorEl.textContent = message;
+  } else {
+    console.warn(`Missing error display element with id "${errorId}"`);
+  }
+};
+
+const clearError = (input, errorId) => {
+  input.classList.remove("invalid");
+  const errorEl = document.getElementById(errorId);
+  if (errorEl) errorEl.textContent = "";
+};
+
+  if (form) {
+    // Live clearing of errors
+    fields.forEach(({ id, errorId }) => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener("input", () => clearError(input, errorId));
+      }
+    });
+
+      form.addEventListener('submit', async (e) => {
+    e.preventDefault(); // Always prevent default initially
+
+
+    let hasErrors = false;
+
+    fields.forEach(({ id, errorId }) => {
+      const input = document.getElementById(id);
+      const errorEl = document.getElementById(errorId);
+      if (!input) {
+        console.warn("Missing field: " + id);
         return;
       }
 
-      const formData = new FormData();
+      const value = input.value.trim();
 
-      formData.append('placement', form.placement.value);
-      formData.append('size', form.size.value);
-      formData.append('desc', form.desc.value || '');
-      formData.append('firstName', form.firstName.value);
-      formData.append('lastName', form.lastName.value);
-      formData.append('email', form.email.value);
-      formData.append('phone', form.phone.value);
-      formData.append('dateFrom', form.dateFrom.value);
-      formData.append('dateTo', form.dateTo.value);
-
-      // Append image file if selected
-      if (form.file.files[0]) {
-        formData.append('file', form.file.files[0]);
+      if (input.required && value === "") {
+        showError(input, errorId, "This field is required.");
+        hasErrors = true;
+        return;
+      } else {
+        clearError(input, errorId);
       }
 
-      // Append reCAPTCHA token
-      const recaptchaToken = grecaptcha.getResponse();
-      formData.append('g-recaptcha-response', recaptchaToken);
+      // Additional custom checks
+      if (id === "inquiryEmail" && value && !/^\S+@\S+\.\S+$/.test(value)) {
+        showError(input, errorId, "Enter a valid email.");
+        hasErrors = true;
+      }
 
-      try {
-        const res = await fetch('/submit-form', {
-          method: 'POST',
-          body: formData // Don't set Content-Type manually!
-        });
-
-        const result = await res.json();
-        alert(result.message);
-        form.reset();
-
-        // Reset reCAPTCHA widget after submission
-        grecaptcha.reset();
-
-        // Optional: close modal if you're using one
-        if (typeof modal !== 'undefined') {
-          modal.style.display = 'none';
-        }
-
-      } catch (err) {
-        alert('Submission failed: ' + err.message);
+      if (id === "inquiryPhone" && value.replace(/\D/g, "").length < 10) {
+        showError(input, errorId, "Enter a 10-digit phone number.");
+        hasErrors = true;
       }
     });
+
+    // Cross-field validation: date range
+    const fromInput = document.getElementById("inquiryAvailabilityFrom");
+    const toInput = document.getElementById("inquiryAvailabilityTo");
+    const toError = document.getElementById("toDateError");
+
+    if (fromInput && toInput && fromInput.value && toInput.value) {
+      const fromDate = new Date(fromInput.value);
+      const toDate = new Date(toInput.value);
+      if (toDate < fromDate) {
+        showError(toInput, "toDateError", "End date must be after start date.");
+        hasErrors = true;
+      } else {
+        clearError(toInput, "toDateError");
+      }
+    }
+
+    if (hasErrors) return;
+
+    // Prepare form data
+    const formData = new FormData();
+    fields.forEach(({ id, name }) => {
+      const input = document.getElementById(id);
+      formData.append(name, input.value.trim());
+    });
+
+    if (form.file?.files[0]) {
+      formData.append('file', form.file.files[0]);
+    }
+
+    const recaptchaToken = grecaptcha.getResponse();
+    formData.append('g-recaptcha-response', recaptchaToken);
+
+    try {
+      const res = await fetch('/submit-form', {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await res.json();
+      alert(result.message);
+      form.reset();
+      grecaptcha.reset();
+
+      if (typeof modal !== 'undefined') {
+        modal.style.display = 'none';
+      }
+    } catch (err) {
+      alert('Submission failed: ' + err.message);
+    }
+  });
   }
 });
+
 
 
 
@@ -342,41 +447,6 @@ function stripEmojis(str) {
   );
 }
 
-  function validateDates() {
-    const fromInput = document.getElementById('inquiryAvailabilityFrom');
-    const toInput = document.getElementById('inquiryAvailabilityTo');
-
-    const fromDate = new Date(fromInput.value);
-    const toDate = new Date(toInput.value);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Normalize today's time
-
-    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
-      alert("Please select valid dates.");
-      return false;
-    };
-
-    if (fromDate < today) {
-      alert("Start date cannot be in the past.");
-      fromInput.focus();
-      return false;
-    };
-
-    if (toDate < fromDate) {
-      alert("End date cannot be before start date.");
-      toInput.focus();
-      return false;
-    };
-
-    const diffDays = (toDate - fromDate) / (1000 * 60 * 60 * 24);
-    if (diffDays > 60) {
-      alert("The range cannot exceed 60 days.");
-      toInput.focus();
-      return false;
-    };
-
-    return true;
-  };
 function cleanInput(value) {
   return sanitizeInput(stripEmojis(value));
 };
