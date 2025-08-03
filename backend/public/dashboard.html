@@ -38,8 +38,16 @@
 function formatRow(row, fields) {
   return fields.map(field => {
     const td = document.createElement('td');
-    if (field === 'full_name') {
+     if (field === 'full_name') {
       td.textContent = `${row.first_name || ''} ${row.last_name || ''}`.trim();
+    } else if (field === 'created_at' || field === 'timestamp') {
+      td.textContent = new Date(row[field]).toLocaleString();
+    } else if (field === 'image_url' && row[field]) {
+      const a = document.createElement('a');
+      a.href = row[field];
+      a.textContent = 'View Image';
+      a.target = '_blank';
+      td.appendChild(a);
     } else {
       td.textContent = row[field] || '';
     }

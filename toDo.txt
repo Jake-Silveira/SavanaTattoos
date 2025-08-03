@@ -1,6 +1,6 @@
-Admin Dashboard
+Dashboard database edits
 Sign in prior to Booking Requests
 Booking/Calendar feature with admin right to block off days
 Testimonials - Google reviews?
 Add a Submission Confirmation Modal or Toast
-
+resend email templates?
