@@ -1,12 +1,6 @@
-rate-limiting
-Log IPs of frequest abusers
 Admin Dashboard
 Sign in prior to Booking Requests
-Auto Respond to Inquiries?
 Booking/Calendar feature with admin right to block off days
 Testimonials - Google reviews?
-//Form inline error messages - tooltips
-// Input Masking
 Add a Submission Confirmation Modal or Toast
-Loading state after submitting Form
-Save Form state in local storage
+

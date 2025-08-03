@@ -6,6 +6,9 @@ const path = require('path');
 const validator = require('validator');
 const multer = require('multer');
 const { createClient } = require('@supabase/supabase-js');
+const rateLimit = require('express-rate-limit');
+const fs = require('fs');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -37,14 +40,36 @@ const upload = multer({
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.set('trust proxy', true); // Allows req.ip to be accurate behind a reverse proxy
 
 // === Serve index.html ===
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Log abuse attempts to a file
+function logAbuse(ip, reason) {
+  const entry = `[${new Date().toISOString()}] IP: ${ip} - ${reason}\n`;
+  fs.appendFile('abuse-log.txt', entry, err => {
+    if (err) console.error("Failed to log abuse:", err);
+  });
+}
+
+// Rate limit: 5 submissions per hour per IP
+const formLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 2,
+  message: { message: "Too many submissions from this IP, try again later." },
+  handler: (req, res, next, options) => {
+    const ip = req.ip || req.headers['x-forwarded-for'];
+    logAbuse(ip, 'Rate limit exceeded');
+    res.status(429).json(options.message);
+  }
+});
+
+
 // === Form Submission Endpoint ===
-app.post('/submit-form', upload.single('file'), async (req, res) => {
+app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) => {
   try {
     const {
       placement,
@@ -108,8 +133,8 @@ app.post('/submit-form', upload.single('file'), async (req, res) => {
     let fileUrl = null;
     if (req.file) {
       console.log('[INFO] File detected, uploading...');
-      const timestamp = Date.now();
-      const filename = `${timestamp}-${req.file.originalname}`;
+      const ext = path.extname(req.file.originalname);
+      const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from(process.env.SUPABASE_BUCKET)
@@ -145,6 +170,7 @@ app.post('/submit-form', upload.single('file'), async (req, res) => {
           date_from: dateFrom,
           date_to: dateTo,
           image_url: fileUrl,
+          ip_address: ip,
         }
       ]);
 
@@ -156,6 +182,7 @@ app.post('/submit-form', upload.single('file'), async (req, res) => {
     console.log('[INFO] Inquiry saved to Supabase.');
 
     // === Send Email via Resend ===
+  try{
     await axios.post(
       'https://api.resend.com/emails',
       {
@@ -183,6 +210,40 @@ app.post('/submit-form', upload.single('file'), async (req, res) => {
     );
 
     console.log('[INFO] Email sent successfully.');
+  } catch(emailErr) {
+    console.warn('[WARN] Email failed to send:', emailErr.message);
+  }
+try {
+  await axios.post(
+    'https://api.resend.com/emails',
+    {
+      from: process.env.FROM_EMAIL,
+      to: email,
+      subject: `Thanks for your inquiry, ${firstName}!`,
+      html: `
+        <p>Hey ${firstName},</p>
+        <p>Thanks for reaching out! I’ve received your inquiry and will get back to you shortly.</p>
+        <p><strong>Your Submission:</strong></p>
+        <ul>
+          <li><strong>Placement:</strong> ${placement}</li>
+          <li><strong>Size:</strong> ${size}</li>
+          <li><strong>Description:</strong> ${desc}</li>
+          <li><strong>Availability:</strong> ${dateFrom} – ${dateTo}</li>
+        </ul>
+        <p>– Raven's Nest Co.</p>
+      `,
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+    }
+  );
+  console.log('[INFO] Auto-responder email sent.');
+} catch (autoResErr) {
+  console.warn('[WARN] Auto-responder failed:', autoResErr.message);
+}
 
     return res.status(200).json({ message: 'Inquiry submitted successfully!' });
 
