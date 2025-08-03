@@ -157,6 +157,12 @@ const formLimiter = rateLimit({
   }
 });
 
+app.post('/admin/login', (req, res) => {
+  console.log("Headers:", req.headers);
+  console.log("Body:", req.body);
+  ...
+});
+
 
 // === Form Submission Endpoint ===
 app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) => {
