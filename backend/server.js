@@ -17,6 +17,43 @@ const PORT = process.env.PORT || 3000;
 // === Supabase client ===
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
+// Required to parse JSON bodies (admin login form)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
+
+// === Multer Setup ===
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) => {
+    const allowed = /jpeg|jpg|png|gif/;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mime = file.mimetype;
+    if (allowed.test(ext) && allowed.test(mime)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed.'));
+    }
+  },
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+});
+
+// === Middleware ===
+app.use(cors());
+app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
+app.set('trust proxy', true); // Allows req.ip to be accurate behind a reverse proxy
+app.use((req, res, next) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  req.clientIp = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.ip) || 'unknown';
+  next();
+});
+app.use(cookieParser());
+
+
+
 // === Admin Login Route ===
 app.post('/admin/login', async (req, res) => {
   console.log("Incoming login body:", req.body);
@@ -48,41 +85,6 @@ app.post('/admin/login', async (req, res) => {
 
   res.json({ message: 'Logged in' });
 });
-
-// === Multer Setup ===
-const storage = multer.memoryStorage();
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif/;
-    const ext = path.extname(file.originalname).toLowerCase();
-    const mime = file.mimetype;
-    if (allowed.test(ext) && allowed.test(mime)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed.'));
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-});
-
-// === Middleware ===
-app.use(cors());
-app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
-app.set('trust proxy', true); // Allows req.ip to be accurate behind a reverse proxy
-app.use((req, res, next) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  req.clientIp = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.ip) || 'unknown';
-  next();
-});
-app.use(cookieParser());
-
-// Required to parse JSON bodies (admin login form)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
 
 const verifyAdmin = async (req, res, next) => {
   const token = req.cookies.admin_token;
