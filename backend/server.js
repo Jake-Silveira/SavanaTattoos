@@ -41,6 +41,11 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('trust proxy', true); // Allows req.ip to be accurate behind a reverse proxy
+app.use((req, res, next) => {
+  const forwarded = req.headers['x-forwarded-for'];
+  req.clientIp = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.ip) || 'unknown';
+  next();
+});
 
 // === Serve index.html ===
 app.get('/', (req, res) => {
@@ -61,8 +66,7 @@ const formLimiter = rateLimit({
   max: 2,
   message: { message: "Too many submissions from this IP, try again later." },
   handler: (req, res, next, options) => {
-    const ip = req.ip || req.headers['x-forwarded-for'];
-    logAbuse(ip, 'Rate limit exceeded');
+    logAbuse(req.clientIp, 'Rate limit exceeded');
     res.status(429).json(options.message);
   }
 });
@@ -170,7 +174,7 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
           date_from: dateFrom,
           date_to: dateTo,
           image_url: fileUrl,
-          ip_address: ip,
+          ip_address: req.clientIp,
         }
       ]);
 
