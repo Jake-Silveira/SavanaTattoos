@@ -9,7 +9,6 @@ const { createClient } = require('@supabase/supabase-js');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const crypto = require('crypto');
-const { createClient } = require('@supabase/supabase-js');
 const cookieParser = require('cookie-parser');
 
 const app = express();
@@ -76,7 +75,8 @@ app.use((req, res, next) => {
   req.clientIp = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.ip) || 'unknown';
   next();
 });
-pp.use(cookieParser());
+app.use(cookieParser());
+
 
 const verifyAdmin = async (req, res, next) => {
   const token = req.cookies.admin_token;
@@ -90,6 +90,10 @@ const verifyAdmin = async (req, res, next) => {
   req.adminUser = data.user;
   next();
 };
+
+app.get('/admin', (req, res) => {
+  res.sendFile(__dirname + '/public/admin.html');
+});
 
 // Get inquiries
 app.get('/admin/api/inquiries', verifyAdmin, async (req, res) => {
