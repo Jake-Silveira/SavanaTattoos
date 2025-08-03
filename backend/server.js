@@ -52,12 +52,17 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Log abuse attempts to a file
-function logAbuse(ip, reason) {
-  const entry = `[${new Date().toISOString()}] IP: ${ip} - ${reason}\n`;
-  fs.appendFile('abuse-log.txt', entry, err => {
-    if (err) console.error("Failed to log abuse:", err);
-  });
+// Log abuse attempts to supabase
+async function logAbuse(ip, reason) {
+  const { error } = await supabase
+    .from('abuse_logs')
+    .insert([
+      { ip_address: ip, reason: reason }
+    ]);
+
+  if (error) {
+    console.error('[ERROR] Failed to log abuse to Supabase:', error.message);
+  }
 }
 
 // Rate limit: 5 submissions per hour per IP
@@ -174,7 +179,6 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
           date_from: dateFrom,
           date_to: dateTo,
           image_url: fileUrl,
-          ip_address: req.clientIp,
         }
       ]);
 

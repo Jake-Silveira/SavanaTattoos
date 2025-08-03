@@ -122,6 +122,10 @@ body{
     color: #aaa;
     cursor: pointer;
   }
+  #privacyStatement{
+    color: rgba(170, 170, 170, 40%);
+    text-align: center;
+  }
   .socialsListItem p{
     padding-left: 20%;
   }
