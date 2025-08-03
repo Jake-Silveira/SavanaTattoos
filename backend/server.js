@@ -19,6 +19,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 // === Admin Login Route ===
 app.post('/admin/login', async (req, res) => {
+  console.log("Incoming login body:", req.body);
   const { email, password } = req.body;
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -157,11 +158,6 @@ const formLimiter = rateLimit({
   }
 });
 
-app.post('/admin/login', (req, res) => {
-  console.log("Headers:", req.headers);
-  console.log("Body:", req.body);
-  ...
-});
 
 
 // === Form Submission Endpoint ===
