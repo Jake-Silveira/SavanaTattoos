@@ -1,0 +1,50 @@
+<!-- public/admin.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .error { color: red; margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h2>Admin Login</h2>
+  <form id="loginForm">
+    <label>Email:<br>
+      <input type="email" id="email" required>
+    </label><br><br>
+    <label>Password:<br>
+      <input type="password" id="password" required>
+    </label><br><br>
+    <button type="submit">Login</button>
+  </form>
+
+  <div class="error" id="error"></div>
+
+  <script>
+    const form = document.getElementById("loginForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const errorEl = document.getElementById("error");
+
+      const res = await fetch("/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (res.ok) {
+        window.location.href = "/admin/dashboard";
+      } else {
+        const data = await res.json();
+        errorEl.textContent = data.message || "Login failed";
+      }
+    });
+  </script>
+</body>
+</html>

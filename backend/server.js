@@ -9,15 +9,45 @@ const { createClient } = require('@supabase/supabase-js');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const crypto = require('crypto');
+const { createClient } = require('@supabase/supabase-js');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// === Supabase Client ===
-const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+// === Supabase client ===
+const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
+// === Admin Login Route ===
+app.post('/admin/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error || !data.session) {
+    console.warn('[ADMIN LOGIN FAILED]', error?.message);
+    return res.status(401).json({ message: 'Invalid email or password' });
+  }
+
+  // Check if user is admin
+  const { user } = data;
+  if (user?.app_metadata?.role !== 'admin') {
+    return res.status(403).json({ message: 'Not authorized' });
+  }
+
+  // Set session cookie
+  res.cookie('admin_token', data.session.access_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 8 // 8 hours
+  });
+
+  res.json({ message: 'Logged in' });
+});
 
 // === Multer Setup ===
 const storage = multer.memoryStorage();
@@ -45,6 +75,48 @@ app.use((req, res, next) => {
   const forwarded = req.headers['x-forwarded-for'];
   req.clientIp = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.ip) || 'unknown';
   next();
+});
+pp.use(cookieParser());
+
+const verifyAdmin = async (req, res, next) => {
+  const token = req.cookies.admin_token;
+  if (!token) return res.redirect('/admin.html');
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || data?.user?.app_metadata?.role !== 'admin') {
+    return res.redirect('/admin.html');
+  }
+
+  req.adminUser = data.user;
+  next();
+};
+
+// Get inquiries
+app.get('/admin/api/inquiries', verifyAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from('inquiries')
+    .select('name, email, message, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// Get abuse logs
+app.get('/admin/api/abuse-logs', verifyAdmin, async (req, res) => {
+  const { data, error } = await supabase
+    .from('abuse_logs')
+    .select('ip, reason, timestamp')
+    .order('created_at', { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+
+// Route: Serve admin dashboard page
+app.get('/admin/dashboard', verifyAdmin, (req, res) => {
+  res.sendFile(__dirname + '/public/dashboard.html');
 });
 
 // === Serve index.html ===

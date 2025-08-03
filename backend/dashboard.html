@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    h2 { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <h1>Welcome, Admin</h1>
+
+  <h2>Inquiries</h2>
+  <table id="inquiriesTable">
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Message</th><th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Abuse Logs</h2>
+  <table id="abuseTable">
+    <thead>
+      <tr>
+        <th>IP</th><th>Reason</th><th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    async function fetchData(endpoint, tableId, fields) {
+      const res = await fetch(endpoint);
+      const data = await res.json();
+      const tbody = document.querySelector(`#${tableId} tbody`);
+      tbody.innerHTML = "";
+      data.forEach(row => {
+        const tr = document.createElement('tr');
+        fields.forEach(field => {
+          const td = document.createElement('td');
+          td.textContent = row[field];
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    fetchData('/admin/api/inquiries', 'inquiriesTable', ['name', 'email', 'message', 'created_at']);
+    fetchData('/admin/api/abuse-logs', 'abuseTable', ['ip', 'reason', 'timestamp']);
+  </script>
+</body>
+</html>
