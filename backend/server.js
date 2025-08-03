@@ -107,12 +107,13 @@ app.get('/admin', (req, res) => {
 app.get('/admin/api/inquiries', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('inquiries')
-    .select('name, email, message, created_at')
+    .select('first_name, last_name, email, phone, placement, size, description, date_from, date_to, image_url, created_at')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
+
 
 // Get abuse logs
 app.get('/admin/api/abuse-logs', verifyAdmin, async (req, res) => {
