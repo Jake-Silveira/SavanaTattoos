@@ -77,6 +77,11 @@ app.use((req, res, next) => {
 });
 app.use(cookieParser());
 
+// Required to parse JSON bodies (admin login form)
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+
 
 const verifyAdmin = async (req, res, next) => {
   const token = req.cookies.admin_token;
