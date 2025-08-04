@@ -430,10 +430,19 @@ const clearError = (input, errorId) => {
     }
   });
   }
+  showToast();
 });
 
 
+function showToast(message = "Submission received!") {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
 
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000); // hides after 3 seconds
+}
 
 function sanitizeInput(str) {
   return str.replace(/[<>&"'\/]/g, ''); // Remove potentially harmful characters
