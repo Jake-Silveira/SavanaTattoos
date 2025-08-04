@@ -25,20 +25,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // === Multer Setup ===
 const storage = multer.memoryStorage();
+
+const fileFilter = (req, file, cb) => {
+  const allowedMimes = ['image/jpeg', 'image/png'];
+  const allowedExts = ['.jpg', '.jpeg', '.png'];
+  const ext = path.extname(file.originalname).toLowerCase();
+
+  if (allowedMimes.includes(file.mimetype) && allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only JPG and PNG files are allowed.'));
+  }
+};
+
 const upload = multer({
   storage,
-  fileFilter: (req, file, cb) => {
-    const allowed = /jpeg|jpg|png|gif/;
-    const ext = path.extname(file.originalname).toLowerCase();
-    const mime = file.mimetype;
-    if (allowed.test(ext) && allowed.test(mime)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed.'));
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
 });
+
 
 // === Middleware ===
 app.use(cors());
@@ -150,7 +155,7 @@ async function logAbuse(ip, reason) {
   }
 }
 
-// Rate limit: 5 submissions per hour per IP
+// Rate limit: 2 submissions per hour per IP
 const formLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 2,
@@ -244,31 +249,43 @@ const cleanData = {
       return res.status(400).json({ message: 'Invalid date range.' });
     }
 
-    // === Upload File to Supabase (if exists) ===
-    let fileUrl = null;
-    if (req.file) {
-      console.log('[INFO] File detected, uploading...');
-      const ext = path.extname(req.file.originalname);
-      const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
+// === Upload File to Supabase (if file exists) ===
+let fileUrl = null;
+if (req.file) {
+  const allowedTypes = ['image/jpeg', 'image/png'];
 
-      const { error: uploadError } = await supabase.storage
-        .from(process.env.SUPABASE_BUCKET)
-        .upload(filename, req.file.buffer, {
-          contentType: req.file.mimetype,
-        });
+  if (!allowedTypes.includes(req.file.mimetype)) {
+    console.warn('[WARN] Disallowed file type:', req.file.mimetype);
+    return res.status(400).json({
+      message: 'Invalid file type. Only JPG or PNG images are allowed.',
+    });
+  }
 
-      if (uploadError) {
-        console.error('[ERROR] Image upload failed:', uploadError.message);
-        throw new Error(`Image upload failed: ${uploadError.message}`);
-      }
+  console.log('[INFO] Valid image detected, uploading...');
+  const ext = path.extname(req.file.originalname);
+  const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
 
-      const { data: publicData } = supabase.storage
-        .from(process.env.SUPABASE_BUCKET)
-        .getPublicUrl(filename);
+  const { error: uploadError } = await supabase.storage
+    .from(process.env.SUPABASE_BUCKET)
+    .upload(filename, req.file.buffer, {
+      contentType: req.file.mimetype,
+    });
 
-      fileUrl = publicData?.publicUrl || null;
-      console.log('[INFO] File uploaded successfully:', fileUrl);
-    }
+  if (uploadError) {
+    console.error('[ERROR] Image upload failed:', uploadError.message);
+    return res.status(500).json({
+      message: `Image upload failed: ${uploadError.message}`,
+    });
+  }
+
+  const { data: publicData } = supabase.storage
+    .from(process.env.SUPABASE_BUCKET)
+    .getPublicUrl(filename);
+
+  fileUrl = publicData?.publicUrl || null;
+  console.log('[INFO] File uploaded successfully:', fileUrl);
+}
+
 
 // === Insert to Supabase Table ===
 const { error: insertError } = await supabase
@@ -326,7 +343,7 @@ const { error: insertError } = await supabase
 
     console.log('[INFO] Email sent successfully.');
   } catch(emailErr) {
-    console.warn('[WARN] Email failed to send:', emailErr.message);
+    console.warn('[WARN] Email failed to send:', emailErr.message, emailErr.response?.data || '');
   }
 try {
   await axios.post(
@@ -371,4 +388,8 @@ try {
 // === Start Server ===
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
+});
+
+app.use((req, res) => {
+  res.status(404).json({ message: 'Not found' });
 });

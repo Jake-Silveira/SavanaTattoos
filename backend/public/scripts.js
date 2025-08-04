@@ -426,7 +426,7 @@ const clearError = (input, errorId) => {
         modal.style.display = 'none';
       }
     } catch (err) {
-      alert('Submission failed: ' + err.message);
+      showToast('Submission failed: ' + err.message);
     }
   });
   }
@@ -464,19 +464,30 @@ function enableSubmit(){
 function disableSubmit(){
   document.getElementById('inquirySubmitBtn').disabled = true;
 }
+const allowedTypes = ['image/jepg, image/png, image/jpg'];
 
 document.getElementById("inquiryExample").addEventListener("change", function () {
   const file = this.files[0];
   const preview = document.getElementById("imagePreview");
+  const allowedTypes = ['image/jpeg', 'image/png'];
 
-  if (file && file.type.startsWith("image/")) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      preview.src = e.target.result;
-      preview.style.display = "block";
-    };
-    reader.readAsDataURL(file);
-  } else {
+  if (!file) {
     preview.style.display = "none";
+    return;
   }
+
+  if (!allowedTypes.includes(file.type)) {
+    showToast("Invalid file type. Only JPG or PNG allowed.");
+    this.value = ''; // reset input
+    preview.style.display = "none";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    preview.src = e.target.result;
+    preview.style.display = "block";
+  };
+  reader.readAsDataURL(file);
 });
+
