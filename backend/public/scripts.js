@@ -418,7 +418,7 @@ const clearError = (input, errorId) => {
       });
 
       const result = await res.json();
-      alert(result.message);
+      showToast(result.message);
       form.reset();
       grecaptcha.reset();
 
@@ -430,7 +430,6 @@ const clearError = (input, errorId) => {
     }
   });
   }
-  showToast();
 });
 
 
