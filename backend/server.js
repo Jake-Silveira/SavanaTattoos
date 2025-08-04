@@ -203,13 +203,33 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
       return res.status(400).json({ message: 'Failed reCAPTCHA verification.' });
     }
 
-    // === Field Validation ===
-    const clean = (val) => validator.escape(val.trim());
-    const validEmail = validator.isEmail(email);
-    if (!placement || !size || !desc || !firstName || !lastName || !email || !validEmail) {
-      console.warn('[WARN] Missing or invalid fields');
-      return res.status(400).json({ message: 'Missing or invalid required fields.' });
-    }
+// === Field Validation & Sanitization ===
+
+// Safer custom sanitizer: strips script injection risks, keeps quotes
+function sanitizeText(str) {
+  return str
+    .trim()
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;'); // optional, for consistency
+}
+
+const validEmail = validator.isEmail(email);
+if (!placement || !size || !desc || !firstName || !lastName || !email || !validEmail) {
+  console.warn('[WARN] Missing or invalid fields');
+  return res.status(400).json({ message: 'Missing or invalid required fields.' });
+}
+
+// Use sanitized values (no escaping quotes!)
+const cleanData = {
+  placement: sanitizeText(placement),
+  size: sanitizeText(size),           // ✅ size will keep its "quotes"
+  description: sanitizeText(desc),
+  first_name: sanitizeText(firstName),
+  last_name: sanitizeText(lastName),
+  email: email.trim().toLowerCase(),  // email doesn't need html sanitization
+};
+
 
     const today = new Date();
     const from = new Date(dateFrom);
@@ -250,23 +270,24 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
       console.log('[INFO] File uploaded successfully:', fileUrl);
     }
 
-    // === Insert to Supabase Table ===
-    const { error: insertError } = await supabase
-      .from('inquiries')
-      .insert([
-        {
-          first_name: clean(firstName),
-          last_name: clean(lastName),
-          email: email.trim(),
-          phone: phone ? clean(phone) : null,
-          placement: clean(placement),
-          size: clean(size),
-          description: clean(desc),
-          date_from: dateFrom,
-          date_to: dateTo,
-          image_url: fileUrl,
-        }
-      ]);
+// === Insert to Supabase Table ===
+const { error: insertError } = await supabase
+  .from('inquiries')
+  .insert([
+    {
+      first_name: cleanData.first_name,
+      last_name: cleanData.last_name,
+      email: cleanData.email,
+      phone: phone ? sanitizeText(phone) : null, // use sanitizeText directly here
+      placement: cleanData.placement,
+      size: cleanData.size,
+      description: cleanData.description,
+      date_from: dateFrom,
+      date_to: dateTo,
+      image_url: fileUrl,
+    }
+  ]);
+
 
     if (insertError) {
       console.error('[ERROR] Failed to insert into Supabase:', insertError.message);
