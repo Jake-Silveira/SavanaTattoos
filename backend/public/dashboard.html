@@ -55,20 +55,29 @@ function formatRow(row, fields) {
   });
 }
 
-async function fetchData(endpoint, tableId, fields) {
-  const res = await fetch(endpoint);
+async function fetchData(url, tableId, fields) {
+  const res = await fetch(url);
   const data = await res.json();
-  const tbody = document.querySelector(`#${tableId} tbody`);
-  tbody.innerHTML = "";
+
+  if (!Array.isArray(data)) {
+    console.warn(`Unexpected response from ${url}:`, data);
+    return;
+  }
+
+  const table = document.getElementById(tableId);
+  table.innerHTML = ''; // clear existing
+
   data.forEach(row => {
     const tr = document.createElement('tr');
-    formatRow(row, fields).forEach(td => tr.appendChild(td));
-    tbody.appendChild(tr);
+    const formatted = formatRow(row, fields);
+    formatted.forEach(td => tr.appendChild(td));
+    table.appendChild(tr);
   });
 }
 
+
     fetchData('/admin/api/inquiries', 'inquiriesTable', ['full_name', 'email', 'phone', 'placement', 'size', 'description', 'date_from', 'date_to', 'image_url', 'created_at']);
-    fetchData('/admin/api/abuse-logs', 'abuseTable', ['ip', 'reason', 'created_at']);
+    fetchData('/admin/api/abuse-logs', 'abuseTable', ['ip_address', 'reason', 'created_at']);
   </script>
 </body>
 </html>

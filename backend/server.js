@@ -119,7 +119,7 @@ app.get('/admin/api/inquiries', verifyAdmin, async (req, res) => {
 app.get('/admin/api/abuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
-    .select('ip, reason, timestamp')
+    .select('ip_address, reason, created_at')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
