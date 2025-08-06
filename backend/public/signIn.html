@@ -79,93 +79,90 @@
   </form>
 
   <script>
-  document.addEventListener('DOMContentLoaded', async () => {
-    const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...'; // keep it short here
+    document.addEventListener('DOMContentLoaded', async () => {
+      const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-    // === All your event handlers here ===
-
-    window.showToast = function(message) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.style.display = 'block';
-      setTimeout(() => toast.style.display = 'none', 3000);
-    }
-
-    window.showForm = function(form) {
-      document.getElementById('loginForm').style.display = 'none';
-      document.getElementById('signupForm').style.display = 'none';
-      document.getElementById('resetForm').style.display = 'none';
-
-      document.getElementById(`${form}Form`).style.display = 'flex';
-      document.getElementById('formTitle').textContent =
-        form === 'login' ? 'Sign In' : form === 'signup' ? 'Sign Up' : 'Reset Password';
-    }
-
-    window.handleLogin = async function(event) {
-      event.preventDefault();
-      const email = document.getElementById("loginEmail").value;
-      const password = document.getElementById("loginPassword").value;
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-
-      if (error) return showToast("Login failed: " + error.message);
-
-      const role = data.user?.user_metadata?.role || 'user';
-      showToast("Welcome!");
-
-      if (role === 'admin') {
-        window.location.href = "/dashboard.html";
-      } else {
-        window.location.href = "/form.html";
+      window.showToast = function(message) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 3000);
       }
-    }
 
-    window.handleSignup = async function(event) {
-      event.preventDefault();
-      const email = document.getElementById("signupEmail").value;
-      const password = document.getElementById("signupPassword").value;
+      window.showForm = function(form) {
+        document.getElementById('loginForm').style.display = 'none';
+        document.getElementById('signupForm').style.display = 'none';
+        document.getElementById('resetForm').style.display = 'none';
 
-      const { error } = await supabaseClient.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { role: 'user' }
+        document.getElementById(`${form}Form`).style.display = 'flex';
+        document.getElementById('formTitle').textContent =
+          form === 'login' ? 'Sign In' : form === 'signup' ? 'Sign Up' : 'Reset Password';
+      }
+
+      window.handleLogin = async function(event) {
+        event.preventDefault();
+        const email = document.getElementById("loginEmail").value;
+        const password = document.getElementById("loginPassword").value;
+
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+        if (error) return showToast("Login failed: " + error.message);
+
+        const role = data.user?.user_metadata?.role || 'user';
+
+        showToast("Welcome!");
+
+        if (role === 'admin') {
+          window.location.href = "/dashboard.html";
+        } else {
+          window.location.href = "/form.html";
         }
-      });
+      }
 
-      if (error) return showToast("Sign-up failed: " + error.message);
-      showToast("Sign-up successful! Check your email to confirm.");
-    }
+      window.handleSignup = async function(event) {
+        event.preventDefault();
+        const email = document.getElementById("signupEmail").value;
+        const password = document.getElementById("signupPassword").value;
 
-    window.handleReset = async function(event) {
-      event.preventDefault();
-      const email = document.getElementById("resetEmail").value;
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { role: 'user' }
+          }
+        });
 
-      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + "/signIn.html"
-      });
+        if (error) return showToast("Sign-up failed: " + error.message);
+        showToast("Sign-up successful! Check your email to confirm.");
+      }
 
-      if (error) return showToast("Reset failed: " + error.message);
-      showToast("Reset email sent!");
-    }
+      window.handleReset = async function(event) {
+        event.preventDefault();
+        const email = document.getElementById("resetEmail").value;
 
-    // Handle password reset via magic link
-    const url = new URL(window.location.href);
-    const isReset = url.searchParams.get('type') === 'recovery';
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: window.location.origin + "/signIn.html"
+        });
 
-    if (isReset) {
-      const newPass = prompt("Enter a new password:");
-      if (!newPass) return;
+        if (error) return showToast("Reset failed: " + error.message);
+        showToast("Reset email sent!");
+      }
 
-      const { error } = await supabaseClient.auth.updateUser({ password: newPass });
-      if (error) return showToast("Failed to update password.");
-      showToast("Password updated! You can now log in.");
-    }
-  });
-</script>
+      // Handle password reset via recovery link
+      const url = new URL(window.location.href);
+      const isReset = url.searchParams.get('type') === 'recovery';
 
+      if (isReset) {
+        const newPass = prompt("Enter a new password:");
+        if (!newPass) return;
+
+        const { error } = await supabase.auth.updateUser({ password: newPass });
+        if (error) return showToast("Failed to update password.");
+        showToast("Password updated! You can now log in.");
+      }
+    });
+  </script>
 </body>
 </html>

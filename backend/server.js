@@ -59,38 +59,39 @@ app.use(cookieParser());
 
 
 
-// === Admin Login Route ===
-app.post('/auth/login', async (req, res) => {
+app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.session) {
-    return res.status(401).json({ message: 'Invalid email or password' });
+    return res.status(401).json({ message: 'Invalid credentials' });
   }
 
-  const { user } = data;
-  const role = user?.app_metadata?.role || 'user'; // Default to 'user' if missing
+  const { user, session } = data;
 
-  // Set different cookie depending on role
-  if (role === 'admin') {
-    res.cookie('admin_token', data.session.access_token, {
+  // Set token for form submissions (both admin and user)
+  res.cookie('user_token', session.access_token, {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 1000 * 60 * 60 * 8
+  });
+
+  if (user.app_metadata?.role === 'admin') {
+    res.cookie('admin_token', session.access_token, {
       httpOnly: true,
       secure: true,
       sameSite: 'lax',
       maxAge: 1000 * 60 * 60 * 8
     });
-  } else {
-    res.cookie('user_token', data.session.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 8
-    });
+    return res.json({ redirect: '/admin/dashboard' });
   }
 
-  return res.status(200).json({ message: 'Login successful', role });
+  // If user is not admin, allow form access
+  return res.json({ message: 'Signed in as user' });
 });
+
 
 const verifyAdmin = async (req, res, next) => {
   const token = req.cookies.admin_token;
@@ -118,7 +119,7 @@ const verifyUser = async (req, res, next) => {
   next();
 };
 
-app.get('/signIn.html', (req, res) => {
+app.get('/signIn', (req, res) => {
   res.sendFile(__dirname + '/public/signIn.html');
 });
 
