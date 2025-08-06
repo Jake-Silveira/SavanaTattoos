@@ -211,11 +211,23 @@ body{
     border-width: 5px;
   }
   #inquiry{
-    border-style: solid;
+    width: 20rem;
+    padding: 0.75rem;
+    font-size: 1.2rem;
+    background-color: #030c05d9;
+    color: #aaa;
+    cursor: pointer;
+    font-weight: 600;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #aaa;
+    border: none;
     border-radius: 20px;
-    padding: 10px;
-    background-color:#030c05d9;
+    transition: background-color 0.3s, color 0.3s;
     text-align: center;
+  }
+  #inquiry:hover{
+    background-color: #aaa;
+    color: rgb(3, 12, 5);
   }
   .inquiryForm{
     align-items: center;
