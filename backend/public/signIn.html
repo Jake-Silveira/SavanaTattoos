@@ -151,7 +151,7 @@
           return;
         }
 
-        showToast('Signed in! Verifying access...');
+        showToast('Signed in! Redirecting...');
 
         const { data: userData, error: userError } = await supabase.auth.getUser();
         if (userError) {
@@ -163,17 +163,7 @@
         const role = userData.user?.app_metadata?.role || 'user';
 
         if (role === 'admin') {
-          try {
-            const response = await authFetch('/admin/dashboard', { method: 'GET' });
-            if (response.ok) {
-              window.location.href = '/admin/dashboard';
-            } else {
-              const errorData = await response.json();
-              showToast('Access denied: ' + errorData.error);
-            }
-          } catch (err) {
-            showToast('Failed to access dashboard: ' + err.message);
-          }
+          window.location.href = '/admin/dashboard';
         } else {
           window.location.href = '/index.html';
         }

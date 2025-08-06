@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Dashboard</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -87,6 +88,10 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
       const toastEl = document.getElementById('toast');
 
       function showToast(message) {
@@ -109,8 +114,28 @@
           setTimeout(() => {
             window.location.href = '/signIn.html';
           }, 2000);
+          throw new Error('Unauthorized');
         }
         return response;
+      }
+
+      // Check authentication on load
+      const token = sessionStorage.getItem('access_token');
+      if (!token) {
+        showToast('No session found. Please log in.');
+        setTimeout(() => {
+          window.location.href = '/signIn.html';
+        }, 2000);
+        return;
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      if (userError || !userData.user || userData.user.app_metadata?.role !== 'admin') {
+        showToast('Access denied: Admin role required.');
+        setTimeout(() => {
+          window.location.href = '/signIn.html';
+        }, 2000);
+        return;
       }
 
       async function fetchInquiries() {

@@ -44,7 +44,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
 // Helper to extract Bearer token from Authorization header or cookie
@@ -117,13 +117,13 @@ app.post('/sign-in', async (req, res) => {
 
   const { user, session } = data;
 
-  // Set HttpOnly cookie with relaxed settings for development
+  // Set HttpOnly cookie
   res.cookie('access_token', session.access_token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Secure only in production
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Lax for dev
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
     maxAge: session.expires_in * 1000,
-    path: '/' // Ensure cookie is sent for all routes
+    path: '/'
   });
 
   res.json({ user });
@@ -169,11 +169,6 @@ app.get('/admin/dashboard', verifyAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// Admin database page (new)
-app.get('/admin/database', verifyAdmin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'database.html'));
-});
-
 // Root route
 app.get('/', async (req, res) => {
   const token = getTokenFromHeaderOrCookie(req);
@@ -191,7 +186,7 @@ app.get('/', async (req, res) => {
   if (role === 'admin') {
     return res.redirect('/admin/dashboard');
   } else {
-    return res.sendFile(path.join(__dirname, 'public', 'user-dashboard.html'));
+    return res.sendFile(path.join(__dirname, 'public', 'index.html')); // Changed to index.html
   }
 });
 
