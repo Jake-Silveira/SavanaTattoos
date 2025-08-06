@@ -60,56 +60,70 @@ app.use(cookieParser());
 
 
 // === Admin Login Route ===
-app.post('/admin/login', async (req, res) => {
-  console.log("Incoming login body:", req.body);
+app.post('/auth/login', async (req, res) => {
   const { email, password } = req.body;
 
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.session) {
-    console.warn('[ADMIN LOGIN FAILED]', error?.message);
     return res.status(401).json({ message: 'Invalid email or password' });
   }
 
-  // Check if user is admin
   const { user } = data;
-  if (user?.app_metadata?.role !== 'admin') {
-    return res.status(403).json({ message: 'Not authorized' });
+  const role = user?.app_metadata?.role || 'user'; // Default to 'user' if missing
+
+  // Set different cookie depending on role
+  if (role === 'admin') {
+    res.cookie('admin_token', data.session.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 8
+    });
+  } else {
+    res.cookie('user_token', data.session.access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      maxAge: 1000 * 60 * 60 * 8
+    });
   }
 
-  // Set session cookie
-  res.cookie('admin_token', data.session.access_token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 8 // 8 hours
-  });
-
-  res.json({ message: 'Logged in' });
+  return res.status(200).json({ message: 'Login successful', role });
 });
 
 const verifyAdmin = async (req, res, next) => {
   const token = req.cookies.admin_token;
-  if (!token) return res.redirect('/admin.html');
+  if (!token) return res.redirect('/signIn.html');
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || data?.user?.app_metadata?.role !== 'admin') {
-    return res.redirect('/admin.html');
+    return res.redirect('/signIn.html');
   }
 
   req.adminUser = data.user;
   next();
 };
 
-app.get('/admin', (req, res) => {
-  res.sendFile(__dirname + '/public/admin.html');
+const verifyUser = async (req, res, next) => {
+  const token = req.cookies.user_token;
+  if (!token) return res.redirect('/signIn.html');
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user || data.user.app_metadata?.role !== 'user') {
+    return res.redirect('/signIn.html');
+  }
+
+  req.user = data.user;
+  next();
+};
+
+app.get('/signIn.html', (req, res) => {
+  res.sendFile(__dirname + '/public/signIn.html');
 });
 
 // Get inquiries
-app.get('/admin/api/inquiries', verifyAdmin, async (req, res) => {
+app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('inquiries')
     .select('first_name, last_name, email, phone, placement, size, description, date_from, date_to, image_url, created_at')
@@ -121,7 +135,7 @@ app.get('/admin/api/inquiries', verifyAdmin, async (req, res) => {
 
 
 // Get abuse logs
-app.get('/admin/api/abuse-logs', verifyAdmin, async (req, res) => {
+app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
     .select('ip_address, reason, created_at')
@@ -138,9 +152,28 @@ app.get('/admin/dashboard', verifyAdmin, (req, res) => {
 });
 
 // === Serve index.html ===
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+
+app.get('/', async (req, res) => {
+  const token = req.cookies.admin_token || req.cookies.user_token;
+  if (!token) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+
+  if (error || !data?.user) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
+  const role = data.user.app_metadata?.role;
+
+  if (role === 'admin') {
+    return res.redirect('/admin/dashboard');
+  } else {
+    return res.sendFile(path.join(__dirname, 'public', 'user-dashboard.html'));
+  }
 });
+
 
 // Log abuse attempts to supabase
 async function logAbuse(ip, reason) {
