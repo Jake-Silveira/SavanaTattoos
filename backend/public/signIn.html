@@ -134,21 +134,23 @@
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
 
+        console.log('[INFO] Initiating sign-in', { email });
+
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
           showToast('Login failed: ' + error.message);
-          console.error('[ERROR] Login failed', { error: error.message });
+          console.error('[ERROR] Login failed', { error: error.message, email });
           button.disabled = false;
           return;
         }
 
         if (data.session?.access_token) {
           sessionStorage.setItem('access_token', data.session.access_token);
-          console.log('[INFO] Token stored in sessionStorage', { token: data.session.access_token });
+          console.log('[INFO] Token stored in sessionStorage', { token: data.session.access_token, email });
         } else {
           showToast('Login failed: No access token');
-          console.error('[ERROR] No access token received');
+          console.error('[ERROR] No access token received', { email });
           button.disabled = false;
           return;
         }
@@ -158,28 +160,30 @@
         const { data: userData, error: userError } = await supabase.auth.getUser();
         if (userError) {
           showToast('Failed to fetch user info: ' + userError.message);
-          console.error('[ERROR] Failed to fetch user info', { error: userError.message });
+          console.error('[ERROR] Failed to fetch user info', { error: userError.message, email });
           sessionStorage.removeItem('access_token');
           button.disabled = false;
           return;
         }
 
         const role = userData.user?.app_metadata?.role || 'user';
-        console.log('[INFO] User role', { role, userId: userData.user.id });
+        console.log('[INFO] User role', { role, userId: userData.user.id, email });
 
         // Debug cookie presence
         try {
-          const debugResponse = await fetch('https://ravensnest.ink/debug/headers', { credentials: 'include' });
+          const debugResponse = await fetch('https://www.ravensnest.ink/debug/headers', { credentials: 'include' });
           const debugData = await debugResponse.json();
           console.log('[DEBUG] Headers and cookies sent', debugData);
         } catch (debugError) {
-          console.error('[ERROR] Failed to debug headers', { error: debugError.message });
+          console.error('[ERROR] Failed to debug headers', { error: debugError.message, email });
         }
 
         if (role === 'admin') {
-          window.location.href = 'https://ravensnest.ink/admin/dashboard';
+          console.log('[INFO] Redirecting to admin dashboard', { email });
+          window.location.href = 'https://www.ravensnest.ink/admin/dashboard';
         } else {
-          window.location.href = 'https://ravensnest.ink/index.html';
+          console.log('[INFO] Redirecting to index', { email });
+          window.location.href = 'https://www.ravensnest.ink/index.html';
         }
         button.disabled = false;
       };
@@ -192,9 +196,12 @@
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
 
+        console.log('[INFO] Initiating sign-up', { email });
+
         const passwordError = validatePassword(password);
         if (passwordError) {
           showToast(passwordError);
+          console.error('[ERROR] Password validation failed', { error: passwordError, email });
           button.disabled = false;
           return;
         }
@@ -207,12 +214,13 @@
 
         if (error) {
           showToast('Sign-up failed: ' + error.message);
-          console.error('[ERROR] Sign-up failed', { error: error.message });
+          console.error('[ERROR] Sign-up failed', { error: error.message, email });
           button.disabled = false;
           return;
         }
 
         showToast('Sign-up successful! Check your email to confirm.');
+        console.log('[INFO] Sign-up successful', { email });
         button.disabled = false;
       };
 
@@ -223,18 +231,21 @@
 
         const email = document.getElementById('resetEmail').value;
 
+        console.log('[INFO] Initiating password reset', { email });
+
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: 'https://ravensnest.ink/signIn.html'
+          redirectTo: 'https://www.ravensnest.ink/signIn.html'
         });
 
         if (error) {
           showToast('Reset failed: ' + error.message);
-          console.error('[ERROR] Reset failed', { error: error.message });
+          console.error('[ERROR] Reset failed', { error: error.message, email });
           button.disabled = false;
           return;
         }
 
         showToast('Reset email sent!');
+        console.log('[INFO] Reset email sent', { email });
         button.disabled = false;
       };
 
@@ -245,6 +256,8 @@
 
         const newPass = document.getElementById('newPassword').value;
         const confirmPass = document.getElementById('confirmPassword').value;
+
+        console.log('[INFO] Initiating password update');
 
         if (newPass !== confirmPass) {
           showToast('Passwords do not match.');
@@ -270,6 +283,7 @@
         }
 
         showToast('Password updated! You can now log in.');
+        console.log('[INFO] Password updated');
         showForm('login');
         button.disabled = false;
       };

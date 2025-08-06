@@ -58,7 +58,7 @@ function getTokenFromHeaderOrCookie(req) {
     }
   }
   if (req.cookies.access_token) {
-    console.log('[DEBUG] Token found in cookie', { path: req.path, ip: req.ip });
+    console.log('[DEBUG] Token found in cookie', { path: req.path, ip: req.ip, cookie: req.cookies.access_token });
     return req.cookies.access_token;
   }
   return null;
@@ -108,7 +108,7 @@ const verifyUser = async (req, res, next) => {
 
 // Debug route
 app.get('/debug/headers', (req, res) => {
-  console.log('[DEBUG] Headers and cookies received', { path: req.path, headers: req.headers, cookies: req.cookies });
+  console.log('[DEBUG] Headers and cookies received', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies });
   res.json({ headers: req.headers, cookies: req.cookies });
 });
 
@@ -116,10 +116,12 @@ app.get('/debug/headers', (req, res) => {
 app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
 
+  console.log('[INFO] Sign-in attempt', { email, path: req.path, ip: req.ip });
+
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error || !data.session) {
-    console.warn('[WARN] Sign-in failed', { error: error?.message, email });
+    console.warn('[WARN] Sign-in failed', { error: error?.message, email, path: req.path, ip: req.ip });
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
@@ -133,11 +135,11 @@ app.post('/sign-in', async (req, res) => {
       sameSite: 'lax', // Allow navigation
       maxAge: session.expires_in * 1000,
       path: '/',
-      domain: '.ravensnest.ink' // Support subdomains
+      domain: 'ravensnest.ink' // Explicitly set to non-www
     });
-    console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path });
+    console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path, ip: req.ip });
   } catch (cookieError) {
-    console.error('[ERROR] Failed to set cookie', { error: cookieError.message, path: req.path });
+    console.error('[ERROR] Failed to set cookie', { error: cookieError.message, path: req.path, ip: req.ip });
   }
 
   res.json({ user });
@@ -157,7 +159,7 @@ app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[ERROR] Failed to fetch inquiries', { error: error.message });
+    console.error('[ERROR] Failed to fetch inquiries', { error: error.message, path: req.path });
     return res.status(500).json({ error: error.message });
   }
 
@@ -172,7 +174,7 @@ app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('[ERROR] Failed to fetch abuse logs', { error: error.message });
+    console.error('[ERROR] Failed to fetch abuse logs', { error: error.message, path: req.path });
     return res.status(500).json({ error: error.message });
   }
 
@@ -181,7 +183,7 @@ app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
 
 // Admin dashboard page
 app.get('/admin/dashboard', verifyAdmin, (req, res) => {
-  console.log('[INFO] Serving admin dashboard', { userId: req.adminUser.id, path: req.path });
+  console.log('[INFO] Serving admin dashboard', { userId: req.adminUser.id, path: req.path, ip: req.ip });
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
@@ -201,10 +203,10 @@ app.get('/', async (req, res) => {
 
   const role = data.user.app_metadata?.role;
   if (role === 'admin' && req.path !== '/admin/dashboard') {
-    console.log('[INFO] Admin user, redirecting to dashboard', { userId: data.user.id, path: req.path });
-    return res.status(302).header('Location', '/admin/dashboard').send();
+    console.log('[INFO] Admin user, redirecting to dashboard', { userId: data.user.id, path: req.path, ip: req.ip });
+    return res.redirect(302, '/admin/dashboard');
   } else {
-    console.log('[INFO] Non-admin user or already on dashboard, serving index.html', { userId: data.user.id, path: req.path });
+    console.log('[INFO] Non-admin user or already on dashboard, serving index.html', { userId: data.user.id, path: req.path, ip: req.ip });
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 });
@@ -268,7 +270,7 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
     }
 
     const validEmail = validator.isEmail(email);
-    if (!placement || !size || !desc || !firstName || !lastName || !email || !validEmail) {
+    if (!placement || !size || !desc || !firstName || !lastName || !emailINY || !validEmail) {
       console.warn('[WARN] Missing or invalid fields');
       return res.status(400).json({ message: 'Missing or invalid required fields.' });
     }

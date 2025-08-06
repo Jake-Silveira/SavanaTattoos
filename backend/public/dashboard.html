@@ -108,211 +108,6 @@
         if (token) {
           options.headers['Authorization'] = `Bearer ${token}`;
         }
-        const response = await fetch(url, options);
-        if (response.status === 401 || response.status === 403) {
-          showToast('Session expired or unauthorized. Please log in again.');
-          setTimeout(() => {
-            window.location.href = '/signIn.html';
-          }, 2000);
-          throw new Error('Unauthorized');
-        }
-        return response;
-      }
-
-      // Check authentication on load
-      const token = sessionStorage.getItem('access_token');
-      if (!token) {
-        showToast('No session found. Please log in.');
-        setTimeout(() => {
-          window.location.href = '/signIn.html';
-        }, 2000);
-        return;
-      }
-
-      const { data: userData, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !userData.user || userData.user.app_metadata?.role !== 'admin') {
-        showToast('Access denied: Admin role required.');
-        setTimeout(() => {
-          window.location.href = '/signIn.html';
-        }, 2000);
-        return;
-      }
-
-      async function fetchInquiries() {
-        try {
-          const response = await authFetch('/auth/api/inquiries');
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error);
-          }
-          const inquiries = await response.json();
-          const tbody = document.getElementById('inquiriesBody');
-          tbody.innerHTML = '';
-          inquiries.forEach(inquiry => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${inquiry.first_name} ${inquiry.last_name}</td>
-              <td>${inquiry.email}</td>
-              <td>${inquiry.phone || 'N/A'}</td>
-              <td>${inquiry.placement}</td>
-              <td>${inquiry.size}</td>
-              <td>${inquiry.description}</td>
-              <td>${new Date(inquiry.date_from).toLocaleDateString()} - ${new Date(inquiry.date_to).toLocaleDateString()}</td>
-              <td>${inquiry.image_url ? `<a href="${inquiry.image_url}" target="_blank">View</a>` : 'N/A'}</td>
-              <td>${new Date(inquiry.created_at).toLocaleString()}</td>
-            `;
-            tbody.appendChild(row);
-          });
-        } catch (err) {
-          showToast('Failed to load inquiries: ' + err.message);
-        }
-      }
-
-      async function fetchAbuseLogs() {
-        try {
-          const response = await authFetch('/auth/api/abuse-logs');
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error);
-          }
-          const logs = await response.json();
-          const tbody = document.getElementById('abuseLogsBody');
-          tbody.innerHTML = '';
-          logs.forEach(log => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${log.ip_address}</td>
-              <td>${log.reason}</td>
-              <td>${new Date(log.created_at).toLocaleString()}</td>
-            `;
-            tbody.appendChild(row);
-          });
-        } catch (err) {
-          showToast('Failed to load abuse logs: ' + err.message);
-        }
-      }
-
-      window.logout = function() {
-        sessionStorage.removeItem('access_token');
-        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-        window.location.href = '/signIn.html';
-      };
-
-      // Fetch data on load
-      await Promise.all([fetchInquiries(), fetchAbuseLogs()]);
-    });
-  </script>
-</body>
-</html><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Dashboard</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 1rem;
-    }
-    h2, h3 {
-      text-align: center;
-    }
-    #toast {
-      background: #333;
-      color: white;
-      padding: 1em;
-      display: none;
-      margin-bottom: 1em;
-      border-radius: 4px;
-      text-align: center;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2rem;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.5rem;
-      text-align: left;
-    }
-    th {
-      background: #f4f4f4;
-    }
-    button {
-      padding: 0.5rem;
-      cursor: pointer;
-    }
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-    .error {
-      color: red;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <h2>Admin Dashboard</h2>
-  <button onclick="logout()">Logout</button>
-  <div id="toast"></div>
-
-  <h3>Inquiries</h3>
-  <table id="inquiriesTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Placement</th>
-        <th>Size</th>
-        <th>Description</th>
-        <th>Dates</th>
-        <th>Image</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody id="inquiriesBody"></tbody>
-  </table>
-
-  <h3>Abuse Logs</h3>
-  <table id="abuseLogsTable">
-    <thead>
-      <tr>
-        <th>IP Address</th>
-        <th>Reason</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody id="abuseLogsBody"></tbody>
-  </table>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
-      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
-      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-      const toastEl = document.getElementById('toast');
-
-      function showToast(message) {
-        toastEl.textContent = message;
-        toastEl.style.display = 'block';
-        setTimeout(() => {
-          toastEl.style.display = 'none';
-        }, 3000);
-      }
-
-      async function authFetch(url, options = {}) {
-        const token = sessionStorage.getItem('access_token');
-        if (!options.headers) options.headers = {};
-        if (token) {
-          options.headers['Authorization'] = `Bearer ${token}`;
-        }
         options.credentials = 'include'; // Ensure cookies are sent
         console.log('[DEBUG] Making authFetch', { url, hasToken: !!token });
         const response = await fetch(url, options);
@@ -320,7 +115,7 @@
           showToast('Session expired or unauthorized. Please log in again.');
           console.error('[ERROR] Unauthorized fetch', { url, status: response.status });
           setTimeout(() => {
-            window.location.href = 'https://ravensnest.ink/signIn.html';
+            window.location.href = 'https://www.ravensnest.ink/signIn.html';
           }, 2000);
           throw new Error('Unauthorized');
         }
@@ -334,7 +129,7 @@
         showToast('No session found. Please log in.');
         console.warn('[WARN] No token in sessionStorage');
         setTimeout(() => {
-          window.location.href = 'https://ravensnest.ink/signIn.html';
+          window.location.href = 'https://www.ravensnest.ink/signIn.html';
         }, 2000);
         return;
       }
@@ -344,7 +139,7 @@
         showToast('Access denied: Admin role required.');
         console.warn('[WARN] Invalid user or role', { error: userError?.message, role: userData?.user?.app_metadata?.role });
         setTimeout(() => {
-          window.location.href = 'https://ravensnest.ink/signIn.html';
+          window.location.href = 'https://www.ravensnest.ink/signIn.html';
         }, 2000);
         return;
       }
@@ -352,7 +147,7 @@
 
       // Debug cookie presence
       try {
-        const debugResponse = await fetch('https://ravensnest.ink/debug/headers', { credentials: 'include' });
+        const debugResponse = await fetch('https://www.ravensnest.ink/debug/headers', { credentials: 'include' });
         const debugData = await debugResponse.json();
         console.log('[DEBUG] Headers and cookies received', debugData);
       } catch (debugError) {
@@ -361,7 +156,7 @@
 
       async function fetchInquiries() {
         try {
-          const response = await authFetch('https://ravensnest.ink/auth/api/inquiries');
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/inquiries');
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error);
@@ -392,7 +187,7 @@
 
       async function fetchAbuseLogs() {
         try {
-          const response = await authFetch('https://ravensnest.ink/auth/api/abuse-logs');
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/abuse-logs');
           if (!response.ok) {
             const errorData = await response.json();
             throw new Error(errorData.error);
@@ -417,9 +212,9 @@
 
       window.logout = function() {
         sessionStorage.removeItem('access_token');
-        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ravensnest.ink';
         console.log('[INFO] Logged out');
-        window.location.href = 'https://ravensnest.ink/signIn.html';
+        window.location.href = 'https://www.ravensnest.ink/signIn.html';
       };
 
       // Fetch data on load
