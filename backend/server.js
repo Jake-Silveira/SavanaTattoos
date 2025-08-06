@@ -95,11 +95,11 @@ app.post('/sign-in', async (req, res) => {
 
 const verifyAdmin = async (req, res, next) => {
   const token = req.cookies.admin_token;
-  if (!token) return res.redirect('/signIn.html');
+  if (!token) return res.status(401).json({ error: 'Unauthorized: No token provided' });
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || data?.user?.app_metadata?.role !== 'admin') {
-    return res.redirect('/signIn.html');
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
   }
 
   req.adminUser = data.user;
@@ -108,11 +108,11 @@ const verifyAdmin = async (req, res, next) => {
 
 const verifyUser = async (req, res, next) => {
   const token = req.cookies.user_token;
-  if (!token) return res.redirect('/signIn.html');
+  if (!token) return res.status(401).json({ error: 'Unauthorized: No token' });
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user || data.user.app_metadata?.role !== 'user') {
-    return res.redirect('/signIn.html');
+    return res.status(403).json({ error: 'Forbidden: User access required' });
   }
 
   req.user = data.user;
@@ -130,7 +130,10 @@ app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
     .select('first_name, last_name, email, phone, placement, size, description, date_from, date_to, image_url, created_at')
     .order('created_at', { ascending: false });
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
   res.json(data);
 });
 
@@ -142,7 +145,10 @@ app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
     .select('ip_address, reason, created_at')
     .order('created_at', { ascending: false });
 
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    return res.status(500).json({ error: error.message });
+  }
+
   res.json(data);
 });
 
@@ -425,5 +431,5 @@ app.listen(PORT, () => {
 });
 
 app.use((req, res) => {
-  res.status(404).json({ message: 'Not found' });
+  res.status(404).json({ error: 'Not found' });
 });
