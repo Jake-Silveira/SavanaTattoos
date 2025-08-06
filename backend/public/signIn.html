@@ -138,15 +138,17 @@
 
         if (error) {
           showToast('Login failed: ' + error.message);
+          console.error('[ERROR] Login failed', { error: error.message });
           button.disabled = false;
           return;
         }
 
         if (data.session?.access_token) {
           sessionStorage.setItem('access_token', data.session.access_token);
-          console.log('Token stored:', data.session.access_token);
+          console.log('[INFO] Token stored in sessionStorage', { token: data.session.access_token });
         } else {
           showToast('Login failed: No access token');
+          console.error('[ERROR] No access token received');
           button.disabled = false;
           return;
         }
@@ -156,16 +158,28 @@
         const { data: userData, error: userError } = await supabase.auth.getUser();
         if (userError) {
           showToast('Failed to fetch user info: ' + userError.message);
+          console.error('[ERROR] Failed to fetch user info', { error: userError.message });
+          sessionStorage.removeItem('access_token');
           button.disabled = false;
           return;
         }
 
         const role = userData.user?.app_metadata?.role || 'user';
+        console.log('[INFO] User role', { role, userId: userData.user.id });
+
+        // Debug cookie presence
+        try {
+          const debugResponse = await fetch('https://ravensnest.ink/debug/headers', { credentials: 'include' });
+          const debugData = await debugResponse.json();
+          console.log('[DEBUG] Headers and cookies sent', debugData);
+        } catch (debugError) {
+          console.error('[ERROR] Failed to debug headers', { error: debugError.message });
+        }
 
         if (role === 'admin') {
-          window.location.href = '/admin/dashboard';
+          window.location.href = 'https://ravensnest.ink/admin/dashboard';
         } else {
-          window.location.href = '/index.html';
+          window.location.href = 'https://ravensnest.ink/index.html';
         }
         button.disabled = false;
       };
@@ -193,6 +207,7 @@
 
         if (error) {
           showToast('Sign-up failed: ' + error.message);
+          console.error('[ERROR] Sign-up failed', { error: error.message });
           button.disabled = false;
           return;
         }
@@ -209,11 +224,12 @@
         const email = document.getElementById('resetEmail').value;
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          redirectTo: window.location.origin + '/signIn.html'
+          redirectTo: 'https://ravensnest.ink/signIn.html'
         });
 
         if (error) {
           showToast('Reset failed: ' + error.message);
+          console.error('[ERROR] Reset failed', { error: error.message });
           button.disabled = false;
           return;
         }
@@ -232,6 +248,7 @@
 
         if (newPass !== confirmPass) {
           showToast('Passwords do not match.');
+          console.error('[ERROR] Passwords do not match');
           button.disabled = false;
           return;
         }
@@ -239,6 +256,7 @@
         const passwordError = validatePassword(newPass);
         if (passwordError) {
           showToast(passwordError);
+          console.error('[ERROR] Password validation failed', { error: passwordError });
           button.disabled = false;
           return;
         }
@@ -246,6 +264,7 @@
         const { error } = await supabase.auth.updateUser({ password: newPass });
         if (error) {
           showToast('Failed to update password: ' + error.message);
+          console.error('[ERROR] Failed to update password', { error: error.message });
           button.disabled = false;
           return;
         }
@@ -270,6 +289,8 @@
         if (token) {
           options.headers['Authorization'] = `Bearer ${token}`;
         }
+        options.credentials = 'include'; // Ensure cookies are sent
+        console.log('[DEBUG] authFetch', { url, hasToken: !!token });
         return fetch(url, options);
       }
     });

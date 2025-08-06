@@ -18,7 +18,7 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 // === Middleware ===
 app.use(cors({
-  origin: ['https://ravensnest.ink', 'http://localhost:3000'],
+  origin: ['https://ravensnest.ink', 'https://www.ravensnest.ink', 'http://localhost:3000'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -27,7 +27,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('trust proxy', true);
+app.set('trust proxy', 1); // Trust Render's proxy
 
 // Multer Setup for file uploads
 const storage = multer.memoryStorage();
@@ -53,30 +53,36 @@ function getTokenFromHeaderOrCookie(req) {
   if (auth) {
     const parts = auth.split(' ');
     if (parts.length === 2 && parts[0] === 'Bearer') {
+      console.log('[DEBUG] Token found in Authorization header', { path: req.path, ip: req.ip });
       return parts[1];
     }
   }
-  return req.cookies.access_token || null;
+  if (req.cookies.access_token) {
+    console.log('[DEBUG] Token found in cookie', { path: req.path, ip: req.ip });
+    return req.cookies.access_token;
+  }
+  return null;
 }
 
 // Middleware to verify admin
 const verifyAdmin = async (req, res, next) => {
   const token = getTokenFromHeaderOrCookie(req);
   if (!token) {
-    console.warn('[WARN] No token provided', { path: req.path, ip: req.ip });
+    console.warn('[WARN] No token provided', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies });
     return res.status(401).json({ error: 'Unauthorized: No token provided' });
   }
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) {
-    console.warn('[WARN] Invalid token or user not found', { error: error?.message, path: req.path });
+    console.warn('[WARN] Invalid token or user not found', { error: error?.message, path: req.path, ip: req.ip });
     return res.status(403).json({ error: 'Forbidden: Invalid token' });
   }
   if (data.user.app_metadata?.role !== 'admin') {
-    console.warn('[WARN] Non-admin user attempted access', { userId: data.user.id, path: req.path });
+    console.warn('[WARN] Non-admin user attempted access', { userId: data.user.id, path: req.path, ip: req.ip });
     return res.status(403).json({ error: 'Forbidden: Admin access required' });
   }
 
+  console.log('[INFO] Admin verified', { userId: data.user.id, path: req.path });
   req.adminUser = data.user;
   next();
 };
@@ -95,12 +101,14 @@ const verifyUser = async (req, res, next) => {
     return res.status(403).json({ error: 'Forbidden: Invalid token' });
   }
 
+  console.log('[INFO] User verified', { userId: data.user.id, path: req.path });
   req.user = data.user;
   next();
 };
 
 // Debug route
 app.get('/debug/headers', (req, res) => {
+  console.log('[DEBUG] Headers and cookies received', { path: req.path, headers: req.headers, cookies: req.cookies });
   res.json({ headers: req.headers, cookies: req.cookies });
 });
 
@@ -118,19 +126,26 @@ app.post('/sign-in', async (req, res) => {
   const { user, session } = data;
 
   // Set HttpOnly cookie
-  res.cookie('access_token', session.access_token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax',
-    maxAge: session.expires_in * 1000,
-    path: '/'
-  });
+  try {
+    res.cookie('access_token', session.access_token, {
+      httpOnly: true,
+      secure: true, // Required for HTTPS
+      sameSite: 'lax', // Allow navigation
+      maxAge: session.expires_in * 1000,
+      path: '/',
+      domain: '.ravensnest.ink' // Support subdomains
+    });
+    console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path });
+  } catch (cookieError) {
+    console.error('[ERROR] Failed to set cookie', { error: cookieError.message, path: req.path });
+  }
 
   res.json({ user });
 });
 
 // Serve signIn page
 app.get('/signIn', (req, res) => {
+  console.log('[INFO] Serving signIn.html', { path: req.path, ip: req.ip });
   res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
 });
 
@@ -166,6 +181,7 @@ app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
 
 // Admin dashboard page
 app.get('/admin/dashboard', verifyAdmin, (req, res) => {
+  console.log('[INFO] Serving admin dashboard', { userId: req.adminUser.id, path: req.path });
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
@@ -173,20 +189,23 @@ app.get('/admin/dashboard', verifyAdmin, (req, res) => {
 app.get('/', async (req, res) => {
   const token = getTokenFromHeaderOrCookie(req);
   if (!token) {
+    console.log('[INFO] No token, serving index.html', { path: req.path, ip: req.ip });
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) {
+    console.log('[INFO] Invalid token, serving index.html', { path: req.path, ip: req.ip });
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
   const role = data.user.app_metadata?.role;
-
-  if (role === 'admin') {
-    return res.redirect('/admin/dashboard');
+  if (role === 'admin' && req.path !== '/admin/dashboard') {
+    console.log('[INFO] Admin user, redirecting to dashboard', { userId: data.user.id, path: req.path });
+    return res.status(302).header('Location', '/admin/dashboard').send();
   } else {
-    return res.sendFile(path.join(__dirname, 'public', 'index.html')); // Changed to index.html
+    console.log('[INFO] Non-admin user or already on dashboard, serving index.html', { userId: data.user.id, path: req.path });
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 });
 
