@@ -111,7 +111,7 @@ const verifyUser = async (req, res, next) => {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) {
     console.warn('[WARN] Invalid token or user not found', { error: error?.message, path: req.path });
-    return res.status(403).json({ error: 'Forbidden: Invalid token' });
+    return res.status(401).json({ error: 'Forbidden: Invalid token' });
   }
 
   console.log('[INFO] User verified', { userId: data.user.id, path: req.path });
@@ -144,18 +144,18 @@ app.post('/sign-in', async (req, res) => {
   try {
     res.cookie('access_token', session.access_token, {
       httpOnly: true,
-      secure: true, // Required for HTTPS
-      sameSite: 'none', // Allow cross-site for www redirect
+      secure: true,
+      sameSite: 'none',
       maxAge: session.expires_in * 1000,
       path: '/',
-      domain: '.ravensnest.ink' // Support www and non-www
+      domain: '.ravensnest.ink'
     });
     console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path, ip: req.ip, token: session.access_token });
   } catch (cookieError) {
     console.error('[ERROR] Failed to set cookie', { error: cookieError.message, path: req.path, ip: req.ip });
   }
 
-  res.json({ user, access_token: session.access_token }); // Return token for client
+  res.json({ user, access_token: session.access_token });
 });
 
 // Serve signIn page
@@ -245,13 +245,13 @@ const formLimiter = rateLimit({
 });
 
 // Form submission endpoint
-app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) => {
+app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (req, res) => {
   try {
     const {
       placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo, 'g-recaptcha-response': token
     } = req.body;
 
-    console.log('[INFO] Received form submission from:', email);
+    console.log('[INFO] Received form submission from:', email, { userId: req.user.id });
 
     if (!token) {
       console.warn('[WARN] Missing reCAPTCHA token');
@@ -354,7 +354,8 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
           description: cleanData.description,
           date_from: dateFrom,
           date_to: dateTo,
-          image_url: fileUrl
+          image_url: fileUrl,
+          user_id: req.user.id // Store user ID
         }
       ]);
 
