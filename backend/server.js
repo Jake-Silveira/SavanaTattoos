@@ -60,7 +60,14 @@ app.use((req, res, next) => {
 });
 app.use(cookieParser());
 
-
+// Debug route to check incoming cookies
+app.get('/debug/cookies', (req, res) => {
+  console.log('[DEBUG] Incoming cookies:', req.cookies);
+  res.json({
+    message: 'Check server console for cookies received',
+    cookies: req.cookies
+  });
+});
 
 app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
@@ -97,8 +104,13 @@ app.post('/sign-in', async (req, res) => {
 
 
 const verifyAdmin = async (req, res, next) => {
+  console.log('[DEBUG verifyAdmin] Cookies:', req.cookies);  // <--- Add this line
+
   const token = req.cookies.admin_token;
-  if (!token) return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  if (!token) {
+    console.log('[DEBUG verifyAdmin] No admin_token cookie found');
+    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  }
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || data?.user?.app_metadata?.role !== 'admin') {
