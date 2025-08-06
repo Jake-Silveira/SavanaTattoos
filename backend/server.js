@@ -9,7 +9,6 @@ const { createClient } = require('@supabase/supabase-js');
 const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const crypto = require('crypto');
-const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,58 +16,79 @@ const PORT = process.env.PORT || 3000;
 // === Supabase client ===
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-// Required to parse JSON bodies (admin login form)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-
-
-// === Multer Setup ===
-const storage = multer.memoryStorage();
-
-const fileFilter = (req, file, cb) => {
-  const allowedMimes = ['image/jpeg', 'image/png'];
-  const allowedExts = ['.jpg', '.jpeg', '.png'];
-  const ext = path.extname(file.originalname).toLowerCase();
-
-  if (allowedMimes.includes(file.mimetype) && allowedExts.includes(ext)) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only JPG and PNG files are allowed.'));
-  }
-};
-
-const upload = multer({
-  storage,
-  fileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-});
-
-
 // === Middleware ===
 app.use(cors({
   origin: 'https://ravensnest.ink', 
   credentials: true
 }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.set('trust proxy', true); // Allows req.ip to be accurate behind a reverse proxy
-app.use((req, res, next) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  req.clientIp = (typeof forwarded === 'string' ? forwarded.split(',')[0] : req.ip) || 'unknown';
+app.set('trust proxy', true); // For req.ip behind proxy
+
+// Multer Setup for file uploads
+const storage = multer.memoryStorage();
+const fileFilter = (req, file, cb) => {
+  const allowedMimes = ['image/jpeg', 'image/png'];
+  const allowedExts = ['.jpg', '.jpeg', '.png'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedMimes.includes(file.mimetype) && allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only JPG and PNG files are allowed.'));
+  }
+};
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+});
+
+// Helper to extract Bearer token from Authorization header
+function getTokenFromHeader(req) {
+  const auth = req.headers['authorization'];
+  if (!auth) return null;
+  const parts = auth.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') return null;
+  return parts[1];
+}
+
+// Middleware to verify admin by token from header
+const verifyAdmin = async (req, res, next) => {
+  const token = getTokenFromHeader(req);
+  if (!token) {
+    return res.status(401).json({ error: 'Unauthorized: No token provided' });
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user || data.user.app_metadata?.role !== 'admin') {
+    return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  }
+
+  req.adminUser = data.user;
   next();
-});
-app.use(cookieParser());
+};
 
-// Debug route to check incoming cookies
-app.get('/debug/cookies', (req, res) => {
-  console.log('[DEBUG] Incoming cookies:', req.cookies);
-  res.json({
-    message: 'Check server console for cookies received',
-    cookies: req.cookies
-  });
+// Middleware to verify regular user by token from header
+const verifyUser = async (req, res, next) => {
+  const token = getTokenFromHeader(req);
+  if (!token) return res.status(401).json({ error: 'Unauthorized: No token' });
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data.user || data.user.app_metadata?.role !== 'user') {
+    return res.status(403).json({ error: 'Forbidden: User access required' });
+  }
+
+  req.user = data.user;
+  next();
+};
+
+// Debug route
+app.get('/debug/headers', (req, res) => {
+  res.json({ headers: req.headers });
 });
 
+// POST /sign-in - Authenticate user and return session info to frontend (no cookies)
 app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
 
@@ -80,111 +100,57 @@ app.post('/sign-in', async (req, res) => {
 
   const { user, session } = data;
 
-  // Set token for form submissions (both admin and user)
-  res.cookie('user_token', session.access_token, {
-    httpOnly: true,
-    sameSite: 'none',
-    secure: true,
-    domain: '.ravensnest.ink',
-    maxAge: 1000 * 60 * 60 * 2
+  // Return session and user info to frontend for client to store token & redirect
+  res.json({
+    session,
+    user,
   });
-
-  if (user.app_metadata?.role === 'admin') {
-    res.cookie('admin_token', session.access_token, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 8
-    });
-    return res.json({ redirect: '/admin/dashboard' });
-  }
-
-  // If user is not admin, allow form access
-  return res.json({ message: 'Signed in as user' });
 });
 
-
-const verifyAdmin = async (req, res, next) => {
-  console.log('[DEBUG verifyAdmin] Cookies:', req.cookies);  // <--- Add this line
-
-  const token = req.cookies.admin_token;
-  if (!token) {
-    console.log('[DEBUG verifyAdmin] No admin_token cookie found');
-    return res.status(401).json({ error: 'Unauthorized: No token provided' });
-  }
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || data?.user?.app_metadata?.role !== 'admin') {
-    return res.status(403).json({ error: 'Forbidden: Admin access required' });
-  }
-
-  req.adminUser = data.user;
-  next();
-};
-
-const verifyUser = async (req, res, next) => {
-  const token = req.cookies.user_token;
-  if (!token) return res.status(401).json({ error: 'Unauthorized: No token' });
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user || data.user.app_metadata?.role !== 'user') {
-    return res.status(403).json({ error: 'Forbidden: User access required' });
-  }
-
-  req.user = data.user;
-  next();
-};
-
+// Serve signIn page
 app.get('/signIn', (req, res) => {
-  res.sendFile(__dirname + '/public/signIn.html');
+  res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
 });
 
-// Get inquiries
+// Get inquiries - Admin only
 app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('inquiries')
     .select('first_name, last_name, email, phone, placement, size, description, date_from, date_to, image_url, created_at')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  if (error) return res.status(500).json({ error: error.message });
 
   res.json(data);
 });
 
-
-// Get abuse logs
+// Get abuse logs - Admin only
 app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
     .select('ip_address, reason, created_at')
     .order('created_at', { ascending: false });
 
-  if (error) {
-    return res.status(500).json({ error: error.message });
-  }
+  if (error) return res.status(500).json({ error: error.message });
 
   res.json(data);
 });
 
-
-// Route: Serve admin dashboard page
+// Admin dashboard page (protected)
 app.get('/admin/dashboard', verifyAdmin, (req, res) => {
-  console.log('Admin dashboard accessed by:', req.adminUser.email);
-  res.sendFile(__dirname + '/public/dashboard.html');
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
-// === Serve index.html ===
-
+// Root route redirects based on token + role
 app.get('/', async (req, res) => {
-  const token = req.cookies.admin_token || req.cookies.user_token;
+  // Try to get token from Authorization header, fallback to none
+  const token = getTokenFromHeader(req);
+
   if (!token) {
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
   const { data, error } = await supabase.auth.getUser(token);
-
   if (error || !data?.user) {
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
@@ -198,28 +164,23 @@ app.get('/', async (req, res) => {
   }
 });
 
-
-// Log abuse attempts to supabase
+// Abuse logging and rate limiting remain unchanged
 async function logAbuse(ip, reason) {
   const { error } = await supabase
     .from('abuse_logs')
-    .insert([
-      { ip_address: ip, reason: reason }
-    ]);
-
+    .insert([{ ip_address: ip, reason }]);
   if (error) {
-    console.error('[ERROR] Failed to log abuse to Supabase:', error.message);
+    console.error('[ERROR] Failed to log abuse:', error.message);
   }
 }
 
-// Rate limit: 2 submissions per hour per IP
 const formLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
+  windowMs: 60 * 60 * 1000,
   max: 2,
   message: { message: "Too many submissions from this IP, try again later." },
-  handler: (req, res, next, options) => {
-    logAbuse(req.clientIp, 'Rate limit exceeded');
-    res.status(429).json(options.message);
+  handler: (req, res) => {
+    logAbuse(req.ip, 'Rate limit exceeded');
+    res.status(429).json({ message: "Too many submissions from this IP, try again later." });
   }
 });
 
