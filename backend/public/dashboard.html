@@ -5,86 +5,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Dashboard</title>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 1rem;
-    }
-    h2, h3 {
-      text-align: center;
-    }
-    #toast {
-      background: #333;
-      color: white;
-      padding: 1em;
-      display: none;
-      margin-bottom: 1em;
-      border-radius: 4px;
-      text-align: center;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-bottom: 2rem;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 0.5rem;
-      text-align: left;
-    }
-    th {
-      background: #f4f4f4;
-    }
-    button {
-      padding: 0.5rem;
-      cursor: pointer;
-    }
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-    .error {
-      color: red;
-      text-align: center;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-  <h2>Admin Dashboard</h2>
-  <button onclick="logout()">Logout</button>
-  <div id="toast"></div>
+  <div id="titleBackground">
+    <img id="titleLogo" src="/images/logo.png" alt="Raven's Nest Logo">
+    <div class="navBtnContainer">
+      <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
+      <img id="menuBtn" src="/images/menu-icon.png" alt="Menu" onclick="openMenu()">
+    </div>
+  </div>
+  <div class="contentContainer">
+    <h2 id="dashboardHeader">Admin Dashboard</h2>
+    <button class="navBtn" onclick="logout()">Logout</button>
+    <div id="toast"></div>
 
-  <h3>Inquiries</h3>
-  <table id="inquiriesTable">
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Email</th>
-        <th>Phone</th>
-        <th>Placement</th>
-        <th>Size</th>
-        <th>Description</th>
-        <th>Dates</th>
-        <th>Image</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody id="inquiriesBody"></tbody>
-  </table>
+    <h3 id="inquiriesHeader" class="signInLabel">Inquiries</h3>
+    <table class="inquiriesTable">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Placement</th>
+          <th>Size</th>
+          <th>Description</th>
+          <th>Dates</th>
+          <th>Image</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="inquiriesBody"></tbody>
+    </table>
 
-  <h3>Abuse Logs</h3>
-  <table id="abuseLogsTable">
-    <thead>
-      <tr>
-        <th>IP Address</th>
-        <th>Reason</th>
-        <th>Created</th>
-      </tr>
-    </thead>
-    <tbody id="abuseLogsBody"></tbody>
-  </table>
+    <h3 id="abuseLogsHeader" class="signInLabel">Abuse Logs</h3>
+    <table class="abuseLogsTable">
+      <thead>
+        <tr>
+          <th>IP Address</th>
+          <th>Reason</th>
+          <th>Created</th>
+        </tr>
+      </thead>
+      <tbody id="abuseLogsBody"></tbody>
+    </table>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
@@ -96,9 +61,9 @@
 
       function showToast(message) {
         toastEl.textContent = message;
-        toastEl.style.display = 'block';
+        toastEl.classList.add('show');
         setTimeout(() => {
-          toastEl.style.display = 'none';
+          toastEl.classList.remove('show');
         }, 3000);
       }
 
@@ -116,7 +81,7 @@
         if (token) {
           options.headers['Authorization'] = `Bearer ${token}`;
         }
-        options.credentials = 'include'; // Ensure cookies are sent
+        options.credentials = 'include';
         console.log('[DEBUG] Making authFetch', { url, hasToken: !!token });
         const response = await fetch(url, options);
         if (response.status === 401 || response.status === 403) {
@@ -130,7 +95,6 @@
         return response;
       }
 
-      // Check authentication on load
       let token = sessionStorage.getItem('access_token');
       if (!token) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -161,7 +125,6 @@
       }
       console.log('[INFO] Admin access verified', { userId: userData.user.id });
 
-      // Debug cookie presence
       try {
         const debugResponse = await fetch('https://www.ravensnest.ink/debug/headers', { credentials: 'include' });
         const debugData = await debugResponse.json();
@@ -190,7 +153,7 @@
               <td>${inquiry.size}</td>
               <td>${inquiry.description}</td>
               <td>${new Date(inquiry.date_from).toLocaleDateString()} - ${new Date(inquiry.date_to).toLocaleDateString()}</td>
-              <td>${inquiry.image_url ? `<a href="${inquiry.image_url}" target="_blank">View</a>` : 'N/A'}</td>
+              <td>${inquiry.image_url ? `<img src="${inquiry.image_url}" alt="Inquiry Image">` : 'N/A'}</td>
               <td>${new Date(inquiry.created_at).toLocaleString()}</td>
             `;
             tbody.appendChild(row);
@@ -233,7 +196,11 @@
         window.location.href = 'https://www.ravensnest.ink/signIn.html';
       };
 
-      // Fetch data on load
+      window.openMenu = function() {
+        console.log('[INFO] Menu button clicked');
+        // Add modal menu logic here if needed
+      };
+
       await Promise.all([fetchInquiries(), fetchAbuseLogs()]);
     });
   </script>

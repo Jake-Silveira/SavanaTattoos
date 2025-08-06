@@ -5,88 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sign In</title>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      max-width: 400px;
-      margin: 2rem auto;
-      padding: 1rem;
-    }
-    form {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-    #toast {
-      background: #333;
-      color: white;
-      padding: 1em;
-      display: none;
-      margin-bottom: 1em;
-      border-radius: 4px;
-      text-align: center;
-    }
-    button {
-      padding: 0.5rem;
-      cursor: pointer;
-    }
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-    .btn-group {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
-    .btn-group button {
-      flex: 1;
-      margin-right: 0.5rem;
-    }
-    .btn-group button:last-child {
-      margin-right: 0;
-    }
-    input:invalid {
-      border: 1px solid red;
-    }
-  </style>
+  <link rel="stylesheet" href="/css/signIn.css">
 </head>
 <body>
-  <h2 id="formTitle">Sign In</h2>
-  <div id="toast"></div>
-
-  <div class="btn-group">
-    <button onclick="showForm('login')">Sign In</button>
-    <button onclick="showForm('signup')">Sign Up</button>
-    <button onclick="showForm('reset')">Reset Password</button>
+  <div id="titleBackground">
+    <img id="titleLogo" src="/images/logo.png" alt="Raven's Nest Logo">
+    <div class="navBtnContainer">
+      <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
+      <img id="menuBtn" src="/images/menu-icon.png" alt="Menu" onclick="openMenu()">
+    </div>
   </div>
+  <div class="contentContainer">
+    <h2 id="formTitle" class="signInLabel">Sign In</h2>
+    <div id="toast"></div>
 
-  <!-- Login Form -->
-  <form id="loginForm" onsubmit="handleLogin(event)">
-    <input type="email" id="loginEmail" placeholder="Email" required />
-    <input type="password" id="loginPassword" placeholder="Password" required />
-    <button type="submit">Sign In</button>
-  </form>
+    <div class="btn-group">
+      <button class="navBtn" onclick="showForm('login')">Sign In</button>
+      <button class="navBtn" onclick="showForm('signup')">Sign Up</button>
+      <button class="navBtn" onclick="showForm('reset')">Reset Password</button>
+    </div>
 
-  <!-- Sign Up Form -->
-  <form id="signupForm" style="display:none" onsubmit="handleSignup(event)">
-    <input type="email" id="signupEmail" placeholder="Email" required />
-    <input type="password" id="signupPassword" placeholder="Password" required minlength="8" />
-    <button type="submit">Sign Up</button>
-  </form>
+    <!-- Login Form -->
+    <form id="loginForm" class="signInForm" onsubmit="handleLogin(event)">
+      <fieldset>
+        <label for="loginEmail" class="signInLabel required">Email</label>
+        <input type="email" id="loginEmail" class="signInInput" placeholder="Email" required />
+        <label for="loginPassword" class="signInLabel required">Password</label>
+        <input type="password" id="loginPassword" class="signInInput" placeholder="Password" required />
+        <button type="submit" id="signInSubmitBtn">Sign In</button>
+      </fieldset>
+    </form>
 
-  <!-- Reset Password Form -->
-  <form id="resetForm" style="display:none" onsubmit="handleReset(event)">
-    <input type="email" id="resetEmail" placeholder="Email" required />
-    <button type="submit">Send Reset Link</button>
-  </form>
+    <!-- Sign Up Form -->
+    <form id="signupForm" class="signInForm" style="display:none" onsubmit="handleSignup(event)">
+      <fieldset>
+        <label for="signupEmail" class="signInLabel required">Email</label>
+        <input type="email" id="signupEmail" class="signInInput" placeholder="Email" required />
+        <label for="signupPassword" class="signInLabel required">Password</label>
+        <input type="password" id="signupPassword" class="signInInput" placeholder="Password" required minlength="8" />
+        <button type="submit" id="signInSubmitBtn">Sign Up</button>
+      </fieldset>
+    </form>
 
-  <!-- Update Password Form -->
-  <form id="updatePasswordForm" style="display:none" onsubmit="handleUpdatePassword(event)">
-    <input type="password" id="newPassword" placeholder="New Password" required minlength="8" />
-    <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="8" />
-    <button type="submit">Update Password</button>
-  </form>
+    <!-- Reset Password Form -->
+    <form id="resetForm" class="signInForm" style="display:none" onsubmit="handleReset(event)">
+      <fieldset>
+        <label for="resetEmail" class="signInLabel required">Email</label>
+        <input type="email" id="resetEmail" class="signInInput" placeholder="Email" required />
+        <button type="submit" id="signInSubmitBtn">Send Reset Link</button>
+      </fieldset>
+    </form>
+
+    <!-- Update Password Form -->
+    <form id="updatePasswordForm" class="signInForm" style="display:none" onsubmit="handleUpdatePassword(event)">
+      <fieldset>
+        <label for="newPassword" class="signInLabel required">New Password</label>
+        <input type="password" id="newPassword" class="signInInput" placeholder="New Password" required minlength="8" />
+        <label for="confirmPassword" class="signInLabel required">Confirm Password</label>
+        <input type="password" id="confirmPassword" class="signInInput" placeholder="Confirm Password" required minlength="8" />
+        <button type="submit" id="signInSubmitBtn">Update Password</button>
+      </fieldset>
+    </form>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -98,9 +78,9 @@
 
       window.showToast = function(message) {
         toastEl.textContent = message;
-        toastEl.style.display = 'block';
+        toastEl.classList.add('show');
         setTimeout(() => {
-          toastEl.style.display = 'none';
+          toastEl.classList.remove('show');
         }, 3000);
       };
 
@@ -114,17 +94,6 @@
           form === 'signup' ? 'Sign Up' :
           form === 'reset' ? 'Reset Password' : 'Update Password';
       };
-
-      function validatePassword(password) {
-        const minLength = 8;
-        const hasUpperCase = /[A-Z]/.test(password);
-        const hasLowerCase = /[a-z]/.test(password);
-        const hasNumbers = /\d/.test(password);
-        if (password.length < minLength || !hasUpperCase || !hasLowerCase || !hasNumbers) {
-          return 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
-        }
-        return null;
-      }
 
       window.handleLogin = async function(event) {
         event.preventDefault();
@@ -176,7 +145,6 @@
         const role = userData.user?.app_metadata?.role || 'user';
         console.log('[INFO] User role', { role, userId: userData.user.id, email });
 
-        // Debug cookie presence
         try {
           const debugResponse = await fetch('https://www.ravensnest.ink/debug/headers', { credentials: 'include' });
           const debugData = await debugResponse.json();
@@ -295,25 +263,39 @@
         button.disabled = false;
       };
 
-      // Handle password reset via recovery link
+      function validatePassword(password) {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        if (password.length < minLength || !hasUpperCase || !hasLowerCase || !hasNumbers) {
+          return 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+        }
+        return null;
+      }
+
       const url = new URL(window.location.href);
       const isReset = url.searchParams.get('type') === 'recovery';
-
       if (isReset) {
         showForm('updatePassword');
       }
 
-      // Helper: fetch with Authorization header
       async function authFetch(url, options = {}) {
         const token = sessionStorage.getItem('access_token');
         if (!options.headers) options.headers = {};
         if (token) {
           options.headers['Authorization'] = `Bearer ${token}`;
         }
-        options.credentials = 'include'; // Ensure cookies are sent
+        options.credentials = 'include';
         console.log('[DEBUG] authFetch', { url, hasToken: !!token });
         return fetch(url, options);
       }
+
+      // Placeholder for menu functionality
+      window.openMenu = function() {
+        console.log('[INFO] Menu button clicked');
+        // Add modal menu logic here if needed
+      };
     });
   </script>
 </body>
