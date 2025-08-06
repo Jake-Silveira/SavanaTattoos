@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Sign In</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -79,19 +79,22 @@
   </form>
 
   <script>
-    // === Supabase Initialization ===
-    const SUPABASE_URL = 'https://supabase.com/dashboard/project/klsgtwlcvpngkwbzromr';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU'; 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  document.addEventListener('DOMContentLoaded', async () => {
+    const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ...'; // keep it short here
 
-    function showToast(message) {
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // === All your event handlers here ===
+
+    window.showToast = function(message) {
       const toast = document.getElementById('toast');
       toast.textContent = message;
       toast.style.display = 'block';
       setTimeout(() => toast.style.display = 'none', 3000);
     }
 
-    function showForm(form) {
+    window.showForm = function(form) {
       document.getElementById('loginForm').style.display = 'none';
       document.getElementById('signupForm').style.display = 'none';
       document.getElementById('resetForm').style.display = 'none';
@@ -101,19 +104,18 @@
         form === 'login' ? 'Sign In' : form === 'signup' ? 'Sign Up' : 'Reset Password';
     }
 
-    async function handleLogin(event) {
+    window.handleLogin = async function(event) {
       event.preventDefault();
       const email = document.getElementById("loginEmail").value;
       const password = document.getElementById("loginPassword").value;
 
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
       if (error) return showToast("Login failed: " + error.message);
 
       const role = data.user?.user_metadata?.role || 'user';
       showToast("Welcome!");
 
-      // Redirect based on role
       if (role === 'admin') {
         window.location.href = "/dashboard.html";
       } else {
@@ -121,16 +123,16 @@
       }
     }
 
-    async function handleSignup(event) {
+    window.handleSignup = async function(event) {
       event.preventDefault();
       const email = document.getElementById("signupEmail").value;
       const password = document.getElementById("signupPassword").value;
 
-      const { error } = await supabase.auth.signUp({
+      const { error } = await supabaseClient.auth.signUp({
         email,
         password,
         options: {
-          data: { role: 'user' } // Default role
+          data: { role: 'user' }
         }
       });
 
@@ -138,11 +140,11 @@
       showToast("Sign-up successful! Check your email to confirm.");
     }
 
-    async function handleReset(event) {
+    window.handleReset = async function(event) {
       event.preventDefault();
       const email = document.getElementById("resetEmail").value;
 
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      const { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/signIn.html"
       });
 
@@ -150,20 +152,20 @@
       showToast("Reset email sent!");
     }
 
-    // === Handle password reset confirmation ===
-    document.addEventListener('DOMContentLoaded', async () => {
-      const url = new URL(window.location.href);
-      const isReset = url.searchParams.get('type') === 'recovery';
+    // Handle password reset via magic link
+    const url = new URL(window.location.href);
+    const isReset = url.searchParams.get('type') === 'recovery';
 
-      if (isReset) {
-        const newPass = prompt("Enter a new password:");
-        if (!newPass) return;
+    if (isReset) {
+      const newPass = prompt("Enter a new password:");
+      if (!newPass) return;
 
-        const { error } = await supabase.auth.updateUser({ password: newPass });
-        if (error) return showToast("Failed to update password.");
-        showToast("Password updated! You can now log in.");
-      }
-    });
-  </script>
+      const { error } = await supabaseClient.auth.updateUser({ password: newPass });
+      if (error) return showToast("Failed to update password.");
+      showToast("Password updated! You can now log in.");
+    }
+  });
+</script>
+
 </body>
 </html>
