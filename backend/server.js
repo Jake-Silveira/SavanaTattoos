@@ -19,7 +19,9 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 // === Middleware ===
 app.use(cors({
   origin: ['https://ravensnest.ink', 'http://localhost:3000'],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(cookieParser());
 app.use(express.json());
@@ -115,12 +117,13 @@ app.post('/sign-in', async (req, res) => {
 
   const { user, session } = data;
 
-  // Set HttpOnly cookie
+  // Set HttpOnly cookie with relaxed settings for development
   res.cookie('access_token', session.access_token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: session.expires_in * 1000
+    secure: process.env.NODE_ENV === 'production', // Secure only in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax', // Lax for dev
+    maxAge: session.expires_in * 1000,
+    path: '/' // Ensure cookie is sent for all routes
   });
 
   res.json({ user });
