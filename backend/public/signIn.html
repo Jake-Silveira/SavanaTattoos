@@ -116,7 +116,7 @@ window.handleLogin = async function(event) {
 
   if (userError) return showToast("Failed to fetch user data.");
   
-  const role = user?.user_metadata?.role || "user";
+  const role = user.app_metadata?.role || "user";
 
   if (role === "admin") {
     window.location.href = "/dashboard.html";
