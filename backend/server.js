@@ -83,9 +83,10 @@ app.post('/sign-in', async (req, res) => {
   // Set token for form submissions (both admin and user)
   res.cookie('user_token', session.access_token, {
     httpOnly: true,
+    sameSite: 'none',
     secure: true,
-    sameSite: 'lax',
-    maxAge: 1000 * 60 * 60 * 8
+    domain: '.ravensnest.ink',
+    maxAge: 1000 * 60 * 60 * 2
   });
 
   if (user.app_metadata?.role === 'admin') {
@@ -170,6 +171,7 @@ app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
 
 // Route: Serve admin dashboard page
 app.get('/admin/dashboard', verifyAdmin, (req, res) => {
+  console.log('Admin dashboard accessed by:', req.adminUser.email);
   res.sendFile(__dirname + '/public/dashboard.html');
 });
 
