@@ -325,12 +325,20 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
       const { error: uploadError } = await supabase.storage
         .from(process.env.SUPABASE_BUCKET)
         .upload(filename, req.file.buffer, {
-          contentType: req.file.mimetype
-        });
+        contentType: req.file.mimetype,
+        metadata: {
+        owner: req.user.id // Set owner to user_id
+        }
+      });
 
       if (uploadError) {
-        console.error('[ERROR] Image upload failed:', uploadError.message);
-        return res.status(500).json({ message: `Image upload failed: ${uploadError.message}` });
+        console.warn('[WARN] Image upload failed, proceeding without image:', uploadError.message);
+      } else {
+        const { data: publicData } = supabase.storage
+          .from(process.env.SUPABASE_BUCKET)
+          .getPublicUrl(filename);
+        fileUrl = publicData?.publicUrl || null;
+        console.log('[INFO] File uploaded successfully:', fileUrl);
       }
 
       const { data: publicData } = supabase.storage
