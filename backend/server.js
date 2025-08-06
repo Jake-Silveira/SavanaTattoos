@@ -29,6 +29,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.set('trust proxy', 1); // Trust Render's proxy
 
+// Redirect non-www to www
+app.use((req, res, next) => {
+  if (req.headers.host === 'ravensnest.ink') {
+    console.log('[INFO] Redirecting non-www to www', { path: req.path, ip: req.ip });
+    return res.redirect(301, `https://www.ravensnest.ink${req.originalUrl}`);
+  }
+  next();
+});
+
 // Multer Setup for file uploads
 const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
@@ -47,7 +56,7 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
-// Helper to extract Bearer token from Authorization header or cookie
+// Helper to extract Bearer token from Authorization header, cookie, or query param
 function getTokenFromHeaderOrCookie(req) {
   const auth = req.headers['authorization'];
   if (auth) {
@@ -61,6 +70,10 @@ function getTokenFromHeaderOrCookie(req) {
     console.log('[DEBUG] Token found in cookie', { path: req.path, ip: req.ip, cookie: req.cookies.access_token });
     return req.cookies.access_token;
   }
+  if (req.query.token) {
+    console.log('[DEBUG] Token found in query param', { path: req.path, ip: req.ip });
+    return req.query.token;
+  }
   return null;
 }
 
@@ -68,7 +81,7 @@ function getTokenFromHeaderOrCookie(req) {
 const verifyAdmin = async (req, res, next) => {
   const token = getTokenFromHeaderOrCookie(req);
   if (!token) {
-    console.warn('[WARN] No token provided', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies });
+    console.warn('[WARN] No token provided', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies, query: req.query });
     return res.status(401).json({ error: 'Unauthorized: No token provided' });
   }
 
@@ -82,7 +95,7 @@ const verifyAdmin = async (req, res, next) => {
     return res.status(403).json({ error: 'Forbidden: Admin access required' });
   }
 
-  console.log('[INFO] Admin verified', { userId: data.user.id, path: req.path });
+  console.log('[INFO] Admin verified', { userId: data.user.id, path: req.path, ip: req.ip });
   req.adminUser = data.user;
   next();
 };
@@ -108,8 +121,8 @@ const verifyUser = async (req, res, next) => {
 
 // Debug route
 app.get('/debug/headers', (req, res) => {
-  console.log('[DEBUG] Headers and cookies received', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies });
-  res.json({ headers: req.headers, cookies: req.cookies });
+  console.log('[DEBUG] Headers and cookies received', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies, query: req.query });
+  res.json({ headers: req.headers, cookies: req.cookies, query: req.query });
 });
 
 // POST /sign-in
@@ -132,17 +145,17 @@ app.post('/sign-in', async (req, res) => {
     res.cookie('access_token', session.access_token, {
       httpOnly: true,
       secure: true, // Required for HTTPS
-      sameSite: 'lax', // Allow navigation
+      sameSite: 'none', // Allow cross-site for www redirect
       maxAge: session.expires_in * 1000,
       path: '/',
-      domain: 'ravensnest.ink' // Explicitly set to non-www
+      domain: '.ravensnest.ink' // Support www and non-www
     });
-    console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path, ip: req.ip });
+    console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path, ip: req.ip, token: session.access_token });
   } catch (cookieError) {
     console.error('[ERROR] Failed to set cookie', { error: cookieError.message, path: req.path, ip: req.ip });
   }
 
-  res.json({ user });
+  res.json({ user, access_token: session.access_token }); // Return token for client
 });
 
 // Serve signIn page
@@ -204,7 +217,7 @@ app.get('/', async (req, res) => {
   const role = data.user.app_metadata?.role;
   if (role === 'admin' && req.path !== '/admin/dashboard') {
     console.log('[INFO] Admin user, redirecting to dashboard', { userId: data.user.id, path: req.path, ip: req.ip });
-    return res.redirect(302, '/admin/dashboard');
+    return res.redirect(302, `https://www.ravensnest.ink/admin/dashboard?token=${token}`);
   } else {
     console.log('[INFO] Non-admin user or already on dashboard, serving index.html', { userId: data.user.id, path: req.path, ip: req.ip });
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -270,7 +283,7 @@ app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) =>
     }
 
     const validEmail = validator.isEmail(email);
-    if (!placement || !size || !desc || !firstName || !lastName || !emailINY || !validEmail) {
+    if (!placement || !size || !desc || !firstName || !lastName || !email || !validEmail) {
       console.warn('[WARN] Missing or invalid fields');
       return res.status(400).json({ message: 'Missing or invalid required fields.' });
     }

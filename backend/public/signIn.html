@@ -136,18 +136,25 @@
 
         console.log('[INFO] Initiating sign-in', { email });
 
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        const response = await fetch('https://www.ravensnest.ink/sign-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include'
+        });
 
-        if (error) {
-          showToast('Login failed: ' + error.message);
-          console.error('[ERROR] Login failed', { error: error.message, email });
+        const { user, access_token, error } = await response.json();
+
+        if (error || !response.ok) {
+          showToast('Login failed: ' + (error?.message || 'Invalid credentials'));
+          console.error('[ERROR] Login failed', { error: error?.message, email });
           button.disabled = false;
           return;
         }
 
-        if (data.session?.access_token) {
-          sessionStorage.setItem('access_token', data.session.access_token);
-          console.log('[INFO] Token stored in sessionStorage', { token: data.session.access_token, email });
+        if (access_token) {
+          sessionStorage.setItem('access_token', access_token);
+          console.log('[INFO] Token stored in sessionStorage', { token: access_token, email });
         } else {
           showToast('Login failed: No access token');
           console.error('[ERROR] No access token received', { email });
@@ -157,7 +164,7 @@
 
         showToast('Signed in! Redirecting...');
 
-        const { data: userData, error: userError } = await supabase.auth.getUser();
+        const { data: userData, error: userError } = await supabase.auth.getUser(access_token);
         if (userError) {
           showToast('Failed to fetch user info: ' + userError.message);
           console.error('[ERROR] Failed to fetch user info', { error: userError.message, email });
@@ -180,10 +187,10 @@
 
         if (role === 'admin') {
           console.log('[INFO] Redirecting to admin dashboard', { email });
-          window.location.href = 'https://www.ravensnest.ink/admin/dashboard';
+          window.location.href = `https://www.ravensnest.ink/admin/dashboard?token=${access_token}`;
         } else {
           console.log('[INFO] Redirecting to index', { email });
-          window.location.href = 'https://www.ravensnest.ink/index.html';
+          window.location.href = `https://www.ravensnest.ink/index.html?token=${access_token}`;
         }
         button.disabled = false;
       };

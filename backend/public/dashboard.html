@@ -103,7 +103,15 @@
       }
 
       async function authFetch(url, options = {}) {
-        const token = sessionStorage.getItem('access_token');
+        let token = sessionStorage.getItem('access_token');
+        if (!token) {
+          const urlParams = new URLSearchParams(window.location.search);
+          token = urlParams.get('token');
+          if (token) {
+            sessionStorage.setItem('access_token', token);
+            console.log('[INFO] Token retrieved from query param', { token });
+          }
+        }
         if (!options.headers) options.headers = {};
         if (token) {
           options.headers['Authorization'] = `Bearer ${token}`;
@@ -123,7 +131,15 @@
       }
 
       // Check authentication on load
-      const token = sessionStorage.getItem('access_token');
+      let token = sessionStorage.getItem('access_token');
+      if (!token) {
+        const urlParams = new URLSearchParams(window.location.search);
+        token = urlParams.get('token');
+        if (token) {
+          sessionStorage.setItem('access_token', token);
+          console.log('[INFO] Token retrieved from query param', { token });
+        }
+      }
       console.log('[DEBUG] Token in sessionStorage', { hasToken: !!token });
       if (!token) {
         showToast('No session found. Please log in.');
