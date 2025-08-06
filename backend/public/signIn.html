@@ -101,25 +101,29 @@
           form === 'login' ? 'Sign In' : form === 'signup' ? 'Sign Up' : 'Reset Password';
       }
 
-      window.handleLogin = async function(event) {
-        event.preventDefault();
-        const email = document.getElementById("loginEmail").value;
-        const password = document.getElementById("loginPassword").value;
+window.handleLogin = async function(event) {
+  event.preventDefault();
+  const email = document.getElementById("loginEmail").value;
+  const password = document.getElementById("loginPassword").value;
 
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({ email, password });
 
-        if (error) return showToast("Login failed: " + error.message);
+  if (signInError) return showToast("Login failed: " + signInError.message);
+  showToast("Signed in! Redirecting...");
 
-        const role = data.user?.user_metadata?.role || 'user';
+  // Get the fresh user session
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
 
-        showToast("Welcome!");
+  if (userError) return showToast("Failed to fetch user data.");
+  
+  const role = user?.user_metadata?.role || "user";
 
-        if (role === 'admin') {
-          window.location.href = "/dashboard.html";
-        } else {
-          window.location.href = "/form.html";
-        }
-      }
+  if (role === "admin") {
+    window.location.href = "/dashboard.html";
+  } else {
+    window.location.href = "/index.html";
+  }
+};
 
       window.handleSignup = async function(event) {
         event.preventDefault();
