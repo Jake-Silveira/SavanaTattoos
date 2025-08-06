@@ -2,105 +2,180 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin Dashboard</title>
   <style>
-    body { font-family: sans-serif; padding: 2rem; }
-    table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    h2 { margin-top: 2rem; }
+    body {
+      font-family: sans-serif;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    h2, h3 {
+      text-align: center;
+    }
+    #toast {
+      background: #333;
+      color: white;
+      padding: 1em;
+      display: none;
+      margin-bottom: 1em;
+      border-radius: 4px;
+      text-align: center;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 2rem;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 0.5rem;
+      text-align: left;
+    }
+    th {
+      background: #f4f4f4;
+    }
+    button {
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+    .error {
+      color: red;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <h1>Welcome, Admin</h1>
+  <h2>Admin Dashboard</h2>
+  <button onclick="logout()">Logout</button>
+  <div id="toast"></div>
 
-  <h2>Inquiries</h2>
+  <h3>Inquiries</h3>
   <table id="inquiriesTable">
     <thead>
       <tr>
-        <th>Name</th><th>Email</th><th>Phone</th><th>Placement</th><th>Size</th><th>Description</th><th>Availability From</th><th>Availability To</th><th>Image Link</th><th>TimeStamp</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Placement</th>
+        <th>Size</th>
+        <th>Description</th>
+        <th>Dates</th>
+        <th>Image</th>
+        <th>Created</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="inquiriesBody"></tbody>
   </table>
 
-  <h2>Abuse Logs</h2>
-  <table id="abuseTable">
+  <h3>Abuse Logs</h3>
+  <table id="abuseLogsTable">
     <thead>
       <tr>
-        <th>IP</th><th>Reason</th><th>Timestamp</th>
+        <th>IP Address</th>
+        <th>Reason</th>
+        <th>Created</th>
       </tr>
     </thead>
-    <tbody></tbody>
+    <tbody id="abuseLogsBody"></tbody>
   </table>
 
   <script>
-function formatRow(row, fields) {
-  return fields.map(field => {
-    const td = document.createElement('td');
-     if (field === 'full_name') {
-      td.textContent = `${row.first_name || ''} ${row.last_name || ''}`.trim();
-    } else if (field === 'created_at' || field === 'timestamp') {
-      td.textContent = new Date(row[field]).toLocaleString();
-    } else if (field === 'image_url' && row[field]) {
-      const a = document.createElement('a');
-      a.href = row[field];
-      a.textContent = 'View Image';
-      a.target = '_blank';
-      td.appendChild(a);
-    } else {
-      td.textContent = row[field] || '';
-    }
-    return td;
-  });
-}
+    document.addEventListener('DOMContentLoaded', async () => {
+      const toastEl = document.getElementById('toast');
 
-async function fetchData(url, tableId, fields) {
-  try {
-    const token = localStorage.getItem('access_token');
-    const res = await fetch(url, {
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      credentials: 'include' // Optional, keep if you plan to use cookies later
+      function showToast(message) {
+        toastEl.textContent = message;
+        toastEl.style.display = 'block';
+        setTimeout(() => {
+          toastEl.style.display = 'none';
+        }, 3000);
+      }
+
+      async function authFetch(url, options = {}) {
+        const token = sessionStorage.getItem('access_token');
+        if (!options.headers) options.headers = {};
+        if (token) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+        const response = await fetch(url, options);
+        if (response.status === 401 || response.status === 403) {
+          showToast('Session expired or unauthorized. Please log in again.');
+          setTimeout(() => {
+            window.location.href = '/signIn.html';
+          }, 2000);
+        }
+        return response;
+      }
+
+      async function fetchInquiries() {
+        try {
+          const response = await authFetch('/auth/api/inquiries');
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          const inquiries = await response.json();
+          const tbody = document.getElementById('inquiriesBody');
+          tbody.innerHTML = '';
+          inquiries.forEach(inquiry => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${inquiry.first_name} ${inquiry.last_name}</td>
+              <td>${inquiry.email}</td>
+              <td>${inquiry.phone || 'N/A'}</td>
+              <td>${inquiry.placement}</td>
+              <td>${inquiry.size}</td>
+              <td>${inquiry.description}</td>
+              <td>${new Date(inquiry.date_from).toLocaleDateString()} - ${new Date(inquiry.date_to).toLocaleDateString()}</td>
+              <td>${inquiry.image_url ? `<a href="${inquiry.image_url}" target="_blank">View</a>` : 'N/A'}</td>
+              <td>${new Date(inquiry.created_at).toLocaleString()}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        } catch (err) {
+          showToast('Failed to load inquiries: ' + err.message);
+        }
+      }
+
+      async function fetchAbuseLogs() {
+        try {
+          const response = await authFetch('/auth/api/abuse-logs');
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          const logs = await response.json();
+          const tbody = document.getElementById('abuseLogsBody');
+          tbody.innerHTML = '';
+          logs.forEach(log => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+              <td>${log.ip_address}</td>
+              <td>${log.reason}</td>
+              <td>${new Date(log.created_at).toLocaleString()}</td>
+            `;
+            tbody.appendChild(row);
+          });
+        } catch (err) {
+          showToast('Failed to load abuse logs: ' + err.message);
+        }
+      }
+
+      window.logout = function() {
+        sessionStorage.removeItem('access_token');
+        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+        window.location.href = '/signIn.html';
+      };
+
+      // Fetch data on load
+      await Promise.all([fetchInquiries(), fetchAbuseLogs()]);
     });
-
-    if (!res.ok) {
-      const contentType = res.headers.get("content-type") || "";
-      const errorMessage = contentType.includes("application/json")
-        ? (await res.json()).error || res.statusText
-        : await res.text();
-
-      console.error(`Error fetching ${url}:`, errorMessage);
-      return;
-    }
-
-    const data = await res.json();
-
-    if (!Array.isArray(data)) {
-      console.warn(`Unexpected response format from ${url}:`, data);
-      return;
-    }
-
-    const table = document.getElementById(tableId);
-    const tbody = table.querySelector('tbody');
-    tbody.innerHTML = '';
-
-    data.forEach(row => {
-      const tr = document.createElement('tr');
-      const formatted = formatRow(row, fields);
-      formatted.forEach(td => tr.appendChild(td));
-      tbody.appendChild(tr);
-    });
-  } catch (err) {
-    console.error(`Failed to fetch ${url}:`, err);
-  }
-}
-
-
-
-    fetchData('/auth/api/inquiries', 'inquiriesTable', ['full_name', 'email', 'phone', 'placement', 'size', 'description', 'date_from', 'date_to', 'image_url', 'created_at']);
-    fetchData('/auth/api/abuse-logs', 'abuseTable', ['ip_address', 'reason', 'created_at']);
   </script>
 </body>
 </html>

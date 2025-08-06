@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sign In</title>
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <style>
     body {
       font-family: sans-serif;
@@ -30,6 +30,10 @@
       padding: 0.5rem;
       cursor: pointer;
     }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
     .btn-group {
       display: flex;
       justify-content: space-between;
@@ -41,6 +45,9 @@
     }
     .btn-group button:last-child {
       margin-right: 0;
+    }
+    input:invalid {
+      border: 1px solid red;
     }
   </style>
 </head>
@@ -64,7 +71,7 @@
   <!-- Sign Up Form -->
   <form id="signupForm" style="display:none" onsubmit="handleSignup(event)">
     <input type="email" id="signupEmail" placeholder="Email" required />
-    <input type="password" id="signupPassword" placeholder="Password" required />
+    <input type="password" id="signupPassword" placeholder="Password" required minlength="8" />
     <button type="submit">Sign Up</button>
   </form>
 
@@ -72,6 +79,13 @@
   <form id="resetForm" style="display:none" onsubmit="handleReset(event)">
     <input type="email" id="resetEmail" placeholder="Email" required />
     <button type="submit">Send Reset Link</button>
+  </form>
+
+  <!-- Update Password Form -->
+  <form id="updatePasswordForm" style="display:none" onsubmit="handleUpdatePassword(event)">
+    <input type="password" id="newPassword" placeholder="New Password" required minlength="8" />
+    <input type="password" id="confirmPassword" placeholder="Confirm Password" required minlength="8" />
+    <button type="submit">Update Password</button>
   </form>
 
   <script>
@@ -91,72 +105,117 @@
       };
 
       window.showForm = function(form) {
-        ['login', 'signup', 'reset'].forEach(f => {
+        ['login', 'signup', 'reset', 'updatePassword'].forEach(f => {
           document.getElementById(f + 'Form').style.display = 'none';
         });
         document.getElementById(form + 'Form').style.display = 'flex';
         document.getElementById('formTitle').textContent =
           form === 'login' ? 'Sign In' :
           form === 'signup' ? 'Sign Up' :
-          'Reset Password';
+          form === 'reset' ? 'Reset Password' : 'Update Password';
       };
+
+      function validatePassword(password) {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        if (password.length < minLength || !hasUpperCase || !hasLowerCase || !hasNumbers) {
+          return 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+        }
+        return null;
+      }
 
       window.handleLogin = async function(event) {
         event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
 
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
         if (error) {
-          return showToast('Login failed: ' + error.message);
+          showToast('Login failed: ' + error.message);
+          button.disabled = false;
+          return;
         }
 
-        // Save token for future authenticated requests
         if (data.session?.access_token) {
-          localStorage.setItem('access_token', data.session.access_token);
+          sessionStorage.setItem('access_token', data.session.access_token);
+          console.log('Token stored:', data.session.access_token);
+        } else {
+          showToast('Login failed: No access token');
+          button.disabled = false;
+          return;
         }
 
-        showToast('Signed in! Redirecting...');
+        showToast('Signed in! Verifying access...');
 
-        // Get user info to check role
         const { data: userData, error: userError } = await supabase.auth.getUser();
-
         if (userError) {
-          return showToast('Failed to fetch user info.');
+          showToast('Failed to fetch user info: ' + userError.message);
+          button.disabled = false;
+          return;
         }
 
         const role = userData.user?.app_metadata?.role || 'user';
 
         if (role === 'admin') {
-          window.location.href = '/admin/dashboard';
+          try {
+            const response = await authFetch('/admin/dashboard', { method: 'GET' });
+            if (response.ok) {
+              window.location.href = '/admin/dashboard';
+            } else {
+              const errorData = await response.json();
+              showToast('Access denied: ' + errorData.error);
+            }
+          } catch (err) {
+            showToast('Failed to access dashboard: ' + err.message);
+          }
         } else {
           window.location.href = '/index.html';
         }
+        button.disabled = false;
       };
 
       window.handleSignup = async function(event) {
         event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
+
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+          showToast(passwordError);
+          button.disabled = false;
+          return;
+        }
 
         const { error } = await supabase.auth.signUp({
           email,
           password,
-          options: {
-            data: { role: 'user' }
-          }
+          options: { data: { role: 'user' } }
         });
 
         if (error) {
-          return showToast('Sign-up failed: ' + error.message);
+          showToast('Sign-up failed: ' + error.message);
+          button.disabled = false;
+          return;
         }
 
         showToast('Sign-up successful! Check your email to confirm.');
+        button.disabled = false;
       };
 
       window.handleReset = async function(event) {
         event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
         const email = document.getElementById('resetEmail').value;
 
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -164,10 +223,46 @@
         });
 
         if (error) {
-          return showToast('Reset failed: ' + error.message);
+          showToast('Reset failed: ' + error.message);
+          button.disabled = false;
+          return;
         }
 
         showToast('Reset email sent!');
+        button.disabled = false;
+      };
+
+      window.handleUpdatePassword = async function(event) {
+        event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
+        const newPass = document.getElementById('newPassword').value;
+        const confirmPass = document.getElementById('confirmPassword').value;
+
+        if (newPass !== confirmPass) {
+          showToast('Passwords do not match.');
+          button.disabled = false;
+          return;
+        }
+
+        const passwordError = validatePassword(newPass);
+        if (passwordError) {
+          showToast(passwordError);
+          button.disabled = false;
+          return;
+        }
+
+        const { error } = await supabase.auth.updateUser({ password: newPass });
+        if (error) {
+          showToast('Failed to update password: ' + error.message);
+          button.disabled = false;
+          return;
+        }
+
+        showToast('Password updated! You can now log in.');
+        showForm('login');
+        button.disabled = false;
       };
 
       // Handle password reset via recovery link
@@ -175,27 +270,19 @@
       const isReset = url.searchParams.get('type') === 'recovery';
 
       if (isReset) {
-        (async () => {
-          const newPass = prompt('Enter a new password:');
-          if (!newPass) return;
+        showForm('updatePassword');
+      }
 
-          const { error } = await supabase.auth.updateUser({ password: newPass });
-          if (error) return showToast('Failed to update password.');
-          showToast('Password updated! You can now log in.');
-        })();
+      // Helper: fetch with Authorization header
+      async function authFetch(url, options = {}) {
+        const token = sessionStorage.getItem('access_token');
+        if (!options.headers) options.headers = {};
+        if (token) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return fetch(url, options);
       }
     });
-
-    // Helper: fetch with Authorization header
-    async function authFetch(url, options = {}) {
-      const token = localStorage.getItem('access_token');
-      if (!options.headers) options.headers = {};
-      if (token) {
-        options.headers['Authorization'] = `Bearer ${token}`;
-      }
-      options.credentials = 'include'; // if your backend uses cookies separately
-      return fetch(url, options);
-    }
   </script>
 </body>
 </html>
