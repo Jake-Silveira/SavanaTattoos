@@ -6,7 +6,23 @@ body {
     display: block;
     margin: 0;
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 20%, rgba(63, 79, 68, .65) 100%);
+    background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 20%, rgba(63, 79, 68, 0.65) 100%);
+    min-height: 100vh;
+}
+
+#titleBackground {
+    background-image: url('/images/background.gif');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    border-style: none;
+    overflow: hidden;
+    width: 100%;
+    height: 20vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
 }
 
 #titleLogo {
@@ -39,6 +55,9 @@ body {
     align-items: center;
     justify-content: space-between;
     padding: 0 1rem;
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 #menuBtn {
@@ -51,48 +70,40 @@ body {
     border-style: none;
     background: none;
     color: #030c05d9;
-    padding: 0;
+    padding: 0.5rem 1rem;
     cursor: pointer;
     font-weight: 600;
-    font-size: 30px;
+    font-size: 1.5rem;
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
     min-width: 20%;
     max-width: 300px;
+    transition: color 0.3s;
 }
 
-#titleBackground {
-    background-image: url('images/background.gif');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: cover;
-    border-style: none;
-    overflow: hidden;
-    width: 100%;
-    height: 20vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.title {
-    min-width: 344px;
-    height: 80%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 20%;
+.navBtn:hover {
+    color: #aaa;
+    text-decoration: underline;
 }
 
 .contentContainer {
     overflow: auto;
     height: 80vh;
     width: 100%;
-    background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 20%, rgba(63, 79, 68, .65) 100%);
+    background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 20%, rgba(63, 79, 68, 0.65) 100%);
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
+    padding: 2rem 1rem;
+}
+
+.signInLabel {
+    font-size: 2rem;
+    color: rgb(3, 12, 5);
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #aaa;
+    margin-bottom: 0.5rem;
+    text-align: center;
 }
 
 .signInForm {
@@ -102,11 +113,12 @@ body {
     justify-content: center;
     min-width: 270px;
     max-width: 90%;
-    height: auto;
-    background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 0%, rgba(63, 79, 68, .65) 100%);
-    padding: 20px;
+    width: 400px;
+    background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 0%, rgba(63, 79, 68, 0.65) 100%);
+    padding: 2rem;
     border-radius: 20px;
     border: solid 5px rgb(3, 12, 5);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .signInForm fieldset {
@@ -115,46 +127,39 @@ body {
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    border-radius: 10px;
-    border-color: rgba(99, 70, 64, .65);
-    border-style: solid;
-}
-
-.signInLabel {
-    font-size: 2rem;
-    color: rgb(3, 12, 5);
-    -webkit-text-stroke-width: 1px;
-    -webkit-text-stroke-color: #aaa;
+    border: none;
+    padding: 0;
+    margin: 0;
 }
 
 .signInInput {
     border-radius: 20px;
-    padding: 0.5rem;
+    padding: 0.75rem;
     font-size: 1rem;
-    width: 90%;
-    background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 0%, rgba(63, 79, 68, .65) 100%);
+    width: 100%;
+    background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 0%, rgba(63, 79, 68, 0.65) 100%);
     border: none;
     color: rgb(3, 12, 5);
+    margin-bottom: 1rem;
+    box-sizing: border-box;
+}
+
+.signInInput:focus {
+    outline: none;
+    border: 2px solid #aaa;
 }
 
 .required:after {
     content: "*";
     display: inline;
     color: red;
-}
-
-.error-msg {
-    color: red;
-    font-size: 0.9em;
-    margin-top: 2px;
-    display: block;
+    margin-left: 0.25rem;
 }
 
 #signInSubmitBtn {
     width: 20rem;
-    border-radius: 20px;
-    padding: 0.5rem;
-    font-size: 1rem;
+    padding: 0.75rem;
+    font-size: 1.2rem;
     background-color: #030c05d9;
     color: #aaa;
     cursor: pointer;
@@ -162,7 +167,8 @@ body {
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
     border: none;
-    margin-top: 1rem;
+    border-radius: 20px;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 #signInSubmitBtn:hover {
@@ -201,4 +207,17 @@ a {
 a:hover {
     text-decoration: underline;
     color: #aaa;
+}
+
+.btn-group {
+    display: flex;
+    justify-content: space-between;
+    margin: 1rem 0;
+    width: 100%;
+    max-width: 400px;
+}
+
+.btn-group .navBtn {
+    flex: 1;
+    margin: 0 0.5rem;
 }
