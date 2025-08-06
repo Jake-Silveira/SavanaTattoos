@@ -57,8 +57,12 @@ function formatRow(row, fields) {
 
 async function fetchData(url, tableId, fields) {
   try {
+    const token = localStorage.getItem('access_token');
     const res = await fetch(url, {
-      credentials: 'include' // ensure cookies are sent
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      credentials: 'include' // Optional, keep if you plan to use cookies later
     });
 
     if (!res.ok) {
