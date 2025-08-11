@@ -8,9 +8,8 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 </head>
 <body>
-    <div class="navBtnContainer">
-      <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
-    </div>
+  <div class="navBtnContainer">
+    <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
   </div>
   <div class="contentContainer">
     <h2 id="formTitle" class="signInLabel">Sign In</h2>
@@ -76,9 +75,7 @@
       window.showToast = function(message) {
         toastEl.textContent = message;
         toastEl.classList.add('show');
-        setTimeout(() => {
-          toastEl.classList.remove('show');
-        }, 3000);
+        setTimeout(() => toastEl.classList.remove('show'), 3000);
       };
 
       window.showForm = function(form) {
@@ -150,72 +147,54 @@
           console.error('[ERROR] Failed to debug headers', { error: debugError.message, email });
         }
 
-        if (role === 'admin') {
-          console.log('[INFO] Redirecting to admin dashboard', { email });
-          window.location.href = `https://www.ravensnest.ink/admin/dashboard?token=${access_token}`;
-        } else {
-          console.log('[INFO] Redirecting to index', { email });
-          window.location.href = `https://www.ravensnest.ink/index.html?token=${access_token}`;
-        }
+        const redirectUrl = role === 'admin' ? 'https://www.ravensnest.ink/admin/dashboard' : 'https://www.ravensnest.ink/index.html';
+        window.location.href = `${redirectUrl}?token=${access_token}`;
         button.disabled = false;
       };
-      
-window.handleSignup = async function(event) {
-  event.preventDefault();
-  const button = event.target.querySelector('button[type="submit"]');
-  button.disabled = true;
 
-  const email = document.getElementById('signupEmail').value;
-  const password = document.getElementById('signupPassword').value;
+      window.handleSignup = async function(event) {
+        event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
 
-  console.log('[INFO] Initiating sign-up', { email });
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
 
-  const passwordError = validatePassword(password);
-  if (passwordError) {
-    showToast(passwordError);
-    console.error('[ERROR] Password validation failed', { error: passwordError, email });
-    button.disabled = false;
-    return;
-  }
+        console.log('[INFO] Initiating sign-up', { email });
 
-  try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { role: 'user' }, emailRedirectTo: 'https://www.ravensnest.ink/signIn.html' }
-    });
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+          showToast(passwordError);
+          console.error('[ERROR] Password validation failed', { error: passwordError, email });
+          button.disabled = false;
+          return;
+        }
 
-    console.log('[DEBUG] Supabase signUp response', { data, error });
+        try {
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { role: 'user' }, emailRedirectTo: 'https://www.ravensnest.ink/signIn.html' }
+          });
 
-    if (error) {
-      showToast('Sign-up failed: ' + error.message);
-      console.error('[ERROR] Sign-up failed', { error: error.message, email, data });
-      button.disabled = false;
-      return;
-    }
+          console.log('[DEBUG] Supabase signUp response', { data, error });
 
-    // Send custom confirmation email via Resend
-    const confirmResponse = await fetch('https://www.ravensnest.ink/send-confirmation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    });
+          if (error) {
+            showToast('Sign-up failed: ' + error.message);
+            console.error('[ERROR] Sign-up failed', { error: error.message, email, data });
+            button.disabled = false;
+            return;
+          }
 
-    const confirmData = await confirmResponse.json();
-    if (!confirmResponse.ok) {
-      showToast('Sign-up successful, but confirmation email failed: ' + confirmData.error);
-      console.warn('[WARN] Confirmation email failed', { error: confirmData.error, email });
-    } else {
-      showToast('Sign-up successful! Check your email to confirm.');
-      console.log('[INFO] Sign-up successful with confirmation email', { email, data });
-    }
-    button.disabled = false;
-  } catch (e) {
-    showToast('Sign-up error: ' + e.message);
-    console.error('[ERROR] Unexpected sign-up error', { error: e.message, email });
-    button.disabled = false;
-  }
-};
+          showToast('Sign-up successful! Check your email to confirm.');
+          console.log('[INFO] Sign-up successful', { email, data });
+          button.disabled = false;
+        } catch (e) {
+          showToast('Sign-up error: ' + e.message);
+          console.error('[ERROR] Unexpected sign-up error', { error: e.message, email });
+          button.disabled = false;
+        }
+      };
 
       window.handleReset = async function(event) {
         event.preventDefault();
@@ -237,7 +216,7 @@ window.handleSignup = async function(event) {
           return;
         }
 
-        showToast('Reset email sent!');
+        showToast('Reset email sent! Check your inbox.');
         console.log('[INFO] Reset email sent', { email });
         button.disabled = false;
       };
@@ -301,18 +280,14 @@ window.handleSignup = async function(event) {
       async function authFetch(url, options = {}) {
         const token = sessionStorage.getItem('access_token');
         if (!options.headers) options.headers = {};
-        if (token) {
-          options.headers['Authorization'] = `Bearer ${token}`;
-        }
+        if (token) options.headers['Authorization'] = `Bearer ${token}`;
         options.credentials = 'include';
         console.log('[DEBUG] authFetch', { url, hasToken: !!token });
         return fetch(url, options);
       }
 
-      // Placeholder for menu functionality
       window.openMenu = function() {
         console.log('[INFO] Menu button clicked');
-        // Add modal menu logic here if needed
       };
     });
   </script>
