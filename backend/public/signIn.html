@@ -160,41 +160,54 @@
         button.disabled = false;
       };
 
-      window.handleSignup = async function(event) {
-        event.preventDefault();
-        const button = event.target.querySelector('button[type="submit"]');
-        button.disabled = true;
+window.handleSignup = async function(event) {
+  event.preventDefault();
+  const button = event.target.querySelector('button[type="submit"]');
+  button.disabled = true;
 
-        const email = document.getElementById('signupEmail').value;
-        const password = document.getElementById('signupPassword').value;
+  const email = document.getElementById('signupEmail').value;
+  const password = document.getElementById('signupPassword').value;
 
-        console.log('[INFO] Initiating sign-up', { email });
+  console.log('[INFO] Initiating sign-up', { email });
 
-        const passwordError = validatePassword(password);
-        if (passwordError) {
-          showToast(passwordError);
-          console.error('[ERROR] Password validation failed', { error: passwordError, email });
-          button.disabled = false;
-          return;
-        }
+  const passwordError = validatePassword(password);
+  if (passwordError) {
+    showToast(passwordError);
+    console.error('[ERROR] Password validation failed', { error: passwordError, email });
+    button.disabled = false;
+    return;
+  }
 
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: { data: { role: 'user' } }
-        });
+  try {
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { role: 'user' }, emailRedirectTo: 'https://www.ravensnest.ink/signIn.html' }
+    });
 
-        if (error) {
-          showToast('Sign-up failed: ' + error.message);
-          console.error('[ERROR] Sign-up failed', { error: error.message, email });
-          button.disabled = false;
-          return;
-        }
+    if (error) {
+      showToast('Sign-up failed: ' + error.message);
+      console.error('[ERROR] Sign-up failed', { error: error.message, email, data });
+      button.disabled = false;
+      return;
+    }
 
-        showToast('Sign-up successful! Check your email to confirm.');
-        console.log('[INFO] Sign-up successful', { email });
-        button.disabled = false;
-      };
+    // Send custom confirmation email via Resend
+    await fetch('https://www.ravensnest.ink/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+
+    showToast('Sign-up successful! Check your email to confirm.');
+    console.log('[INFO] Sign-up successful', { email, data });
+    button.disabled = false;
+  } catch (e) {
+    showToast('Sign-up error: ' + e.message);
+    console.error('[ERROR] Unexpected sign-up error', { error: e.message, email });
+    button.disabled = false;
+  }
+};
 
       window.handleReset = async function(event) {
         event.preventDefault();

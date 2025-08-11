@@ -244,6 +244,33 @@ const formLimiter = rateLimit({
   }
 });
 
+app.post('/send-confirmation', async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    await axios.post(
+      'https://api.resend.com/emails',
+      {
+        from: process.env.FROM_EMAIL,
+        to: email,
+        subject: 'Confirm Your Account',
+        html: '<p>Please confirm your email by clicking <a href="https://www.ravensnest.ink/signIn.html?type=recovery">here</a>.</p>'
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    console.log('[INFO] Confirmation email sent', { email });
+    res.json({ message: 'Confirmation email sent' });
+  } catch (error) {
+    console.error('[ERROR] Failed to send confirmation email', { error: error.message, response: error.response?.data });
+    res.status(500).json({ error: 'Failed to send confirmation email' });
+  }
+});
+
 // Form submission endpoint
 app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (req, res) => {
   try {
