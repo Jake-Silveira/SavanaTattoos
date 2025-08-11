@@ -159,7 +159,7 @@
         }
         button.disabled = false;
       };
-
+      
 window.handleSignup = async function(event) {
   event.preventDefault();
   const button = event.target.querySelector('button[type="submit"]');
@@ -185,6 +185,8 @@ window.handleSignup = async function(event) {
       options: { data: { role: 'user' }, emailRedirectTo: 'https://www.ravensnest.ink/signIn.html' }
     });
 
+    console.log('[DEBUG] Supabase signUp response', { data, error });
+
     if (error) {
       showToast('Sign-up failed: ' + error.message);
       console.error('[ERROR] Sign-up failed', { error: error.message, email, data });
@@ -205,7 +207,7 @@ window.handleSignup = async function(event) {
       console.warn('[WARN] Confirmation email failed', { error: confirmData.error, email });
     } else {
       showToast('Sign-up successful! Check your email to confirm.');
-      console.log('[INFO] Sign-up successful', { email, data });
+      console.log('[INFO] Sign-up successful with confirmation email', { email, data });
     }
     button.disabled = false;
   } catch (e) {
