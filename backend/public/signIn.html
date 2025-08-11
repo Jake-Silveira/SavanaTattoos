@@ -193,14 +193,20 @@ window.handleSignup = async function(event) {
     }
 
     // Send custom confirmation email via Resend
-    await fetch('https://www.ravensnest.ink/send-confirmation', {
+    const confirmResponse = await fetch('https://www.ravensnest.ink/send-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email })
     });
 
-    showToast('Sign-up successful! Check your email to confirm.');
-    console.log('[INFO] Sign-up successful', { email, data });
+    const confirmData = await confirmResponse.json();
+    if (!confirmResponse.ok) {
+      showToast('Sign-up successful, but confirmation email failed: ' + confirmData.error);
+      console.warn('[WARN] Confirmation email failed', { error: confirmData.error, email });
+    } else {
+      showToast('Sign-up successful! Check your email to confirm.');
+      console.log('[INFO] Sign-up successful', { email, data });
+    }
     button.disabled = false;
   } catch (e) {
     showToast('Sign-up error: ' + e.message);

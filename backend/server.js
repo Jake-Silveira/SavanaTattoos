@@ -246,9 +246,10 @@ const formLimiter = rateLimit({
 
 app.post('/send-confirmation', async (req, res) => {
   const { email } = req.body;
+  console.log('[DEBUG] send-confirmation called', { email, resendKey: process.env.RESEND_API_KEY, fromEmail: process.env.FROM_EMAIL });
 
   try {
-    await axios.post(
+    const response = await axios.post(
       'https://api.resend.com/emails',
       {
         from: process.env.FROM_EMAIL,
@@ -263,10 +264,15 @@ app.post('/send-confirmation', async (req, res) => {
         }
       }
     );
+    console.log('[DEBUG] Resend API response', { status: response.status, data: response.data });
     console.log('[INFO] Confirmation email sent', { email });
     res.json({ message: 'Confirmation email sent' });
   } catch (error) {
-    console.error('[ERROR] Failed to send confirmation email', { error: error.message, response: error.response?.data });
+    console.error('[ERROR] Failed to send confirmation email', {
+      error: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
     res.status(500).json({ error: 'Failed to send confirmation email' });
   }
 });
