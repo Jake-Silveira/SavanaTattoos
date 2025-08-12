@@ -60,18 +60,18 @@
     </div>
 
     <h3 id="galleryHeader" class="signInLabel">Gallery Management</h3>
-    <div class="image-upload-container">
-      <input type="file" id="galleryUpload" accept="image/jpeg,image/png" class="inquiryInput">
+    <div class="image-management">
+      <input type="file" id="galleryUpload" accept="image/jpeg,image/png" />
       <button class="navBtn" onclick="uploadImage('gallery')">Upload to Gallery</button>
+      <ul id="galleryList" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px;"></ul>
     </div>
-    <ul id="galleryList" class="image-list"></ul>
 
     <h3 id="flashHeader" class="signInLabel">Flash Management</h3>
-    <div class="image-upload-container">
-      <input type="file" id="flashUpload" accept="image/jpeg,image/png" class="inquiryInput">
+    <div class="image-management">
+      <input type="file" id="flashUpload" accept="image/jpeg,image/png" />
       <button class="navBtn" onclick="uploadImage('flash')">Upload to Flash</button>
+      <ul id="flashList" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px;"></ul>
     </div>
-    <ul id="flashList" class="image-list"></ul>
   </div>
 
   <script>
@@ -214,11 +214,12 @@
           const images = await response.json();
           const list = document.getElementById(listId);
           list.innerHTML = '';
-          images.forEach((url, index) => {
+          images.forEach((url) => {
             const li = document.createElement('li');
-            li.className = 'image-list-item';
+            li.style.display = 'inline-block';
+            li.style.margin = '5px';
             li.innerHTML = `
-              <img src="${url}" alt="${bucket} image" style="max-width: 100px; max-height: 100px; object-fit: contain;">
+              <img src="${url}" style="max-width: 100px; max-height: 100px; object-fit: cover;" />
               <button class="navBtn" onclick="deleteImage('${bucket}', '${url.split('/').pop()}')">Delete</button>
             `;
             list.appendChild(li);
@@ -231,11 +232,13 @@
       window.uploadImage = async (bucket) => {
         const fileInput = document.getElementById(`${bucket}Upload`);
         const file = fileInput.files[0];
-        if (!file) return showToast('No file selected');
+        if (!file) {
+          showToast('No file selected');
+          return;
+        }
 
-        const allowedTypes = ['image/jpeg', 'image/png'];
-        if (!allowedTypes.includes(file.type)) {
-          showToast('Only JPG or PNG files are allowed');
+        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+          showToast('Invalid file type. Only JPG or PNG allowed.');
           fileInput.value = '';
           return;
         }
@@ -249,35 +252,33 @@
             method: 'POST',
             body: formData
           });
+          const result = await response.json();
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error);
+            throw new Error(result.error || 'Upload failed');
           }
           showToast('Image uploaded successfully');
           fileInput.value = '';
           loadImages(bucket, `${bucket}List`);
         } catch (err) {
-          showToast(`Upload failed: ${err.message}`);
+          showToast('Upload failed: ' + err.message);
         }
       };
 
       window.deleteImage = async (bucket, filePath) => {
-        if (!confirm(`Are you sure you want to delete ${filePath} from ${bucket}?`)) return;
-
         try {
           const response = await authFetch('https://www.ravensnest.ink/auth/api/delete-image', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ bucket, path: filePath })
           });
+          const result = await response.json();
           if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error);
+            throw new Error(result.error || 'Delete failed');
           }
           showToast('Image deleted successfully');
           loadImages(bucket, `${bucket}List`);
         } catch (err) {
-          showToast(`Delete failed: ${err.message}`);
+          showToast('Delete failed: ' + err.message);
         }
       };
 
@@ -317,7 +318,7 @@
         // Add modal menu logic here if needed
       };
 
-      // Load data
+      // Load all data
       await Promise.all([
         fetchInquiries(),
         fetchAbuseLogs(),
