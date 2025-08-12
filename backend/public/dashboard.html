@@ -92,30 +92,32 @@
         }, 3000);
       }
 
-      async function authFetch(url, options = {}) {
-        let token = sessionStorage.getItem('access_token');
-        if (!token) {
-          const urlParams = new URLSearchParams(window.location.search);
-          token = urlParams.get('token');
-          if (token) {
-            sessionStorage.setItem('access_token', token);
-          }
-        }
-        if (!options.headers) options.headers = {};
-        if (token) {
-          options.headers['Authorization'] = `Bearer ${token}`;
-        }
-        options.credentials = 'include';
-        const response = await fetch(url, options);
-        if (response.status === 401 || response.status === 403) {
-          showToast('Session expired or unauthorized. Please log in again.');
-          setTimeout(() => {
-            window.location.href = 'https://www.ravensnest.ink/signIn.html';
-          }, 2000);
-          throw new Error('Unauthorized');
-        }
-        return response;
-      }
+async function authFetch(url, options = {}) {
+  let token = sessionStorage.getItem('access_token');
+  if (!token) {
+    const urlParams = new URLSearchParams(window.location.search);
+    token = urlParams.get('token');
+    if (token) {
+      sessionStorage.setItem('access_token', token);
+      // Remove token from URL to prevent exposure
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }
+  if (!options.headers) options.headers = {};
+  if (token) {
+    options.headers['Authorization'] = `Bearer ${token}`;
+  }
+  options.credentials = 'include';
+  const response = await fetch(url, options);
+  if (response.status === 401 || response.status === 403) {
+    showToast('Session expired or unauthorized. Please log in again.');
+    setTimeout(() => {
+      window.location.href = 'https://www.ravensnest.ink/signIn.html';
+    }, 2000);
+    throw new Error('Unauthorized');
+  }
+  return response;
+}
 
       let token = sessionStorage.getItem('access_token');
       if (!token) {
