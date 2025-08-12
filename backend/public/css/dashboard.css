@@ -307,7 +307,7 @@ a:hover {
 
 .image-management button {
   padding: 8px 16px;
-  background-color: #4CAF50;
+  background-color: #030c05d9;
   color: white;
   border: none;
   border-radius: 4px;
@@ -315,7 +315,7 @@ a:hover {
 }
 
 .image-management button:hover {
-  background-color: #45a049;
+  background-color: #aaa;
 }
 
 .image-management ul {
@@ -323,7 +323,8 @@ a:hover {
 }
 
 .image-management li {
-  display: inline-block;
+  display: flex;
+  flex-direction: column;
   vertical-align: top;
 }
 
