@@ -6,20 +6,36 @@
   <title>Admin Dashboard</title>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <link rel="stylesheet" href="/css/dashboard.css">
+  <style>
+    .filter-container {
+      margin-bottom: 10px;
+    }
+    .filter-container input {
+      margin-right: 10px;
+      padding: 5px;
+    }
+    .inquiriesTable img {
+      cursor: pointer;
+      max-width: 100px;
+    }
+  </style>
 </head>
 <body>
-  <div id="titleBackground">
-    <img id="titleLogo" src="/images/logo.png" alt="Raven's Nest Logo">
-    <div class="navBtnContainer">
-      <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
-    </div>
-  </div>
+  <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
   <div class="contentContainer">
     <h2 id="dashboardHeader">Admin Dashboard</h2>
     <button class="navBtn" onclick="logout()">Logout</button>
     <div id="toast"></div>
 
     <h3 id="inquiriesHeader" class="signInLabel">Inquiries</h3>
+    <div class="filter-container">
+      <input type="text" id="inquiryFilterName" placeholder="Filter Name" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterEmail" placeholder="Filter Email" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterPhone" placeholder="Filter Phone" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterPlacement" placeholder="Filter Placement" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterSize" placeholder="Filter Size" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterDescription" placeholder="Filter Description" oninput="filterInquiries()">
+    </div>
     <table class="inquiriesTable">
       <thead>
         <tr>
@@ -38,6 +54,10 @@
     </table>
 
     <h3 id="abuseLogsHeader" class="signInLabel">Abuse Logs</h3>
+    <div class="filter-container">
+      <input type="text" id="abuseFilterIP" placeholder="Filter IP Address" oninput="filterAbuseLogs()">
+      <input type="text" id="abuseFilterReason" placeholder="Filter Reason" oninput="filterAbuseLogs()">
+    </div>
     <table class="abuseLogsTable">
       <thead>
         <tr>
@@ -57,6 +77,8 @@
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
       const toastEl = document.getElementById('toast');
+      let inquiriesData = [];
+      let abuseLogsData = [];
 
       function showToast(message) {
         toastEl.textContent = message;
@@ -139,28 +161,32 @@
             const errorData = await response.json();
             throw new Error(errorData.error);
           }
-          const inquiries = await response.json();
-          const tbody = document.getElementById('inquiriesBody');
-          tbody.innerHTML = '';
-          inquiries.forEach(inquiry => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${inquiry.first_name} ${inquiry.last_name}</td>
-              <td>${inquiry.email}</td>
-              <td>${inquiry.phone || 'N/A'}</td>
-              <td>${inquiry.placement}</td>
-              <td>${inquiry.size}</td>
-              <td>${inquiry.description}</td>
-              <td>${new Date(inquiry.date_from).toLocaleDateString()} - ${new Date(inquiry.date_to).toLocaleDateString()}</td>
-              <td>${inquiry.image_url ? `<img src="${inquiry.image_url}" alt="Inquiry Image">` : 'N/A'}</td>
-              <td>${new Date(inquiry.created_at).toLocaleString()}</td>
-            `;
-            tbody.appendChild(row);
-          });
+          inquiriesData = await response.json();
+          renderInquiries(inquiriesData);
         } catch (err) {
           showToast('Failed to load inquiries: ' + err.message);
           console.error('[ERROR] Failed to load inquiries', { error: err.message });
         }
+      }
+
+      function renderInquiries(data) {
+        const tbody = document.getElementById('inquiriesBody');
+        tbody.innerHTML = '';
+        data.forEach(inquiry => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${inquiry.first_name} ${inquiry.last_name}</td>
+            <td>${inquiry.email}</td>
+            <td>${inquiry.phone || 'N/A'}</td>
+            <td>${inquiry.placement}</td>
+            <td>${inquiry.size}</td>
+            <td>${inquiry.description}</td>
+            <td>${new Date(inquiry.date_from).toLocaleDateString()} - ${new Date(inquiry.date_to).toLocaleDateString()}</td>
+            <td>${inquiry.image_url ? `<a href="${inquiry.image_url}" target="_blank"><img src="${inquiry.image_url}" alt="Inquiry Image"></a>` : 'N/A'}</td>
+            <td>${new Date(inquiry.created_at).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
       }
 
       async function fetchAbuseLogs() {
@@ -170,22 +196,58 @@
             const errorData = await response.json();
             throw new Error(errorData.error);
           }
-          const logs = await response.json();
-          const tbody = document.getElementById('abuseLogsBody');
-          tbody.innerHTML = '';
-          logs.forEach(log => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td>${log.ip_address}</td>
-              <td>${log.reason}</td>
-              <td>${new Date(log.created_at).toLocaleString()}</td>
-            `;
-            tbody.appendChild(row);
-          });
+          abuseLogsData = await response.json();
+          renderAbuseLogs(abuseLogsData);
         } catch (err) {
           showToast('Failed to load abuse logs: ' + err.message);
           console.error('[ERROR] Failed to load abuse logs', { error: err.message });
         }
+      }
+
+      function renderAbuseLogs(data) {
+        const tbody = document.getElementById('abuseLogsBody');
+        tbody.innerHTML = '';
+        data.forEach(log => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${log.ip_address}</td>
+            <td>${log.reason}</td>
+            <td>${new Date(log.created_at).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      window.filterInquiries = function() {
+        const nameFilter = document.getElementById('inquiryFilterName').value.toLowerCase();
+        const emailFilter = document.getElementById('inquiryFilterEmail').value.toLowerCase();
+        const phoneFilter = document.getElementById('inquiryFilterPhone').value.toLowerCase();
+        const placementFilter = document.getElementById('inquiryFilterPlacement').value.toLowerCase();
+        const sizeFilter = document.getElementById('inquiryFilterSize').value.toLowerCase();
+        const descFilter = document.getElementById('inquiryFilterDescription').value.toLowerCase();
+
+        const filteredInquiries = inquiriesData.filter(inquiry => {
+          const fullName = `${inquiry.first_name} ${inquiry.last_name}`.toLowerCase();
+          const phone = inquiry.phone ? inquiry.phone.toLowerCase() : '';
+          return fullName.includes(nameFilter) &&
+                 inquiry.email.toLowerCase().includes(emailFilter) &&
+                 phone.includes(phoneFilter) &&
+                 inquiry.placement.toLowerCase().includes(placementFilter) &&
+                 inquiry.size.toLowerCase().includes(sizeFilter) &&
+                 inquiry.description.toLowerCase().includes(descFilter);
+        });
+        renderInquiries(filteredInquiries);
+      }
+
+      window.filterAbuseLogs = function() {
+        const ipFilter = document.getElementById('abuseFilterIP').value.toLowerCase();
+        const reasonFilter = document.getElementById('abuseFilterReason').value.toLowerCase();
+
+        const filteredLogs = abuseLogsData.filter(log => {
+          return log.ip_address.toLowerCase().includes(ipFilter) &&
+                 log.reason.toLowerCase().includes(reasonFilter);
+        });
+        renderAbuseLogs(filteredLogs);
       }
 
       window.logout = function() {
