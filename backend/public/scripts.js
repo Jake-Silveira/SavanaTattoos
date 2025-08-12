@@ -33,18 +33,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     token = urlParams.get('token');
     if (token) {
       sessionStorage.setItem('access_token', token);
-      console.log('[INFO] Token retrieved from query param', { token });
     }
   }
 
   if (token) {
     const { data: userData, error } = await supabase.auth.getUser(token);
     if (error || !userData.user) {
-      console.warn('[WARN] Invalid token or user not found', { error: error?.message });
       sessionStorage.removeItem('access_token');
     } else {
       isAuthenticated = true;
-      console.log('[INFO] User authenticated', { userId: userData.user.id, email: userData.user.email });
     }
   }
 
@@ -66,13 +63,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (isAuthenticated) {
       authMessage.style.display = 'none';
       formInputs.forEach(input => input.removeAttribute('disabled'));
-      // Submit button is enabled by reCAPTCHA callback
-      console.log('[INFO] Inquiry form enabled for authenticated user');
     } else {
       authMessage.style.display = 'block';
       formInputs.forEach(input => input.setAttribute('disabled', 'true'));
       submitBtn.setAttribute('disabled', 'true');
-      console.log('[INFO] Inquiry form disabled for unauthenticated user');
     }
   };
 
@@ -366,8 +360,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorEl = document.getElementById(errorId);
     if (errorEl) {
       errorEl.textContent = message;
-    } else {
-      console.warn(`Missing error display element with id "${errorId}"`);
     }
   };
 
@@ -400,7 +392,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const input = document.getElementById(id);
       const errorEl = document.getElementById(errorId);
       if (!input) {
-        console.warn("Missing field: " + id);
         return;
       }
 
@@ -476,7 +467,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       modal.style.display = 'none';
     } catch (err) {
       showToast('Submission failed: ' + err.message);
-      console.error('[ERROR] Form submission failed', { error: err.message });
     }
   });
 

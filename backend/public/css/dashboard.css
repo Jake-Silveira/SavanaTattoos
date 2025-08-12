@@ -9,7 +9,7 @@ body {
     min-height: 100vh;
 }
 
-.navBtnContainer {
+#navBtnContainer {
     background-color: rgba(44, 54, 57, 0.39);
     width: 100%;
     display: flex;

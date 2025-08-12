@@ -32,7 +32,6 @@ app.set('trust proxy', 1); // Trust Render's proxy
 // Redirect non-www to www
 app.use((req, res, next) => {
   if (req.headers.host === 'ravensnest.ink') {
-    console.log('[INFO] Redirecting non-www to www', { path: req.path, ip: req.ip });
     return res.redirect(301, `https://www.ravensnest.ink${req.originalUrl}`);
   }
   next();
@@ -90,17 +89,9 @@ const verifyUser = async (req, res, next) => {
   next();
 };
 
-// Debug route
-app.get('/debug/headers', (req, res) => {
-  console.log('[DEBUG] Headers and cookies received', { path: req.path, ip: req.ip, headers: req.headers, cookies: req.cookies, query: req.query });
-  res.json({ headers: req.headers, cookies: req.cookies, query: req.query });
-});
-
 // POST /sign-in
 app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
-
-  console.log('[INFO] Sign-in attempt', { email, path: req.path, ip: req.ip });
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.session) return res.status(401).json({ message: 'Invalid credentials' });
@@ -115,14 +106,12 @@ app.post('/sign-in', async (req, res) => {
     path: '/',
     domain: '.ravensnest.ink'
   });
-  console.log('[INFO] Cookie set successfully', { userId: user.id, email, path: req.path, ip: req.ip });
 
   res.json({ user, access_token: session.access_token });
 });
 
 // Serve signIn page
 app.get('/signIn', (req, res) => {
-  console.log('[INFO] Serving signIn.html', { path: req.path, ip: req.ip });
   res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
 });
 
@@ -138,7 +127,7 @@ app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
 });
 
 // Get abuse logs - Admin only
-app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
+app.get('/auth/apiабuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
     .select('ip_address, reason, created_at')
@@ -150,7 +139,6 @@ app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
 
 // Admin dashboard page
 app.get('/admin/dashboard', verifyAdmin, (req, res) => {
-  console.log('[INFO] Serving admin dashboard', { userId: req.adminUser.id, path: req.path, ip: req.ip });
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
@@ -158,13 +146,11 @@ app.get('/admin/dashboard', verifyAdmin, (req, res) => {
 app.get('/', async (req, res) => {
   const token = getTokenFromHeaderOrCookie(req);
   if (!token) {
-    console.log('[INFO] No token, serving index.html', { path: req.path, ip: req.ip });
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data?.user) {
-    console.log('[INFO] Invalid token, serving index.html', { path: req.path, ip: req.ip });
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
@@ -178,7 +164,7 @@ app.get('/', async (req, res) => {
 // Abuse logging
 async function logAbuse(ip, reason) {
   const { error } = await supabase.from('abuse_logs').insert([{ ip_address: ip, reason }]);
-  if (error) console.error('[ERROR] Failed to log abuse:', error.message);
+  if (error) throw new Error(`Failed to log abuse: ${error.message}`);
 }
 
 const formLimiter = rateLimit({
@@ -194,8 +180,6 @@ const formLimiter = rateLimit({
 app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (req, res) => {
   try {
     const { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo, 'g-recaptcha-response': token } = req.body;
-
-    console.log('[INFO] Received form submission from:', email, { userId: req.user.id });
 
     if (!token) return res.status(400).json({ message: 'reCAPTCHA not completed.' });
 
@@ -241,7 +225,6 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
       if (!uploadError) {
         const { data: publicData } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(filename);
         fileUrl = publicData?.publicUrl || null;
-        console.log('[INFO] File uploaded successfully:', fileUrl);
       }
     }
 
@@ -251,15 +234,12 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
 
     if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
 
-    console.log('[INFO] Inquiry saved to Supabase.');
-
     await axios.post('https://api.resend.com/emails', {
       from: process.env.FROM_EMAIL,
       to: process.env.TO_EMAIL,
       subject: `New Inquiry from ${firstName} ${lastName}`,
       html: `<h2>New Tattoo Inquiry</h2><p><strong>Name:</strong> ${firstName} ${lastName}</p><p><strong>Email:</strong> ${email}</p><p><strong>Phone:</strong> ${phone || 'N/A'}</p><p><strong>Placement:</strong> ${placement}</p><p><strong>Size:</strong> ${size}</p><p><strong>Description:</strong> ${desc}</p><p><strong>Availability:</strong> ${dateFrom} - ${dateTo}</p>${fileUrl ? `<p><strong>Image:</strong> <a href="${fileUrl}" target="_blank">View Uploaded Image</a></p>` : ''}`
     }, { headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } });
-    console.log('[INFO] Email sent successfully.');
 
     await axios.post('https://api.resend.com/emails', {
       from: process.env.FROM_EMAIL,
@@ -267,20 +247,18 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
       subject: `Thanks for your inquiry, ${firstName}!`,
       html: `<p>Hey ${firstName},</p><p>Thanks for reaching out! I’ve received your inquiry and will get back to you shortly.</p><p><strong>Your Submission:</strong></p><ul><li><strong>Placement:</strong> ${placement}</li><li><strong>Size:</strong> ${size}</li><li><strong>Description:</strong> ${desc}</li><li><strong>Availability:</strong> ${dateFrom} – ${dateTo}</li></ul><p>– Raven's Nest Co.</p>`
     }, { headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } });
-    console.log('[INFO] Auto-responder email sent.');
 
     res.status(200).json({ message: 'Inquiry submitted successfully!' });
   } catch (err) {
-    console.error('[FATAL] Submission failed:', err.message);
     res.status(500).json({ message: 'Internal Server Error. Please try again later.' });
   }
 });
 
 // Start Server
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}`);
 });
 
+// Error handling for unmatched routes
 app.use((req, res) => {
   res.status(404).json({ error: 'Not found' });
 });

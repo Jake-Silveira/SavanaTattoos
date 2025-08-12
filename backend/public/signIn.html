@@ -97,8 +97,6 @@
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
 
-        console.log('[INFO] Initiating sign-in', { email });
-
         const response = await fetch('https://www.ravensnest.ink/sign-in', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -110,17 +108,14 @@
 
         if (error || !response.ok) {
           showToast('Login failed: ' + (error?.message || 'Invalid credentials'));
-          console.error('[ERROR] Login failed', { error: error?.message, email });
           button.disabled = false;
           return;
         }
 
         if (access_token) {
           sessionStorage.setItem('access_token', access_token);
-          console.log('[INFO] Token stored in sessionStorage', { token: access_token, email });
         } else {
           showToast('Login failed: No access token');
-          console.error('[ERROR] No access token received', { email });
           button.disabled = false;
           return;
         }
@@ -130,23 +125,12 @@
         const { data: userData, error: userError } = await supabase.auth.getUser(access_token);
         if (userError) {
           showToast('Failed to fetch user info: ' + userError.message);
-          console.error('[ERROR] Failed to fetch user info', { error: userError.message, email });
           sessionStorage.removeItem('access_token');
           button.disabled = false;
           return;
         }
 
         const role = userData.user?.app_metadata?.role || 'user';
-        console.log('[INFO] User role', { role, userId: userData.user.id, email });
-
-        try {
-          const debugResponse = await fetch('https://www.ravensnest.ink/debug/headers', { credentials: 'include' });
-          const debugData = await debugResponse.json();
-          console.log('[DEBUG] Headers and cookies sent', debugData);
-        } catch (debugError) {
-          console.error('[ERROR] Failed to debug headers', { error: debugError.message, email });
-        }
-
         const redirectUrl = role === 'admin' ? 'https://www.ravensnest.ink/admin/dashboard' : 'https://www.ravensnest.ink/index.html';
         window.location.href = `${redirectUrl}?token=${access_token}`;
         button.disabled = false;
@@ -160,12 +144,9 @@
         const email = document.getElementById('signupEmail').value;
         const password = document.getElementById('signupPassword').value;
 
-        console.log('[INFO] Initiating sign-up', { email });
-
         const passwordError = validatePassword(password);
         if (passwordError) {
           showToast(passwordError);
-          console.error('[ERROR] Password validation failed', { error: passwordError, email });
           button.disabled = false;
           return;
         }
@@ -177,21 +158,16 @@
             options: { data: { role: 'user' }, emailRedirectTo: 'https://www.ravensnest.ink/signIn.html' }
           });
 
-          console.log('[DEBUG] Supabase signUp response', { data, error });
-
           if (error) {
             showToast('Sign-up failed: ' + error.message);
-            console.error('[ERROR] Sign-up failed', { error: error.message, email, data });
             button.disabled = false;
             return;
           }
 
           showToast('Sign-up successful! Check your email to confirm.');
-          console.log('[INFO] Sign-up successful', { email, data });
           button.disabled = false;
         } catch (e) {
           showToast('Sign-up error: ' + e.message);
-          console.error('[ERROR] Unexpected sign-up error', { error: e.message, email });
           button.disabled = false;
         }
       };
@@ -203,21 +179,17 @@
 
         const email = document.getElementById('resetEmail').value;
 
-        console.log('[INFO] Initiating password reset', { email });
-
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
           redirectTo: 'https://www.ravensnest.ink/signIn.html'
         });
 
         if (error) {
           showToast('Reset failed: ' + error.message);
-          console.error('[ERROR] Reset failed', { error: error.message, email });
           button.disabled = false;
           return;
         }
 
         showToast('Reset email sent! Check your inbox.');
-        console.log('[INFO] Reset email sent', { email });
         button.disabled = false;
       };
 
@@ -229,11 +201,8 @@
         const newPass = document.getElementById('newPassword').value;
         const confirmPass = document.getElementById('confirmPassword').value;
 
-        console.log('[INFO] Initiating password update');
-
         if (newPass !== confirmPass) {
           showToast('Passwords do not match.');
-          console.error('[ERROR] Passwords do not match');
           button.disabled = false;
           return;
         }
@@ -241,7 +210,6 @@
         const passwordError = validatePassword(newPass);
         if (passwordError) {
           showToast(passwordError);
-          console.error('[ERROR] Password validation failed', { error: passwordError });
           button.disabled = false;
           return;
         }
@@ -249,13 +217,11 @@
         const { error } = await supabase.auth.updateUser({ password: newPass });
         if (error) {
           showToast('Failed to update password: ' + error.message);
-          console.error('[ERROR] Failed to update password', { error: error.message });
           button.disabled = false;
           return;
         }
 
         showToast('Password updated! You can now log in.');
-        console.log('[INFO] Password updated');
         showForm('login');
         button.disabled = false;
       };
@@ -282,12 +248,11 @@
         if (!options.headers) options.headers = {};
         if (token) options.headers['Authorization'] = `Bearer ${token}`;
         options.credentials = 'include';
-        console.log('[DEBUG] authFetch', { url, hasToken: !!token });
         return fetch(url, options);
       }
 
       window.openMenu = function() {
-        console.log('[INFO] Menu button clicked');
+        // Add modal menu logic here if needed
       };
     });
   </script>

@@ -85,7 +85,6 @@
           token = urlParams.get('token');
           if (token) {
             sessionStorage.setItem('access_token', token);
-            console.log('[INFO] Token retrieved from query param', { token });
           }
         }
         if (!options.headers) options.headers = {};
@@ -93,11 +92,9 @@
           options.headers['Authorization'] = `Bearer ${token}`;
         }
         options.credentials = 'include';
-        console.log('[DEBUG] Making authFetch', { url, hasToken: !!token });
         const response = await fetch(url, options);
         if (response.status === 401 || response.status === 403) {
           showToast('Session expired or unauthorized. Please log in again.');
-          console.error('[ERROR] Unauthorized fetch', { url, status: response.status });
           setTimeout(() => {
             window.location.href = 'https://www.ravensnest.ink/signIn.html';
           }, 2000);
@@ -112,13 +109,10 @@
         token = urlParams.get('token');
         if (token) {
           sessionStorage.setItem('access_token', token);
-          console.log('[INFO] Token retrieved from query param', { token });
         }
       }
-      console.log('[DEBUG] Token in sessionStorage', { hasToken: !!token });
       if (!token) {
         showToast('No session found. Please log in.');
-        console.warn('[WARN] No token in sessionStorage');
         setTimeout(() => {
           window.location.href = 'https://www.ravensnest.ink/signIn.html';
         }, 2000);
@@ -128,20 +122,10 @@
       const { data: userData, error: userError } = await supabase.auth.getUser(token);
       if (userError || !userData.user || userData.user.app_metadata?.role !== 'admin') {
         showToast('Access denied: Admin role required.');
-        console.warn('[WARN] Invalid user or role', { error: userError?.message, role: userData?.user?.app_metadata?.role });
         setTimeout(() => {
           window.location.href = 'https://www.ravensnest.ink/signIn.html';
         }, 2000);
         return;
-      }
-      console.log('[INFO] Admin access verified', { userId: userData.user.id });
-
-      try {
-        const debugResponse = await fetch('https://www.ravensnest.ink/debug/headers', { credentials: 'include' });
-        const debugData = await debugResponse.json();
-        console.log('[DEBUG] Headers and cookies received', debugData);
-      } catch (debugError) {
-        console.error('[ERROR] Failed to debug headers', { error: debugError.message });
       }
 
       async function fetchInquiries() {
@@ -155,7 +139,6 @@
           renderInquiries(inquiriesData);
         } catch (err) {
           showToast('Failed to load inquiries: ' + err.message);
-          console.error('[ERROR] Failed to load inquiries', { error: err.message });
         }
       }
 
@@ -190,7 +173,6 @@
           renderAbuseLogs(abuseLogsData);
         } catch (err) {
           showToast('Failed to load abuse logs: ' + err.message);
-          console.error('[ERROR] Failed to load abuse logs', { error: err.message });
         }
       }
 
@@ -237,12 +219,10 @@
       window.logout = function() {
         sessionStorage.removeItem('access_token');
         document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ravensnest.ink';
-        console.log('[INFO] Logged out');
         window.location.href = 'https://www.ravensnest.ink/signIn.html';
       };
 
       window.openMenu = function() {
-        console.log('[INFO] Menu button clicked');
         // Add modal menu logic here if needed
       };
 
