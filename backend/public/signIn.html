@@ -3,28 +3,64 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sign In - Raven's Nest Co.</title>
-  <link rel="stylesheet" href="/css/styles.css">
+  <title>Sign In</title>
+  <link rel="stylesheet" href="/css/signIn.css">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 </head>
 <body>
+  <div class="navBtnContainer">
+    <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
+  </div>
   <div class="contentContainer">
-    <h2 id="signInHeader">Sign In</h2>
+    <h2 id="formTitle" class="signInLabel">Sign In</h2>
     <div id="toast"></div>
-    <form id="signInForm" novalidate>
-      <label for="email" class="signInLabel">Email</label>
-      <input id="email" class="signInInput" type="email" placeholder="Enter your email" required />
-      <div id="emailError" class="error-msg"></div>
 
-      <label for="password" class="signInLabel">Password</label>
-      <input id="password" class="signInInput" type="password" placeholder="Enter your password" required />
-      <div id="passwordError" class="error-msg"></div>
+    <div class="btn-group">
+      <button class="navBtn" onclick="showForm('login')">Sign In</button>
+      <button class="navBtn" onclick="showForm('signup')">Sign Up</button>
+      <button class="navBtn" onclick="showForm('reset')">Reset Password</button>
+    </div>
 
-      <div class="signInButtons">
-        <button id="signInBtn" class="signInInput" type="submit">Sign In</button>
-        <button id="signUpBtn" class="signInInput" type="button" onclick="window.location.href='/register.html'">Sign Up</button>
-        <button id="resetBtn" class="signInInput" type="button" onclick="window.location.href='/reset.html'">Reset</button>
-      </div>
+    <!-- Login Form -->
+    <form id="loginForm" class="signInForm" onsubmit="handleLogin(event)">
+      <fieldset>
+        <label for="loginEmail" class="signInLabel required">Email</label>
+        <input type="email" id="loginEmail" class="signInInput" placeholder="Email" required />
+        <label for="loginPassword" class="signInLabel required">Password</label>
+        <input type="password" id="loginPassword" class="signInInput" placeholder="Password" required />
+        <button type="submit" id="signInSubmitBtn">Sign In</button>
+      </fieldset>
+    </form>
+
+    <!-- Sign Up Form -->
+    <form id="signupForm" class="signInForm" style="display:none" onsubmit="handleSignup(event)">
+      <fieldset>
+        <label for="signupEmail" class="signInLabel required">Email</label>
+        <input type="email" id="signupEmail" class="signInInput" placeholder="Email" required />
+        <label for="signupPassword" class="signInLabel required">Password</label>
+        <input type="password" id="signupPassword" class="signInInput" placeholder="Password" required minlength="8" />
+        <button type="submit" id="signInSubmitBtn">Sign Up</button>
+      </fieldset>
+    </form>
+
+    <!-- Reset Password Form -->
+    <form id="resetForm" class="signInForm" style="display:none" onsubmit="handleReset(event)">
+      <fieldset>
+        <label for="resetEmail" class="signInLabel required">Email</label>
+        <input type="email" id="resetEmail" class="signInInput" placeholder="Email" required />
+        <button type="submit" id="signInSubmitBtn">Send Reset Link</button>
+      </fieldset>
+    </form>
+
+    <!-- Update Password Form -->
+    <form id="updatePasswordForm" class="signInForm" style="display:none" onsubmit="handleUpdatePassword(event)">
+      <fieldset>
+        <label for="newPassword" class="signInLabel required">New Password</label>
+        <input type="password" id="newPassword" class="signInInput" placeholder="New Password" required minlength="8" />
+        <label for="confirmPassword" class="signInLabel required">Confirm Password</label>
+        <input type="password" id="confirmPassword" class="signInInput" placeholder="Confirm Password" required minlength="8" />
+        <button type="submit" id="signInSubmitBtn">Update Password</button>
+      </fieldset>
     </form>
   </div>
 
@@ -34,64 +70,190 @@
       const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
       const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      const form = document.getElementById('signInForm');
       const toastEl = document.getElementById('toast');
 
-      function showToast(message) {
+      window.showToast = function(message) {
         toastEl.textContent = message;
         toastEl.classList.add('show');
-        setTimeout(() => {
-          toastEl.classList.remove('show');
-        }, 3000);
-      }
+        setTimeout(() => toastEl.classList.remove('show'), 3000);
+      };
 
-      async function handleLogin(email, password) {
+      window.showForm = function(form) {
+        ['login', 'signup', 'reset', 'updatePassword'].forEach(f => {
+          document.getElementById(f + 'Form').style.display = 'none';
+        });
+        document.getElementById(form + 'Form').style.display = 'flex';
+        document.getElementById('formTitle').textContent =
+          form === 'login' ? 'Sign In' :
+          form === 'signup' ? 'Sign Up' :
+          form === 'reset' ? 'Reset Password' : 'Update Password';
+      };
+
+      window.handleLogin = async function(event) {
+        event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+
+        const response = await fetch('https://www.ravensnest.ink/sign-in', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include'
+        });
+
+        const { user, access_token, error } = await response.json();
+
+        if (error || !response.ok) {
+          showToast('Login failed: ' + (error?.message || 'Invalid credentials'));
+          button.disabled = false;
+          return;
+        }
+
+        if (access_token) {
+          sessionStorage.setItem('access_token', access_token);
+        } else {
+          showToast('Login failed: No access token');
+          button.disabled = false;
+          return;
+        }
+
+        showToast('Signed in! Redirecting...');
+
+        const { data: userData, error: userError } = await supabase.auth.getUser(access_token);
+        if (userError) {
+          showToast('Failed to fetch user info: ' + userError.message);
+          sessionStorage.removeItem('access_token');
+          button.disabled = false;
+          return;
+        }
+
+        const role = userData.user?.app_metadata?.role || 'user';
+        const redirectUrl = role === 'admin' ? 'https://www.ravensnest.ink/admin/dashboard' : 'https://www.ravensnest.ink/index.html';
+        window.location.href = `${redirectUrl}?token=${access_token}`;
+        button.disabled = false;
+      };
+
+      window.handleSignup = async function(event) {
+        event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
+        const email = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+
+        const passwordError = validatePassword(password);
+        if (passwordError) {
+          showToast(passwordError);
+          button.disabled = false;
+          return;
+        }
+
         try {
-          const response = await fetch('https://www.ravensnest.ink/sign-in', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-            credentials: 'include'
+          const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: { data: { role: 'user' }, emailRedirectTo: 'https://www.ravensnest.ink/signIn.html' }
           });
 
-          const result = await response.json();
-          if (!response.ok) {
-            throw new Error(result.message || 'Sign-in failed');
+          if (error) {
+            showToast('Sign-up failed: ' + error.message);
+            button.disabled = false;
+            return;
           }
 
-          sessionStorage.setItem('access_token', result.access_token);
-          const role = result.user?.app_metadata?.role;
-
-          if (role === 'admin') {
-            window.location.href = 'https://www.ravensnest.ink/admin/dashboard?token=' + result.access_token;
-          } else {
-            showToast('Access denied: Admin role required.');
-            setTimeout(() => {
-              window.location.href = 'https://www.ravensnest.ink/index.html?token=' + result.access_token;
-            }, 2000);
-          }
-        } catch (err) {
-          showToast('Sign-in failed: ' + err.message);
+          showToast('Sign-up successful! Check your email to confirm.');
+          button.disabled = false;
+        } catch (e) {
+          showToast('Sign-up error: ' + e.message);
+          button.disabled = false;
         }
+      };
+
+      window.handleReset = async function(event) {
+        event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
+        const email = document.getElementById('resetEmail').value;
+
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: 'https://www.ravensnest.ink/signIn.html'
+        });
+
+        if (error) {
+          showToast('Reset failed: ' + error.message);
+          button.disabled = false;
+          return;
+        }
+
+        showToast('Reset email sent! Check your inbox.');
+        button.disabled = false;
+      };
+
+      window.handleUpdatePassword = async function(event) {
+        event.preventDefault();
+        const button = event.target.querySelector('button[type="submit"]');
+        button.disabled = true;
+
+        const newPass = document.getElementById('newPassword').value;
+        const confirmPass = document.getElementById('confirmPassword').value;
+
+        if (newPass !== confirmPass) {
+          showToast('Passwords do not match.');
+          button.disabled = false;
+          return;
+        }
+
+        const passwordError = validatePassword(newPass);
+        if (passwordError) {
+          showToast(passwordError);
+          button.disabled = false;
+          return;
+        }
+
+        const { error } = await supabase.auth.updateUser({ password: newPass });
+        if (error) {
+          showToast('Failed to update password: ' + error.message);
+          button.disabled = false;
+          return;
+        }
+
+        showToast('Password updated! You can now log in.');
+        showForm('login');
+        button.disabled = false;
+      };
+
+      function validatePassword(password) {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasLowerCase = /[a-z]/.test(password);
+        const hasNumbers = /\d/.test(password);
+        if (password.length < minLength || !hasUpperCase || !hasLowerCase || !hasNumbers) {
+          return 'Password must be at least 8 characters long and include uppercase, lowercase, and numbers.';
+        }
+        return null;
       }
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
+      const url = new URL(window.location.href);
+      const isReset = url.searchParams.get('type') === 'recovery';
+      if (isReset) {
+        showForm('updatePassword');
+      }
 
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value;
+      async function authFetch(url, options = {}) {
+        const token = sessionStorage.getItem('access_token');
+        if (!options.headers) options.headers = {};
+        if (token) options.headers['Authorization'] = `Bearer ${token}`;
+        options.credentials = 'include';
+        return fetch(url, options);
+      }
 
-        if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-          document.getElementById('emailError').textContent = 'Enter a valid email';
-          return;
-        }
-        if (!password) {
-          document.getElementById('passwordError').textContent = 'Enter a password';
-          return;
-        }
-
-        await handleLogin(email, password);
-      });
+      window.openMenu = function() {
+        // Add modal menu logic here if needed
+      };
     });
   </script>
 </body>
