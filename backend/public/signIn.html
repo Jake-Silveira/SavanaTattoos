@@ -58,7 +58,7 @@
 
           console.log('Sign-in response:', result); // Debug log
           sessionStorage.setItem('access_token', result.access_token);
-          const role = result.user?.raw_app_meta_data?.role;
+          const role = result.user?.app_metadata?.role;
 
           if (role === 'admin') {
             window.location.href = 'https://www.ravensnest.ink/admin/dashboard?token=' + result.access_token;

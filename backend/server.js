@@ -70,7 +70,7 @@ const verifyAdmin = async (req, res, next) => {
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return res.status(403).json({ error: 'Forbidden: Invalid token' });
   console.log('User data in verifyAdmin:', data.user); // Debug log
-  if (data.user.raw_app_meta_data?.role !== 'admin') return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  if (data.user.app_metadata?.role !== 'admin') return res.status(403).json({ error: 'Forbidden: Admin access required' });
 
   req.adminUser = data.user;
   next();
@@ -133,7 +133,7 @@ app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
 app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
-    .select('ip_address, reason, created_at')
+    .select('ip_address, role, created_at')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });
@@ -215,7 +215,7 @@ app.get('/', async (req, res) => {
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
-  const role = data.user.raw_app_meta_data?.role;
+  const role = data.user.app_metadata?.role;
   const redirectUrl = role === 'admin' && req.path !== '/admin/dashboard'
     ? 'https://www.ravensnest.ink/admin/dashboard'
     : 'https://www.ravensnest.ink/index.html';
