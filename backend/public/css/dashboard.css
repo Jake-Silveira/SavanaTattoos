@@ -10,7 +10,7 @@ body {
 }
 
 #navBtnContainer {
-    background-color: rgba(44, 54, 57, 0.39);
+    background-color: rgba(44, 54, 57, 0.85);
     width: 100%;
     display: flex;
     align-items: center;
