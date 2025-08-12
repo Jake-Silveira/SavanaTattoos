@@ -7,17 +7,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <link rel="stylesheet" href="/css/dashboard.css">
   <style>
-    .filter-container {
-      margin-bottom: 10px;
-    }
-    .filter-container input {
-      margin-right: 10px;
-      padding: 5px;
-    }
-    .inquiriesTable img {
-      cursor: pointer;
-      max-width: 100px;
-    }
+
   </style>
 </head>
 <body>
@@ -32,9 +22,6 @@
       <input type="text" id="inquiryFilterName" placeholder="Filter Name" oninput="filterInquiries()">
       <input type="text" id="inquiryFilterEmail" placeholder="Filter Email" oninput="filterInquiries()">
       <input type="text" id="inquiryFilterPhone" placeholder="Filter Phone" oninput="filterInquiries()">
-      <input type="text" id="inquiryFilterPlacement" placeholder="Filter Placement" oninput="filterInquiries()">
-      <input type="text" id="inquiryFilterSize" placeholder="Filter Size" oninput="filterInquiries()">
-      <input type="text" id="inquiryFilterDescription" placeholder="Filter Description" oninput="filterInquiries()">
     </div>
     <table class="inquiriesTable">
       <thead>
@@ -222,9 +209,6 @@
         const nameFilter = document.getElementById('inquiryFilterName').value.toLowerCase();
         const emailFilter = document.getElementById('inquiryFilterEmail').value.toLowerCase();
         const phoneFilter = document.getElementById('inquiryFilterPhone').value.toLowerCase();
-        const placementFilter = document.getElementById('inquiryFilterPlacement').value.toLowerCase();
-        const sizeFilter = document.getElementById('inquiryFilterSize').value.toLowerCase();
-        const descFilter = document.getElementById('inquiryFilterDescription').value.toLowerCase();
 
         const filteredInquiries = inquiriesData.filter(inquiry => {
           const fullName = `${inquiry.first_name} ${inquiry.last_name}`.toLowerCase();
