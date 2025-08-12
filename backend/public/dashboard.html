@@ -218,7 +218,8 @@
           list.innerHTML = '';
           images.forEach((url) => {
             const li = document.createElement('li');
-            li.style.display = 'inline-block';
+            li.style.display = 'flex';
+            li.style.flexDirection = 'column'
             li.style.margin = '5px';
             li.innerHTML = `
               <img src="${url}" style="max-width: 100px; max-height: 100px; object-fit: cover;" />
