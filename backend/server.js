@@ -69,7 +69,6 @@ const verifyAdmin = async (req, res, next) => {
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return res.status(403).json({ error: 'Forbidden: Invalid token' });
-  console.log('User data in verifyAdmin:', data.user); // Debug log
   if (data.user.app_metadata?.role !== 'admin') return res.status(403).json({ error: 'Forbidden: Admin access required' });
 
   req.adminUser = data.user;
@@ -94,13 +93,10 @@ app.post('/sign-in', async (req, res) => {
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error || !data.session) {
-    console.log('Sign-in error:', error); // Debug log
     return res.status(401).json({ message: 'Invalid credentials' });
   }
 
   const { user, session } = data;
-  console.log('Sign-in user:', user); // Debug log
-
   res.cookie('access_token', session.access_token, {
     httpOnly: true,
     secure: true,
@@ -133,7 +129,7 @@ app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
 app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
-    .select('ip_address, role, created_at')
+    .select('ip_address, reason, created_at')
     .order('created_at', { ascending: false });
 
   if (error) return res.status(500).json({ error: error.message });

@@ -136,7 +136,6 @@
       }
 
       const { data: userData, error: userError } = await supabase.auth.getUser(token);
-      console.log('User data:', userData, 'Error:', userError); // Debug log
       if (userError || !userData.user || userData.user.app_metadata?.role !== 'admin') {
         showToast('Access denied: Admin role required.');
         setTimeout(() => {

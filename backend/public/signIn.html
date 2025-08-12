@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sign In - Raven's Nest Co.</title>
-  <link rel="stylesheet" href="/css/signIn.css">
+  <link rel="stylesheet" href="/css/styles.css">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
 </head>
 <body>
@@ -56,7 +56,6 @@
             throw new Error(result.message || 'Sign-in failed');
           }
 
-          console.log('Sign-in response:', result); // Debug log
           sessionStorage.setItem('access_token', result.access_token);
           const role = result.user?.app_metadata?.role;
 
