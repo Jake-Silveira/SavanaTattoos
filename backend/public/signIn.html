@@ -20,9 +20,12 @@
       <input id="password" class="signInInput" type="password" placeholder="Enter your password" required />
       <div id="passwordError" class="error-msg"></div>
 
-      <button id="signInBtn" class="signInInput" type="submit">Sign In</button>
+      <div class="signInButtons">
+        <button id="signInBtn" class="signInInput" type="submit">Sign In</button>
+        <button id="signUpBtn" class="signInInput" type="button" onclick="window.location.href='/register.html'">Sign Up</button>
+        <button id="resetBtn" class="signInInput" type="button" onclick="window.location.href='/reset.html'">Reset</button>
+      </div>
     </form>
-    <p>Not registered? <a href="/register.html">Create an account</a></p>
   </div>
 
   <script>
