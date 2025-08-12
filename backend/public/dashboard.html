@@ -6,59 +6,15 @@
   <title>Admin Dashboard</title>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <link rel="stylesheet" href="/css/dashboard.css">
-  <style>
-    .filter-container {
-      margin-bottom: 1.5rem;
-      width: 100%;
-      max-width: 1200px;
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
-      gap: 0.5rem;
-      background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 0%, rgba(63, 79, 68, 0.65) 100%);
-      padding: 1rem;
-      border: solid 3px rgb(3, 12, 5);
-      border-radius: 10px;
-    }
-    .filter-container input {
-      padding: 0.5rem;
-      border: solid 2px rgb(3, 12, 5);
-      border-radius: 5px;
-      background-color: rgba(44, 54, 57, 0.2);
-      color: rgb(3, 12, 5);
-      font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-      font-size: 1rem;
-      -webkit-text-stroke-width: 0.5px;
-      -webkit-text-stroke-color: #aaa;
-      transition: border-color 0.3s, color 0.3s;
-      flex: 1 1 150px;
-      max-width: 200px;
-    }
-    .filter-container input::placeholder {
-      color: rgba(3, 12, 5, 0.7);
-      -webkit-text-stroke-width: 0.5px;
-      -webkit-text-stroke-color: #aaa;
-    }
-    .filter-container input:focus {
-      outline: none;
-      border-color: #aaa;
-      color: #aaa;
-    }
-    .filter-container input:hover {
-      border-color: #aaa;
-      color: #aaa;
-    }
-    .inquiriesTable img {
-      cursor: pointer;
-      max-width: 100px;
-    }
-  </style>
+
 </head>
 <body>
+  <div id="navBtnContainer">
   <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
+  <button class="navBtn" onclick="logout()">Logout</button>
+  </div>
   <div class="contentContainer">
     <h2 id="dashboardHeader">Admin Dashboard</h2>
-    <button class="navBtn" onclick="logout()">Logout</button>
     <div id="toast"></div>
 
     <h3 id="inquiriesHeader" class="signInLabel">Inquiries</h3>
