@@ -58,6 +58,20 @@
         <tbody id="abuseLogsBody"></tbody>
       </table>
     </div>
+
+    <h3 id="galleryHeader" class="signInLabel">Gallery Management</h3>
+    <div class="image-upload-container">
+      <input type="file" id="galleryUpload" accept="image/jpeg,image/png" class="inquiryInput">
+      <button class="navBtn" onclick="uploadImage('gallery')">Upload to Gallery</button>
+    </div>
+    <ul id="galleryList" class="image-list"></ul>
+
+    <h3 id="flashHeader" class="signInLabel">Flash Management</h3>
+    <div class="image-upload-container">
+      <input type="file" id="flashUpload" accept="image/jpeg,image/png" class="inquiryInput">
+      <button class="navBtn" onclick="uploadImage('flash')">Upload to Flash</button>
+    </div>
+    <ul id="flashList" class="image-list"></ul>
   </div>
 
   <script>
@@ -120,7 +134,7 @@
       }
 
       const { data: userData, error: userError } = await supabase.auth.getUser(token);
-      if (userError || !userData.user || userData.user.app_metadata?.role !== 'admin') {
+      if (userError || !userData.user || userData.user.raw_app_meta_data?.role !== 'admin') {
         showToast('Access denied: Admin role required.');
         setTimeout(() => {
           window.location.href = 'https://www.ravensnest.ink/signIn.html';
@@ -190,6 +204,83 @@
         });
       }
 
+      async function loadImages(bucket, listId) {
+        try {
+          const response = await authFetch(`https://www.ravensnest.ink/api/images/${bucket}`);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          const images = await response.json();
+          const list = document.getElementById(listId);
+          list.innerHTML = '';
+          images.forEach((url, index) => {
+            const li = document.createElement('li');
+            li.className = 'image-list-item';
+            li.innerHTML = `
+              <img src="${url}" alt="${bucket} image" style="max-width: 100px; max-height: 100px; object-fit: contain;">
+              <button class="navBtn" onclick="deleteImage('${bucket}', '${url.split('/').pop()}')">Delete</button>
+            `;
+            list.appendChild(li);
+          });
+        } catch (err) {
+          showToast(`Failed to load ${bucket} images: ${err.message}`);
+        }
+      }
+
+      window.uploadImage = async (bucket) => {
+        const fileInput = document.getElementById(`${bucket}Upload`);
+        const file = fileInput.files[0];
+        if (!file) return showToast('No file selected');
+
+        const allowedTypes = ['image/jpeg', 'image/png'];
+        if (!allowedTypes.includes(file.type)) {
+          showToast('Only JPG or PNG files are allowed');
+          fileInput.value = '';
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', bucket);
+
+        try {
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/upload-image', {
+            method: 'POST',
+            body: formData
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          showToast('Image uploaded successfully');
+          fileInput.value = '';
+          loadImages(bucket, `${bucket}List`);
+        } catch (err) {
+          showToast(`Upload failed: ${err.message}`);
+        }
+      };
+
+      window.deleteImage = async (bucket, filePath) => {
+        if (!confirm(`Are you sure you want to delete ${filePath} from ${bucket}?`)) return;
+
+        try {
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/delete-image', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bucket, path: filePath })
+          });
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          showToast('Image deleted successfully');
+          loadImages(bucket, `${bucket}List`);
+        } catch (err) {
+          showToast(`Delete failed: ${err.message}`);
+        }
+      };
+
       window.filterInquiries = function() {
         const nameFilter = document.getElementById('inquiryFilterName').value.toLowerCase();
         const emailFilter = document.getElementById('inquiryFilterEmail').value.toLowerCase();
@@ -226,7 +317,13 @@
         // Add modal menu logic here if needed
       };
 
-      await Promise.all([fetchInquiries(), fetchAbuseLogs()]);
+      // Load data
+      await Promise.all([
+        fetchInquiries(),
+        fetchAbuseLogs(),
+        loadImages('gallery', 'galleryList'),
+        loadImages('flash', 'flashList')
+      ]);
     });
   </script>
 </body>

@@ -292,3 +292,43 @@ a:hover {
         font-size: 1rem;
     }
 }
+
+/* Image Management */
+.image-management {
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.image-management input[type="file"] {
+  margin-bottom: 10px;
+}
+
+.image-management button {
+  padding: 8px 16px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.image-management button:hover {
+  background-color: #45a049;
+}
+
+.image-management ul {
+  margin-top: 10px;
+}
+
+.image-management li {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.image-management img {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 5px;
+}

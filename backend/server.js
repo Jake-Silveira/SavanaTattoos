@@ -71,7 +71,7 @@ const verifyAdmin = async (req, res, next) => {
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return res.status(403).json({ error: 'Forbidden: Invalid token' });
-  if (data.user.app_metadata?.role !== 'admin') return res.status(403).json({ error: 'Forbidden: Admin access required' });
+  if (data.user.raw_app_meta_data?.role !== 'admin') return res.status(403).json({ error: 'Forbidden: Admin access required' });
 
   req.adminUser = data.user;
   next();
@@ -127,7 +127,7 @@ app.get('/auth/api/inquiries', verifyAdmin, async (req, res) => {
 });
 
 // Get abuse logs - Admin only
-app.get('/auth/apiабuse-logs', verifyAdmin, async (req, res) => {
+app.get('/auth/api/abuse-logs', verifyAdmin, async (req, res) => {
   const { data, error } = await supabase
     .from('abuse_logs')
     .select('ip_address, reason, created_at')
@@ -142,6 +142,64 @@ app.get('/admin/dashboard', verifyAdmin, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
+// Upload image - Admin only
+app.post('/auth/api/upload-image', upload.single('file'), verifyAdmin, async (req, res) => {
+  try {
+    const { bucket } = req.body; // 'gallery' or 'flash'
+    if (!['gallery', 'flash'].includes(bucket)) return res.status(400).json({ error: 'Invalid bucket' });
+
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const ext = path.extname(file.originalname);
+    const filename = `${crypto.randomUUID()}${ext}`;
+    const { error: uploadError } = await supabase.storage.from(bucket).upload(filename, file.buffer, { contentType: file.mimetype });
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(filename);
+    const url = publicData.publicUrl;
+
+    // Store metadata
+    const { error: dbError } = await supabase.from('images').insert({ bucket, path: filename, url });
+    if (dbError) throw dbError;
+
+    res.json({ message: 'Image uploaded', url });
+  } catch (err) {
+    res.status(500).json({ error: 'Upload failed: ' + err.message });
+  }
+});
+
+// Delete image - Admin only
+app.delete('/auth/api/delete-image', verifyAdmin, async (req, res) => {
+  try {
+    const { bucket, path: filePath } = req.body;
+    if (!['gallery', 'flash'].includes(bucket)) return res.status(400).json({ error: 'Invalid bucket' });
+    if (!filePath) return res.status(400).json({ error: 'No file path provided' });
+
+    const { error: deleteError } = await supabase.storage.from(bucket).remove([filePath]);
+    if (deleteError) throw deleteError;
+
+    // Remove metadata
+    const { error: dbError } = await supabase.from('images').delete().eq('bucket', bucket).eq('path', filePath);
+    if (dbError) throw dbError;
+
+    res.json({ message: 'Image deleted' });
+  } catch (err) {
+    res.status(500).json({ error: 'Delete failed: ' + err.message });
+  }
+});
+
+// List images (public)
+app.get('/api/images/:bucket', async (req, res) => {
+  const { bucket } = req.params;
+  if (!['gallery', 'flash'].includes(bucket)) return res.status(400).json({ error: 'Invalid bucket' });
+
+  const { data, error } = await supabase.from('images').select('url').eq('bucket', bucket).order('created_at', { ascending: false });
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data.map(item => item.url));
+});
+
 // Root route
 app.get('/', async (req, res) => {
   const token = getTokenFromHeaderOrCookie(req);
@@ -154,7 +212,7 @@ app.get('/', async (req, res) => {
     return res.sendFile(path.join(__dirname, 'public', 'index.html'));
   }
 
-  const role = data.user.app_metadata?.role;
+  const role = data.user.raw_app_meta_data?.role;
   const redirectUrl = role === 'admin' && req.path !== '/admin/dashboard'
     ? 'https://www.ravensnest.ink/admin/dashboard'
     : 'https://www.ravensnest.ink/index.html';

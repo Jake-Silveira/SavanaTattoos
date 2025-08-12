@@ -176,25 +176,27 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentPopupIndex = 0;
 
   async function loadGalleryImages() {
-    const response = await fetch("images/galleryImages/galleryImages.json");
-    const imageNames = await response.json();
-
-    for (let i = 0; i < imageNames.length; i++) {
-      const photo = new Photo(imageNames[i]);
-      gallery.push(photo);
+    try {
+      const response = await fetch("https://www.ravensnest.ink/api/images/gallery");
+      if (!response.ok) throw new Error('Failed to fetch gallery images');
+      const imageUrls = await response.json();
+      gallery.length = 0; // Clear existing gallery
+      imageUrls.forEach(url => gallery.push(new Photo(url)));
+      displayGallery();
+      startGallery();
+    } catch (err) {
+      showToast('Failed to load gallery images: ' + err.message);
     }
-
-    displayGallery();
-    startGallery();
   }
 
   class Photo {
-    constructor(filename) {
-      this.name = filename;
+    constructor(url) {
+      this.url = url;
     }
   }
 
   function displayGallery() {
+    galleryPhotos.innerHTML = ''; // Clear existing photos
     for (let i = 0; i < gallery.length; i++) {
       let cell = document.createElement('div');
       cell.className = "grid-item";
@@ -204,7 +206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       let icon = document.createElement('img');
       icon.className = 'grid-item-icon';
       icon.id = 'grid-item-icon' + i;
-      icon.src = `images/galleryImages/${gallery[i].name}`;
+      icon.src = gallery[i].url;
       cell.appendChild(icon);
 
       icon.addEventListener("click", () => {
@@ -229,7 +231,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const popupIcon = document.createElement('img');
     popupIcon.className = 'popupImg';
-    popupIcon.src = `images/galleryImages/${gallery[currentPopupIndex].name}`;
+    popupIcon.src = gallery[currentPopupIndex].url;
 
     popupIcon.addEventListener("click", (e) => {
       if (e.target === popupIcon) {
@@ -266,21 +268,20 @@ document.addEventListener('DOMContentLoaded', async () => {
   const flashGrid = [];
 
   async function loadFlashGridImages() {
-    const response = await fetch("images/flashImages/flashImages.json");
-    if (!response.ok) {
-      return;
+    try {
+      const response = await fetch("https://www.ravensnest.ink/api/images/flash");
+      if (!response.ok) throw new Error('Failed to fetch flash images');
+      const imageUrls = await response.json();
+      flashGrid.length = 0; // Clear existing grid
+      imageUrls.forEach(url => flashGrid.push(new Photo(url)));
+      displayFlashGrid();
+    } catch (err) {
+      showToast('Failed to load flash images: ' + err.message);
     }
-
-    const imageNames = await response.json();
-    for (let i = 0; i < imageNames.length; i++) {
-      const photo = new Photo(imageNames[i]);
-      flashGrid.push(photo);
-    }
-
-    displayFlashGrid();
   }
 
   function displayFlashGrid() {
+    flashGridContainer.innerHTML = ''; // Clear existing photos
     for (let i = 0; i < flashGrid.length; i++) {
       let cell = document.createElement('div');
       cell.className = "flash-grid-item";
@@ -290,7 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       let icon = document.createElement('img');
       icon.className = 'flash-grid-item-icon';
       icon.id = 'flash-grid-item-icon' + i;
-      icon.src = `images/flashImages/${flashGrid[i].name}`;
+      icon.src = flashGrid[i].url;
       cell.appendChild(icon);
 
       icon.addEventListener("click", () => {
