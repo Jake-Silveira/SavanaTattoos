@@ -6,12 +6,11 @@
   <title>Admin Dashboard</title>
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
   <link rel="stylesheet" href="/css/dashboard.css">
-
 </head>
 <body>
   <div id="navBtnContainer">
-  <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
-  <button class="navBtn" onclick="logout()">Logout</button>
+    <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
+    <button class="navBtn" onclick="logout()">Logout</button>
   </div>
   <div class="contentContainer">
     <h2 id="dashboardHeader">Admin Dashboard</h2>
@@ -23,38 +22,42 @@
       <input type="text" id="inquiryFilterEmail" placeholder="Email" oninput="filterInquiries()">
       <input type="text" id="inquiryFilterPhone" placeholder="Phone" oninput="filterInquiries()">
     </div>
-    <table class="inquiriesTable">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Email</th>
-          <th>Phone</th>
-          <th>Placement</th>
-          <th>Size</th>
-          <th>Description</th>
-          <th>Dates</th>
-          <th>Image</th>
-          <th>Created</th>
-        </tr>
-      </thead>
-      <tbody id="inquiriesBody"></tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="inquiriesTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Placement</th>
+            <th>Size</th>
+            <th>Description</th>
+            <th>Dates</th>
+            <th>Image</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="inquiriesBody"></tbody>
+      </table>
+    </div>
 
     <h3 id="abuseLogsHeader" class="signInLabel">Abuse Logs</h3>
     <div class="filter-container">
       <input type="text" id="abuseFilterIP" placeholder="Filter IP Address" oninput="filterAbuseLogs()">
       <input type="text" id="abuseFilterReason" placeholder="Filter Reason" oninput="filterAbuseLogs()">
     </div>
-    <table class="abuseLogsTable">
-      <thead>
-        <tr>
-          <th>IP Address</th>
-          <th>Reason</th>
-          <th>Created</th>
-        </tr>
-      </thead>
-      <tbody id="abuseLogsBody"></tbody>
-    </table>
+    <div class="table-wrapper">
+      <table class="abuseLogsTable">
+        <thead>
+          <tr>
+            <th>IP Address</th>
+            <th>Reason</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="abuseLogsBody"></tbody>
+      </table>
+    </div>
   </div>
 
   <script>

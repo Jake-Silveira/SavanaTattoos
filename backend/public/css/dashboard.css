@@ -3,10 +3,9 @@
 }
 
 body {
-    display: block;
     margin: 0;
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 20%, rgba(63, 79, 68, 0.65) 100%);
+    background: transparent;
     min-height: 100vh;
 }
 
@@ -16,10 +15,12 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 1rem;
-    position: absolute;
+    padding: 0.5rem 1rem;
+    position: sticky;
     top: 0;
     left: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 #menuBtn {
@@ -35,39 +36,44 @@ body {
     padding: 0.5rem 1rem;
     cursor: pointer;
     font-weight: 600;
-    font-size: 1.5rem;
-    -webkit-text-stroke-width: 1px;
+    font-size: 1.25rem;
+    -webkit-text-stroke-width: 0.5px;
     -webkit-text-stroke-color: #aaa;
-    min-width: 20%;
-    max-width: 300px;
-    transition: color 0.3s;
+    min-width: 100px;
+    transition: color 0.3s, background-color 0.3s;
 }
 
 .navBtn:hover {
     color: #aaa;
+    background-color: rgba(170, 170, 170, 0.1);
     text-decoration: underline;
 }
 
 .contentContainer {
-    overflow: auto;
-    height: 80vh;
+    min-height: 100vh;
     width: 100%;
     background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 20%, rgba(63, 79, 68, 0.65) 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 2rem 1rem;
+    padding: 1rem;
 }
 
 #dashboardHeader {
     text-decoration: underline;
-    font-size: 2.5rem;
+    font-size: 2rem;
     font-weight: 600;
     color: rgb(3, 12, 5);
-    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-width: 0.5px;
     -webkit-text-stroke-color: #aaa;
     text-align: center;
-    margin-bottom: 1.5rem;
+    margin: 1rem 0;
+}
+
+.table-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    overflow-x: auto;
 }
 
 .inquiriesTable, .abuseLogsTable {
@@ -75,31 +81,32 @@ body {
     max-width: 1200px;
     border-collapse: collapse;
     background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 0%, rgba(63, 79, 68, 0.65) 100%);
-    border: solid 5px rgb(3, 12, 5);
-    border-radius: 10px;
+    border: solid 3px rgb(3, 12, 5);
+    border-radius: 8px;
     color: rgb(3, 12, 5);
-    font-size: 1rem;
-    margin-bottom: 2rem;
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 .inquiriesTable th, .inquiriesTable td,
 .abuseLogsTable th, .abuseLogsTable td {
-    padding: 1rem;
+    padding: 0.75rem;
     border: solid 1px rgb(3, 12, 5);
     text-align: left;
 }
 
 .inquiriesTable th, .abuseLogsTable th {
     font-weight: 600;
-    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-width: 0.5px;
     -webkit-text-stroke-color: #aaa;
     background-color: rgba(44, 54, 57, 0.2);
 }
 
 .inquiriesTable img {
-    width: 100px;
+    width: 80px;
     height: auto;
-    border: solid 3px rgb(3, 12, 5);
+    border: solid 2px rgb(3, 12, 5);
     border-radius: 5px;
     cursor: pointer;
     transition: transform 0.3s;
@@ -112,7 +119,7 @@ body {
 a {
     text-decoration: none;
     color: rgb(3, 12, 5);
-    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-width: 0.5px;
     -webkit-text-stroke-color: #aaa;
 }
 
@@ -123,18 +130,20 @@ a:hover {
 
 #toast {
     visibility: hidden;
-    min-width: 250px;
+    min-width: 200px;
+    max-width: 90%;
     background-color: #333;
     color: #fff;
     text-align: center;
     border-radius: 6px;
-    padding: 1rem;
+    padding: 0.75rem;
     position: fixed;
-    bottom: 30px;
-    right: 30px;
+    bottom: 20px;
+    right: 10px;
     z-index: 1000;
     opacity: 0;
     transition: opacity 0.3s ease-in-out;
+    font-size: 0.9rem;
 }
 
 #toast.show {
@@ -145,7 +154,7 @@ a:hover {
 .modal {
     display: none;
     position: fixed;
-    z-index: 1;
+    z-index: 1001;
     left: 0;
     top: 0;
     width: 100%;
@@ -176,7 +185,7 @@ a:hover {
 .close {
     color: #aaa;
     float: right;
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
     align-self: flex-end;
     cursor: pointer;
@@ -189,17 +198,18 @@ a:hover {
 }
 
 .filter-container {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     width: 100%;
     max-width: 1200px;
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-between;
+    justify-content: flex-start;
     gap: 0.5rem;
     background-image: linear-gradient(to bottom, rgba(99, 70, 64, 0.65) 0%, rgba(63, 79, 68, 0.65) 100%);
-    padding: 1rem;
-    border: solid 3px rgb(3, 12, 5);
-    border-radius: 10px;
+    padding: 0.75rem;
+    border: solid 2px rgb(3, 12, 5);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .filter-container input {
@@ -209,12 +219,12 @@ a:hover {
     background-color: rgba(44, 54, 57, 0.2);
     color: rgb(3, 12, 5);
     font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
-    font-size: 1rem;
+    font-size: 0.9rem;
     -webkit-text-stroke-width: 0.5px;
     -webkit-text-stroke-color: #aaa;
     transition: border-color 0.3s, color 0.3s;
-    flex: 1 1 150px;
-    max-width: 200px;
+    flex: 1 1 100%;
+    max-width: 100%;
 }
 
 .filter-container input::placeholder {
@@ -232,4 +242,53 @@ a:hover {
 .filter-container input:hover {
     border-color: #aaa;
     color: #aaa;
+}
+
+@media (min-width: 768px) {
+    .contentContainer {
+        padding: 2rem 1rem;
+    }
+
+    #dashboardHeader {
+        font-size: 2.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .navBtn {
+        font-size: 1.5rem;
+        min-width: 20%;
+        max-width: 300px;
+    }
+
+    .inquiriesTable, .abuseLogsTable {
+        font-size: 1rem;
+    }
+
+    .inquiriesTable th, .inquiriesTable td,
+    .abuseLogsTable th, .abuseLogsTable td {
+        padding: 1rem;
+    }
+
+    .inquiriesTable img {
+        width: 100px;
+    }
+
+    .filter-container {
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+    }
+
+    .filter-container input {
+        flex: 1 1 150px;
+        max-width: 200px;
+        font-size: 1rem;
+    }
+
+    #toast {
+        min-width: 250px;
+        padding: 1rem;
+        bottom: 30px;
+        right: 30px;
+        font-size: 1rem;
+    }
 }
