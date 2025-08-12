@@ -92,32 +92,31 @@
         }, 3000);
       }
 
-async function authFetch(url, options = {}) {
-  let token = sessionStorage.getItem('access_token');
-  if (!token) {
-    const urlParams = new URLSearchParams(window.location.search);
-    token = urlParams.get('token');
-    if (token) {
-      sessionStorage.setItem('access_token', token);
-      // Remove token from URL to prevent exposure
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }
-  if (!options.headers) options.headers = {};
-  if (token) {
-    options.headers['Authorization'] = `Bearer ${token}`;
-  }
-  options.credentials = 'include';
-  const response = await fetch(url, options);
-  if (response.status === 401 || response.status === 403) {
-    showToast('Session expired or unauthorized. Please log in again.');
-    setTimeout(() => {
-      window.location.href = 'https://www.ravensnest.ink/signIn.html';
-    }, 2000);
-    throw new Error('Unauthorized');
-  }
-  return response;
-}
+      async function authFetch(url, options = {}) {
+        let token = sessionStorage.getItem('access_token');
+        if (!token) {
+          const urlParams = new URLSearchParams(window.location.search);
+          token = urlParams.get('token');
+          if (token) {
+            sessionStorage.setItem('access_token', token);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+        if (!options.headers) options.headers = {};
+        if (token) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+        options.credentials = 'include';
+        const response = await fetch(url, options);
+        if (response.status === 401 || response.status === 403) {
+          showToast('Session expired or unauthorized. Please log in again.');
+          setTimeout(() => {
+            window.location.href = 'https://www.ravensnest.ink/signIn.html';
+          }, 2000);
+          throw new Error('Unauthorized');
+        }
+        return response;
+      }
 
       let token = sessionStorage.getItem('access_token');
       if (!token) {
@@ -125,6 +124,7 @@ async function authFetch(url, options = {}) {
         token = urlParams.get('token');
         if (token) {
           sessionStorage.setItem('access_token', token);
+          window.history.replaceState({}, document.title, window.location.pathname);
         }
       }
       if (!token) {
@@ -136,6 +136,340 @@ async function authFetch(url, options = {}) {
       }
 
       const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      console.log('User data:', userData, 'Error:', userError); // Debug log
+      if (userError || !userData.user || userData.user.raw_app_meta_data?.role !== 'admin') {
+        showToast('Access denied: Admin role required.');
+        setTimeout(() => {
+          window.location.href = 'https://www.ravensnest.ink/signIn.html';
+        }, 2000);
+        return;
+      }
+
+      async function fetchInquiries() {
+        try {
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/inquiries');
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          inquiriesData = await response.json();
+          renderInquiries(inquiriesData);
+        } catch (err) {
+          showToast('Failed to load inquiries: ' + err.message);
+        }
+      }
+
+      function renderInquiries(data) {
+        const tbody = document.getElementById('inquiriesBody');
+        tbody.innerHTML = '';
+        data.forEach(inquiry => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${inquiry.first_name} ${inquiry.last_name}</td>
+            <td>${inquiry.email}</td>
+            <td>${inquiry.phone || 'N/A'}</td>
+            <td>${inquiry.placement}</td>
+            <td>${inquiry.size}</td>
+            <td>${inquiry.description}</td>
+            <td>${new Date(inquiry.date_from).toLocaleDateString()} - ${new Date(inquiry.date_to).toLocaleDateString()}</td>
+            <td>${inquiry.image_url ? `<a href="${inquiry.image_url}" target="_blank"><img src="${inquiry.image_url}" alt="Inquiry Image"></a>` : 'N/A'}</td>
+            <td>${new Date(inquiry.created_at).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      async function fetchAbuseLogs() {
+        try {
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/abuse-logs');
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          abuseLogsData = await response.json();
+          renderAbuseLogs(abuseLogsData);
+        } catch (err) {
+          showToast('Failed to load abuse logs: ' + err.message);
+        }
+      }
+
+      function renderAbuseLogs(data) {
+        const tbody = document.getElementById('abuseLogsBody');
+        tbody.innerHTML = '';
+        data.forEach(log => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${log.ip_address}</td>
+            <td>${log.reason}</td>
+            <td>${new Date(log.created_at).toLocaleString()}</td>
+          `;
+          tbody.appendChild(row);
+        });
+      }
+
+      async function loadImages(bucket, listId) {
+        try {
+          const response = await authFetch(`https://www.ravensnest.ink/api/images/${bucket}`);
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error);
+          }
+          const images = await response.json();
+          const list = document.getElementById(listId);
+          list.innerHTML = '';
+          images.forEach((url) => {
+            const li = document.createElement('li');
+            li.style.display = 'inline-block';
+            li.style.margin = '5px';
+            li.innerHTML = `
+              <img src="${url}" style="max-width: 100px; max-height: 100px; object-fit: cover;" />
+              <button class="navBtn" onclick="deleteImage('${bucket}', '${url.split('/').pop()}')">Delete</button>
+            `;
+            list.appendChild(li);
+          });
+        } catch (err) {
+          showToast(`Failed to load ${bucket} images: ${err.message}`);
+        }
+      }
+
+      window.uploadImage = async (bucket) => {
+        const fileInput = document.getElementById(`${bucket}Upload`);
+        const file = fileInput.files[0];
+        if (!file) {
+          showToast('No file selected');
+          return;
+        }
+
+        if (!['image/jpeg', 'image/png'].includes(file.type)) {
+          showToast('Invalid file type. Only JPG or PNG allowed.');
+          fileInput.value = '';
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('bucket', bucket);
+
+        try {
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/upload-image', {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || 'Upload failed');
+          }
+          showToast('Image uploaded successfully');
+          fileInput.value = '';
+          loadImages(bucket, `${bucket}List`);
+        } catch (err) {
+          showToast('Upload failed: ' + err.message);
+        }
+      };
+
+      window.deleteImage = async (bucket, filePath) => {
+        try {
+          const response = await authFetch('https://www.ravensnest.ink/auth/api/delete-image', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ bucket, path: filePath })
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            throw new Error(result.error || 'Delete failed');
+          }
+          showToast('Image deleted successfully');
+          loadImages(bucket, `${bucket}List`);
+        } catch (err) {
+          showToast('Delete failed: ' + err.message);
+        }
+      };
+
+      window.filterInquiries = function() {
+        const nameFilter = document.getElementById('inquiryFilterName').value.toLowerCase();
+        const emailFilter = document.getElementById('inquiryFilterEmail').value.toLowerCase();
+        const phoneFilter = document.getElementById('inquiryFilterPhone').value.toLowerCase();
+
+        const filteredInquiries = inquiriesData.filter(inquiry => {
+          const fullName = `${inquiry.first_name} ${inquiry.last_name}`.toLowerCase();
+          const phone = inquiry.phone ? inquiry.phone.toLowerCase() : '';
+          return fullName.includes(nameFilter) &&
+                 inquiry.email.toLowerCase().includes(emailFilter) &&
+                 phone.includes(phoneFilter);
+        });
+        renderInquiries(filteredInquiries);
+      }
+
+      window.filterAbuseLogs = function() {
+        const ipFilter = document.getElementById('abuseFilterIP').value.toLowerCase();
+        const reasonFilter = document.getElementById('abuseFilterReason').value.toLowerCase();
+
+        const filteredLogs = abuseLogsData.filter(log => {
+          return log.ip_address.toLowerCase().includes(ipFilter) &&
+                 log.reason.toLowerCase().includes(reasonFilter);
+        });
+        renderAbuseLogs(filteredLogs);
+      }
+
+      window.logout = function() {
+        sessionStorage.removeItem('access_token');
+        document.cookie = 'access_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; domain=.ravensnest.ink';
+        window.location.href = 'https://www.ravensnest.ink/signIn.html';
+      };
+
+      window.openMenu = function() {
+        // Add modal menu logic here if needed
+      };
+
+      // Load all data
+      await Promise.all([
+        fetchInquiries(),
+        fetchAbuseLogs(),
+        loadImages('gallery', 'galleryList'),
+        loadImages('flash', 'flashList')
+      ]);
+    });
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Dashboard</title>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div id="navBtnContainer">
+    <button class="navBtn" onclick="window.location.href='https://www.ravensnest.ink/index.html'">Home</button>
+    <button class="navBtn" onclick="logout()">Logout</button>
+  </div>
+  <div class="contentContainer">
+    <h2 id="dashboardHeader">Admin Dashboard</h2>
+    <div id="toast"></div>
+
+    <h3 id="inquiriesHeader" class="signInLabel">Inquiries</h3>
+    <div class="filter-container">
+      <input type="text" id="inquiryFilterName" placeholder="Name" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterEmail" placeholder="Email" oninput="filterInquiries()">
+      <input type="text" id="inquiryFilterPhone" placeholder="Phone" oninput="filterInquiries()">
+    </div>
+    <div class="table-wrapper">
+      <table class="inquiriesTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Placement</th>
+            <th>Size</th>
+            <th>Description</th>
+            <th>Dates</th>
+            <th>Image</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="inquiriesBody"></tbody>
+      </table>
+    </div>
+
+    <h3 id="abuseLogsHeader" class="signInLabel">Abuse Logs</h3>
+    <div class="filter-container">
+      <input type="text" id="abuseFilterIP" placeholder="Filter IP Address" oninput="filterAbuseLogs()">
+      <input type="text" id="abuseFilterReason" placeholder="Filter Reason" oninput="filterAbuseLogs()">
+    </div>
+    <div class="table-wrapper">
+      <table class="abuseLogsTable">
+        <thead>
+          <tr>
+            <th>IP Address</th>
+            <th>Reason</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="abuseLogsBody"></tbody>
+      </table>
+    </div>
+
+    <h3 id="galleryHeader" class="signInLabel">Gallery Management</h3>
+    <div class="image-management">
+      <input type="file" id="galleryUpload" accept="image/jpeg,image/png" />
+      <button class="navBtn" onclick="uploadImage('gallery')">Upload to Gallery</button>
+      <ul id="galleryList" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px;"></ul>
+    </div>
+
+    <h3 id="flashHeader" class="signInLabel">Flash Management</h3>
+    <div class="image-management">
+      <input type="file" id="flashUpload" accept="image/jpeg,image/png" />
+      <button class="navBtn" onclick="uploadImage('flash')">Upload to Flash</button>
+      <ul id="flashList" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px;"></ul>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
+      const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+      const toastEl = document.getElementById('toast');
+      let inquiriesData = [];
+      let abuseLogsData = [];
+
+      function showToast(message) {
+        toastEl.textContent = message;
+        toastEl.classList.add('show');
+        setTimeout(() => {
+          toastEl.classList.remove('show');
+        }, 3000);
+      }
+
+      async function authFetch(url, options = {}) {
+        let token = sessionStorage.getItem('access_token');
+        if (!token) {
+          const urlParams = new URLSearchParams(window.location.search);
+          token = urlParams.get('token');
+          if (token) {
+            sessionStorage.setItem('access_token', token);
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        }
+        if (!options.headers) options.headers = {};
+        if (token) {
+          options.headers['Authorization'] = `Bearer ${token}`;
+        }
+        options.credentials = 'include';
+        const response = await fetch(url, options);
+        if (response.status === 401 || response.status === 403) {
+          showToast('Session expired or unauthorized. Please log in again.');
+          setTimeout(() => {
+            window.location.href = 'https://www.ravensnest.ink/signIn.html';
+          }, 2000);
+          throw new Error('Unauthorized');
+        }
+        return response;
+      }
+
+      let token = sessionStorage.getItem('access_token');
+      if (!token) {
+        const urlParams = new URLSearchParams(window.location.search);
+        token = urlParams.get('token');
+        if (token) {
+          sessionStorage.setItem('access_token', token);
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+      }
+      if (!token) {
+        showToast('No session found. Please log in.');
+        setTimeout(() => {
+          window.location.href = 'https://www.ravensnest.ink/signIn.html';
+        }, 2000);
+        return;
+      }
+
+      const { data: userData, error: userError } = await supabase.auth.getUser(token);
+      console.log('User data:', userData, 'Error:', userError); // Debug log
       if (userError || !userData.user || userData.user.raw_app_meta_data?.role !== 'admin') {
         showToast('Access denied: Admin role required.');
         setTimeout(() => {

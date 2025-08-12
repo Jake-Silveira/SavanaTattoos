@@ -59,9 +59,7 @@ const upload = multer({
 function getTokenFromHeaderOrCookie(req) {
   const auth = req.headers['authorization'];
   if (auth && auth.split(' ')[0] === 'Bearer') return auth.split(' ')[1];
-  if (req.cookies.access_token) return req.cookies.access_token;
-  if (req.query.token) return req.query.token;
-  return null;
+  return req.cookies.access_token || req.query.token || null;
 }
 
 // Middleware to verify admin
@@ -71,6 +69,7 @@ const verifyAdmin = async (req, res, next) => {
 
   const { data, error } = await supabase.auth.getUser(token);
   if (error || !data.user) return res.status(403).json({ error: 'Forbidden: Invalid token' });
+  console.log('User data in verifyAdmin:', data.user); // Debug log
   if (data.user.raw_app_meta_data?.role !== 'admin') return res.status(403).json({ error: 'Forbidden: Admin access required' });
 
   req.adminUser = data.user;
@@ -94,9 +93,13 @@ app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error || !data.session) return res.status(401).json({ message: 'Invalid credentials' });
+  if (error || !data.session) {
+    console.log('Sign-in error:', error); // Debug log
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
 
   const { user, session } = data;
+  console.log('Sign-in user:', user); // Debug log
 
   res.cookie('access_token', session.access_token, {
     httpOnly: true,
@@ -314,6 +317,7 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
 
 // Start Server
 app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 // Error handling for unmatched routes
