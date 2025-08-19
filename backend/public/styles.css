@@ -228,8 +228,9 @@ a:hover {
     background-color: #aaa;
     color: rgb(3, 12, 5);
 }
-.inquiryForm{
+.inquiryFormContainer{
     align-items: center;
+    text-align: center;
     justify-content: center;
     display: flex;
     flex-wrap: wrap;
