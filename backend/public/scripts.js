@@ -37,7 +37,349 @@ function showToast(message = 'Submission received!') {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
+  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Get the modal
+  const modal = document.getElementById("menuModal");
+  const modalContent = document.getElementById("modalContent");
+  const menuList = document.getElementById("menuList");
+  const socialsList = document.getElementById("socialsList");
+  const flashModal = document.getElementById("flashModal");
+  const savanaModal = document.getElementById("savanaModal");
+  const inquiryModal = document.getElementById("inquiryModal");
+  const galleryModal = document.getElementById("galleryModal");
+
+  // Get the button that opens the modal
+  const menuBtn = document.getElementById("menuBtn");
+  const socialsBtn = document.getElementById("socialsBtn");
+  const flashBtn = document.getElementById("flashBtn");
+  const savana = document.getElementById("savana");
+  const inquiryBtn = document.getElementById("inquiry");
+  const galleryBtn = document.getElementById("gallery");
+  const signInBtn = document.getElementById("signIn");
+
+  // Get the <span> element that closes the modal
+  const span = document.getElementsByClassName("close")[0];
+
+  // Check authentication status
+  let isAuthenticated = false;
+  let token = sessionStorage.getItem('access_token');
+  if (!token) {
+    const urlParams = new URLSearchParams(window.location.search);
+    token = urlParams.get('token');
+    if (token) {
+      sessionStorage.setItem('access_token', token);
+    }
+  }
+
+  if (token) {
+    const { data: userData, error } = await supabase.auth.getUser(token);
+    if (error || !userData.user) {
+      sessionStorage.removeItem('access_token');
+    } else {
+      isAuthenticated = true;
+    }
+  }
+
+  // Redirect to sign-in page from modal button
+  const signInFromModal = document.getElementById('signInFromModal');
+  if (signInFromModal) {
+    signInFromModal.onclick = function() {
+      window.location.href = 'https://www.ravensnest.ink/signIn.html';
+    };
+  }
+
+  // Redirect to sign-in page
+  if (signInBtn) {
+    signInBtn.onclick = function() {
+      window.location.href = 'https://www.ravensnest.ink/signIn.html';
+    };
+  }
+
+  // Modal button handlers
+  if (menuBtn) {
+    menuBtn.onclick = function() {
+      modal.style.display = "block";
+      modalContent.style.margin = "0 0";
+      modalContent.style.width = "75%";
+      modalContent.style.height = "100%";
+      modalContent.style.borderRadius = "0px";
+      modalContent.style.padding = "4px";
+      socialsList.style.display = "none";
+      flashModal.style.display = "none";
+      savanaModal.style.display = "none";
+      inquiryModal.style.display = "none";
+      galleryModal.style.display = "none";
+      menuList.style.display = "flex";
+    };
+  }
+
+  if (socialsBtn) {
+    socialsBtn.onclick = function() {
+      wideModal();
+      socialsList.style.display = "flex";
+      flashModal.style.display = "none";
+      savanaModal.style.display = "none";
+      inquiryModal.style.display = "none";
+      galleryModal.style.display = "none";
+      modalContent.style.width = "auto";
+      modalContent.style.height = "90%";
+    };
+  }
+
+  if (flashBtn) {
+    flashBtn.onclick = function() {
+      wideModal();
+      flashModal.style.display = "block";
+      socialsList.style.display = "none";
+      savanaModal.style.display = "none";
+      inquiryModal.style.display = "none";
+      galleryModal.style.display = "none";
+      modalContent.style.width = "80%";
+      modalContent.style.height = "90%";
+    };
+  }
+
+  if (savana) {
+    savana.onclick = function() {
+      wideModal();
+      savanaModal.style.display = "flex";
+      flashModal.style.display = "none";
+      socialsList.style.display = "none";
+      inquiryModal.style.display = "none";
+      galleryModal.style.display = "none";
+      modalContent.style.width = "80%";
+      modalContent.style.height = "90%";
+    };
+  }
+
+  if (galleryBtn) {
+    galleryBtn.onclick = function() {
+      wideModal();
+      savanaModal.style.display = "none";
+      flashModal.style.display = "none";
+      socialsList.style.display = "none";
+      inquiryModal.style.display = "none";
+      galleryModal.style.display = "flex";
+      modalContent.style.width = "80%";
+      modalContent.style.height = "90%";
+    };
+  }
+
+  if (inquiryBtn) {
+    inquiryBtn.onclick = function() {
+      wideModal();
+      modalContent.style.width = '80%';
+      modalContent.style.height = '90%';
+      savanaModal.style.display = 'none';
+      flashModal.style.display = 'none';
+      socialsList.style.display = 'none';
+      galleryModal.style.display = 'none';
+      inquiryModal.style.display = 'flex';
+
+      const authMessage = document.getElementById('authMessage');
+      const inquiryFormContainer = document.getElementById('inquiryFormContainer');
+      const formInputs = document.querySelectorAll('#inquiryForm .inquiryInput');
+      const submitBtn = document.getElementById('inquirySubmitBtn');
+
+      if (isAuthenticated) {
+        authMessage.style.display = 'none';
+        inquiryFormContainer.style.display = 'block';
+        formInputs.forEach(input => input.removeAttribute('disabled'));
+      } else {
+        authMessage.style.display = 'flex';
+        inquiryFormContainer.style.display = 'none';
+        formInputs.forEach(input => input.setAttribute('disabled', 'true'));
+        submitBtn.setAttribute('disabled', 'true');
+        showToast('Please sign in to access the inquiry form.');
+      }
+    };
+  }
+
+  // Close modal
+  if (span) {
+    span.onclick = function() {
+      modal.style.display = "none";
+    };
+  }
+
+  window.onclick = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+
+  window.ontouchstart = function(event) {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+
+  const wideModal = function() {
+    modal.style.display = "flex";
+    modal.style.alignItems = "center";
+    modal.style.justifyContent = "center";
+    modalContent.style.width = "fit-content";
+    modalContent.style.minWidth = "300px";
+    modalContent.style.height = "fit-content";
+    modalContent.style.minHeight = "300px";
+    modalContent.style.borderRadius = "20px";
+    modalContent.style.padding = "20px";
+    modalContent.style.overflow = "auto";
+    menuList.style.display = "none";
+  };
+
+  // Gallery Generation
+  const galleryPhotos = document.querySelector(".galleryPhotos");
+  const gallery = [];
+  const galleryPopup = document.getElementById("galleryPopup");
+  const leftBtn = document.getElementById("galleryLeft");
+  const rightBtn = document.getElementById("galleryRight");
+
+  let currentPopupIndex = 0;
+
+  async function loadGalleryImages() {
+    try {
+      const response = await fetch("https://www.ravensnest.ink/api/images/gallery");
+      if (!response.ok) throw new Error('Failed to fetch gallery images');
+      const imageUrls = await response.json();
+      gallery.length = 0; // Clear existing gallery
+      imageUrls.forEach(url => gallery.push(new Photo(url)));
+      displayGallery();
+      startGallery();
+    } catch (err) {
+      showToast('Failed to load gallery images: ' + err.message);
+    }
+  }
+
+  class Photo {
+    constructor(url) {
+      this.url = url;
+    }
+  }
+
+  function displayGallery() {
+    galleryPhotos.innerHTML = ''; // Clear existing photos
+    for (let i = 0; i < gallery.length; i++) {
+      let cell = document.createElement('div');
+      cell.className = "grid-item";
+      cell.id = `photo-${i}`;
+      cell.style.padding = '1vw';
+
+      let icon = document.createElement('img');
+      icon.className = 'grid-item-icon';
+      icon.id = 'grid-item-icon' + i;
+      icon.src = gallery[i].url;
+      cell.appendChild(icon);
+
+      icon.addEventListener("click", () => {
+        currentPopupIndex = i;
+        updatePopupImage();
+      });
+
+      galleryPhotos.appendChild(cell);
+    }
+  }
+
+  function startGallery() {
+    if (gallery.length > 0) {
+      currentPopupIndex = 0;
+      updatePopupImage();
+    }
+  }
+
+  function updatePopupImage() {
+    const modal = document.getElementById("galleryPopup");
+    modal.innerHTML = ''; // Clear previous content
+
+    const popupIcon = document.createElement('img');
+    popupIcon.className = 'popupImg';
+    popupIcon.src = gallery[currentPopupIndex].url;
+
+    popupIcon.addEventListener("click", (e) => {
+      if (e.target === popupIcon) {
+        if (modal.classList.contains("fullscreen")) {
+          modal.classList.remove("fullscreen");
+          popupIcon.classList.remove("zoomed");
+        } else {
+          modal.classList.add("fullscreen");
+          popupIcon.classList.add("zoomed");
+        }
+      }
+    });
+
+    modal.appendChild(popupIcon);
+  }
+
+  // Navigation buttons
+  if (leftBtn) {
+    leftBtn.addEventListener("click", () => {
+      if (gallery.length === 0) return;
+      currentPopupIndex = (currentPopupIndex - 1 + gallery.length) % gallery.length;
+      updatePopupImage();
+    });
+  }
+
+  if (rightBtn) {
+    rightBtn.addEventListener("click", () => {
+      if (gallery.length === 0) return;
+      currentPopupIndex = (currentPopupIndex + 1) % gallery.length;
+      updatePopupImage();
+    });
+  }
+
+  loadGalleryImages(); // Start gallery
+
+  // FlashGrid Generation
+  const flashGridContainer = document.querySelector(".flashGridContainer");
+  const flashGrid = [];
+
+  async function loadFlashGridImages() {
+    try {
+      const response = await fetch("https://www.ravensnest.ink/api/images/flash");
+      if (!response.ok) throw new Error('Failed to fetch flash images');
+      const imageUrls = await response.json();
+      flashGrid.length = 0; // Clear existing grid
+      imageUrls.forEach(url => flashGrid.push(new Photo(url)));
+      displayFlashGrid();
+    } catch (err) {
+      showToast('Failed to load flash images: ' + err.message);
+    }
+  }
+
+  function displayFlashGrid() {
+    flashGridContainer.innerHTML = ''; // Clear existing photos
+    for (let i = 0; i < flashGrid.length; i++) {
+      let cell = document.createElement('div');
+      cell.className = "flash-grid-item";
+      cell.id = `flashPhoto-${i}`;
+      cell.style.padding = '1vw';
+
+      let icon = document.createElement('img');
+      icon.className = 'flash-grid-item-icon';
+      icon.id = 'flash-grid-item-icon' + i;
+      icon.src = flashGrid[i].url;
+      cell.appendChild(icon);
+
+      icon.addEventListener("click", () => {
+        const zoomedImages = document.querySelectorAll(".flash-grid-item-icon.zoomed");
+        zoomedImages.forEach(img => {
+          if (img !== icon) {
+            img.classList.remove("zoomed");
+          }
+        });
+        icon.classList.toggle("zoomed");
+      });
+
+      flashGridContainer.appendChild(cell);
+    }
+  }
+
+  loadFlashGridImages();
+
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
 
   // Image preview
@@ -73,51 +415,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!form) {
     console.error('Inquiry form not found');
     return;
-  }
-
-  // Inquiry modal logic
-  const inquiryBtn = document.getElementById('inquiry');
-  if (inquiryBtn) {
-    inquiryBtn.onclick = function() {
-      const modal = document.getElementById('menuModal');
-      const modalContent = document.getElementById('modalContent');
-      const savanaModal = document.getElementById('savanaModal');
-      const flashModal = document.getElementById('flashModal');
-      const socialsList = document.getElementById('socialsList');
-      const galleryModal = document.getElementById('galleryModal');
-      const inquiryModal = document.getElementById('inquiryModal');
-      const authMessage = document.getElementById('authMessage');
-      const inquiryFormContainer = document.getElementById('inquiryFormContainer');
-      const formInputs = document.querySelectorAll('#inquiryForm .inquiryInput');
-      const submitBtn = document.getElementById('inquirySubmitBtn');
-
-      modal.style.display = 'flex';
-      modal.style.alignItems = 'center';
-      modal.style.justifyContent = 'center';
-      modalContent.style.width = '80%';
-      modalContent.style.height = '90%';
-      modalContent.style.borderRadius = '20px';
-      modalContent.style.padding = '20px';
-      modalContent.style.overflow = 'auto';
-      savanaModal.style.display = 'none';
-      flashModal.style.display = 'none';
-      socialsList.style.display = 'none';
-      galleryModal.style.display = 'none';
-      inquiryModal.style.display = 'flex';
-
-      const isAuthenticated = !!sessionStorage.getItem('access_token');
-      if (isAuthenticated) {
-        authMessage.style.display = 'none';
-        inquiryFormContainer.style.display = 'block';
-        formInputs.forEach(input => input.removeAttribute('disabled'));
-      } else {
-        authMessage.style.display = 'flex';
-        inquiryFormContainer.style.display = 'none';
-        formInputs.forEach(input => input.setAttribute('disabled', 'true'));
-        submitBtn.setAttribute('disabled', 'true');
-        showToast('Please sign in to access the inquiry form.');
-      }
-    };
   }
 
   form.setAttribute('novalidate', true); // Disable native validation
