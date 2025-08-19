@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Move inquiry modal logic here to show toast for unauthenticated users
+  // Inquiry modal logic
   const inquiryBtn = document.getElementById('inquiry');
   if (inquiryBtn) {
     inquiryBtn.onclick = function() {
@@ -87,6 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const galleryModal = document.getElementById('galleryModal');
       const inquiryModal = document.getElementById('inquiryModal');
       const authMessage = document.getElementById('authMessage');
+      const inquiryFormContainer = document.getElementById('inquiryFormContainer');
       const formInputs = document.querySelectorAll('#inquiryForm .inquiryInput');
       const submitBtn = document.getElementById('inquirySubmitBtn');
 
@@ -107,9 +108,11 @@ document.addEventListener('DOMContentLoaded', () => {
       const isAuthenticated = !!sessionStorage.getItem('access_token');
       if (isAuthenticated) {
         authMessage.style.display = 'none';
+        inquiryFormContainer.style.display = 'block';
         formInputs.forEach(input => input.removeAttribute('disabled'));
       } else {
-        authMessage.style.display = 'block';
+        authMessage.style.display = 'flex';
+        inquiryFormContainer.style.display = 'none';
         formInputs.forEach(input => input.setAttribute('disabled', 'true'));
         submitBtn.setAttribute('disabled', 'true');
         showToast('Please sign in to access the inquiry form.');

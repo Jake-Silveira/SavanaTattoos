@@ -67,55 +67,58 @@
                     </p>
             </div>
             <div id="inquiryModal">
-                <div id="authMessage" style="display: none;" role="alert" aria-live="assertive">
-                    <p style="margin: 0; font-weight: bold;">Please sign in or register to submit an inquiry.</p>
-                    <button id="signInFromModal" class="signInBtn">Sign In</button>
+                <div id="authMessage" role="alert" aria-live="assertive">
+                    <span class="lock-icon">🔒</span>
+                    <p>Please sign in or register to request a consultation.</p>
+                    <button id="signInFromModal" class="signInBtn">Sign In / Sign Up</button>
                 </div>
-                <div id="privacyStatement">We may log IP addresses for abuse prevention and rate-limiting purposes. This data is only used to protect our systems and is not shared.</div>
-                <p id="inquiryModalHeader">Consultation Request</p>
-                <p class="indicatorSpan"><span class="indicatorSpan" style="color: red;">*</span> Indicates a required field</p>
-                <form class="inquiryForm" id="inquiryForm" enctype="multipart/form-data">
-                    <fieldset>
-                        <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
-                        <select id="inquiryLocation" class="inquiryInput" name="placement" required disabled><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
-                        <div id="locationError" class="error-msg"></div>
-                        <label for="inquirySize" class="inquiryLabel required">Size</label>
-                        <input id="inquirySize" class="inquiryInput" name="size" type="text" placeholder='W"xH"' maxlength="10" oninput="this.value = cleanInput(this.value)" required disabled>
-                        <div id="sizeError" class="error-msg"></div>
-                        <label for="inquiryDesc" class="inquiryLabel required">Description</label>
-                        <textarea id="inquiryDesc" class="inquiryInput" name="desc" placeholder="What kind of tattoo do you want?" maxlength="512" oninput="this.value = cleanInput(this.value)" required disabled></textarea>
-                        <div id="descError" class="error-msg"></div>
-                        <label class="inquiryLabel">Have a Photo?</label>
-                        <input id="inquiryExample" class="inquiryInput" name="file" type="file" accept="image/*" disabled>
-                        <img id="imagePreview" style="max-width: 200px; display: none;" />
-                        <div id="imageError" class="error-msg"></div>
-                    </fieldset>
-                    <fieldset>
-                        <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
-                        <input id="inquiryFirstName" class="inquiryInput" name="firstName" type="text" placeholder="John" maxlength="20" oninput="this.value = cleanInput(this.value)" required disabled>
-                        <div id="firstNameError" class="error-msg"></div>
-                        <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
-                        <input id="inquiryLastName" class="inquiryInput" name="lastName" type="text" placeholder="Doe" maxlength="20" oninput="this.value = cleanInput(this.value)" required disabled>
-                        <div id="lastNameError" class="error-msg"></div>
-                        <label for="inquiryEmail" class="inquiryLabel required">Email</label>
-                        <input id="inquiryEmail" class="inquiryInput" name="email" type="email" placeholder="JohnDoe@gmail.com" maxlength="50" oninput="this.value = stripEmojis(this.value.trim())" required disabled>
-                        <div id="emailError" class="error-msg"></div>
-                        <label for="inquiryPhone" class="inquiryLabel">Phone</label>
-                        <input id="inquiryPhone" class="inquiryInput" name="phone" pattern="\d{10}" maxlength="14" placeholder="1118675309" type="tel" oninput="this.value = this.value.replace(/\D/g, '')" disabled>
-                        <div id="phoneError" class="error-msg"></div>
-                    </fieldset>
-                    <fieldset>
-                        <label for="inquiryAvailabilityFrom" class="inquiryLabel required">Availability</label>
-                        <label for="inquiryAvailabilityFrom">From:</label>
-                        <input id="inquiryAvailabilityFrom" class="inquiryInput" name="dateFrom" type="date" required disabled>
-                        <div id="fromDateError" class="error-msg"></div>
-                        <label for="inquiryAvailabilityTo">To:</label>
-                        <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required disabled>     
-                        <div id="toDateError" class="error-msg"></div>               
-                    </fieldset>
-                    <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="disableSubmit"></div>
-                    <button id="inquirySubmitBtn" class="inquiryInput" value="submit" type="submit" disabled>Submit</button>
-                </form>
+                <div id="inquiryFormContainer" style="display: none;">
+                    <div id="privacyStatement">We may log IP addresses for abuse prevention and rate-limiting purposes. This data is only used to protect our systems and is not shared.</div>
+                    <p id="inquiryModalHeader">Consultation Request</p>
+                    <p class="indicatorSpan"><span class="indicatorSpan" style="color: red;">*</span> Indicates a required field</p>
+                    <form class="inquiryForm" id="inquiryForm" enctype="multipart/form-data">
+                        <fieldset>
+                            <label for="inquiryLocation" class="inquiryLabel required">Placement</label>
+                            <select id="inquiryLocation" class="inquiryInput" name="placement" required disabled><option value="">Select one...</option><option value="Arm">Arm</option><option value="Back">Back</option><option value="Leg">Leg</option><option value="Side">Side</option><option value="Chest">Chest</option><option value="Other">Other</option></select>
+                            <div id="locationError" class="error-msg"></div>
+                            <label for="inquirySize" class="inquiryLabel required">Size</label>
+                            <input id="inquirySize" class="inquiryInput" name="size" type="text" placeholder='W"xH"' maxlength="10" oninput="this.value = cleanInput(this.value)" required disabled>
+                            <div id="sizeError" class="error-msg"></div>
+                            <label for="inquiryDesc" class="inquiryLabel required">Description</label>
+                            <textarea id="inquiryDesc" class="inquiryInput" name="desc" placeholder="What kind of tattoo do you want?" maxlength="512" oninput="this.value = cleanInput(this.value)" required disabled></textarea>
+                            <div id="descError" class="error-msg"></div>
+                            <label class="inquiryLabel">Have a Photo?</label>
+                            <input id="inquiryExample" class="inquiryInput" name="file" type="file" accept="image/*" disabled>
+                            <img id="imagePreview" style="max-width: 200px; display: none;" />
+                            <div id="imageError" class="error-msg"></div>
+                        </fieldset>
+                        <fieldset>
+                            <label for="inquiryFirstName" class="inquiryLabel required">First Name</label>
+                            <input id="inquiryFirstName" class="inquiryInput" name="firstName" type="text" placeholder="John" maxlength="20" oninput="this.value = cleanInput(this.value)" required disabled>
+                            <div id="firstNameError" class="error-msg"></div>
+                            <label for="inquiryLastName" class="inquiryLabel required">Last Name</label>
+                            <input id="inquiryLastName" class="inquiryInput" name="lastName" type="text" placeholder="Doe" maxlength="20" oninput="this.value = cleanInput(this.value)" required disabled>
+                            <div id="lastNameError" class="error-msg"></div>
+                            <label for="inquiryEmail" class="inquiryLabel required">Email</label>
+                            <input id="inquiryEmail" class="inquiryInput" name="email" type="email" placeholder="JohnDoe@gmail.com" maxlength="50" oninput="this.value = stripEmojis(this.value.trim())" required disabled>
+                            <div id="emailError" class="error-msg"></div>
+                            <label for="inquiryPhone" class="inquiryLabel">Phone</label>
+                            <input id="inquiryPhone" class="inquiryInput" name="phone" pattern="\d{10}" maxlength="14" placeholder="1118675309" type="tel" oninput="this.value = this.value.replace(/\D/g, '')" disabled>
+                            <div id="phoneError" class="error-msg"></div>
+                        </fieldset>
+                        <fieldset>
+                            <label for="inquiryAvailabilityFrom" class="inquiryLabel required">Availability</label>
+                            <label for="inquiryAvailabilityFrom">From:</label>
+                            <input id="inquiryAvailabilityFrom" class="inquiryInput" name="dateFrom" type="date" required disabled>
+                            <div id="fromDateError" class="error-msg"></div>
+                            <label for="inquiryAvailabilityTo">To:</label>
+                            <input id="inquiryAvailabilityTo" class="inquiryInput" name="dateTo" type="date" required disabled>     
+                            <div id="toDateError" class="error-msg"></div>               
+                        </fieldset>
+                        <div class="g-recaptcha" data-sitekey="6LdvmZIrAAAAALk28Wumi_ioEaXbwU8UO5AVPNNm" data-callback="enableSubmit" data-expired-callback="disableSubmit"></div>
+                        <button id="inquirySubmitBtn" class="inquiryInput" value="submit" type="submit" disabled>Submit</button>
+                    </form>
+                </div>
             </div>
             <div id="galleryModal">
                 <div id="galleryPopup"></div>
@@ -177,31 +180,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       isAuthenticated = true;
     }
   }
-
-  // Handle inquiry modal display
-  inquiryBtn.onclick = function() {
-    wideModal();
-    savanaModal.style.display = "none";
-    flashModal.style.display = "none";
-    socialsList.style.display = "none";
-    galleryModal.style.display = "none";
-    inquiryModal.style.display = "flex";
-    modalContent.style.width = "80%";
-    modalContent.style.height = "90%";
-
-    const authMessage = document.getElementById('authMessage');
-    const formInputs = document.querySelectorAll('#inquiryForm .inquiryInput');
-    const submitBtn = document.getElementById('inquirySubmitBtn');
-
-    if (isAuthenticated) {
-      authMessage.style.display = 'none';
-      formInputs.forEach(input => input.removeAttribute('disabled'));
-    } else {
-      authMessage.style.display = 'block';
-      formInputs.forEach(input => input.setAttribute('disabled', 'true'));
-      submitBtn.setAttribute('disabled', 'true');
-    }
-  };
 
   // Redirect to sign-in page from modal button
   const signInFromModal = document.getElementById('signInFromModal');
