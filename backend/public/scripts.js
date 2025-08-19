@@ -75,6 +75,48 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // Move inquiry modal logic here to show toast for unauthenticated users
+  const inquiryBtn = document.getElementById('inquiry');
+  if (inquiryBtn) {
+    inquiryBtn.onclick = function() {
+      const modal = document.getElementById('menuModal');
+      const modalContent = document.getElementById('modalContent');
+      const savanaModal = document.getElementById('savanaModal');
+      const flashModal = document.getElementById('flashModal');
+      const socialsList = document.getElementById('socialsList');
+      const galleryModal = document.getElementById('galleryModal');
+      const inquiryModal = document.getElementById('inquiryModal');
+      const authMessage = document.getElementById('authMessage');
+      const formInputs = document.querySelectorAll('#inquiryForm .inquiryInput');
+      const submitBtn = document.getElementById('inquirySubmitBtn');
+
+      modal.style.display = 'flex';
+      modal.style.alignItems = 'center';
+      modal.style.justifyContent = 'center';
+      modalContent.style.width = '80%';
+      modalContent.style.height = '90%';
+      modalContent.style.borderRadius = '20px';
+      modalContent.style.padding = '20px';
+      modalContent.style.overflow = 'auto';
+      savanaModal.style.display = 'none';
+      flashModal.style.display = 'none';
+      socialsList.style.display = 'none';
+      galleryModal.style.display = 'none';
+      inquiryModal.style.display = 'flex';
+
+      const isAuthenticated = !!sessionStorage.getItem('access_token');
+      if (isAuthenticated) {
+        authMessage.style.display = 'none';
+        formInputs.forEach(input => input.removeAttribute('disabled'));
+      } else {
+        authMessage.style.display = 'block';
+        formInputs.forEach(input => input.setAttribute('disabled', 'true'));
+        submitBtn.setAttribute('disabled', 'true');
+        showToast('Please sign in to access the inquiry form.');
+      }
+    };
+  }
+
   form.setAttribute('novalidate', true); // Disable native validation
 
   const fields = [

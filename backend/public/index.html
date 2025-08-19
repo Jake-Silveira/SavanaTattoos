@@ -32,7 +32,7 @@
           
         <div class="title">
             <img src="images/Raven'sNest.svg" id="titleLogo">
-            <div class="navBtn" id="inquiry">Book Today!</div>
+            <div class="navBtn" id="inquiry" title="Sign in required to book">Book Today!</div>
         </div>
     </div>
  </div> 
@@ -67,8 +67,9 @@
                     </p>
             </div>
             <div id="inquiryModal">
-                <div id="authMessage" style="display: none; text-align: center; color: red; margin-bottom: 1rem;">
-                    Please <a href="https://www.ravensnest.ink/signIn.html">sign in or register</a> to submit an inquiry.
+                <div id="authMessage" style="display: none;" role="alert" aria-live="assertive">
+                    <p style="margin: 0; font-weight: bold;">Please sign in or register to submit an inquiry.</p>
+                    <button id="signInFromModal" class="signInBtn">Sign In</button>
                 </div>
                 <div id="privacyStatement">We may log IP addresses for abuse prevention and rate-limiting purposes. This data is only used to protect our systems and is not shared.</div>
                 <p id="inquiryModalHeader">Consultation Request</p>
@@ -201,6 +202,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       submitBtn.setAttribute('disabled', 'true');
     }
   };
+
+  // Redirect to sign-in page from modal button
+  const signInFromModal = document.getElementById('signInFromModal');
+  if (signInFromModal) {
+    signInFromModal.onclick = function() {
+      window.location.href = 'https://www.ravensnest.ink/signIn.html';
+    };
+  }
 
   // Redirect to sign-in page
   signInBtn.onclick = function() {
