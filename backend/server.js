@@ -87,6 +87,22 @@ const verifyUser = async (req, res, next) => {
   next();
 };
 
+// Abuse logging
+async function logAbuse(ip, reason) {
+  const { error } = await supabase.from('abuse_logs').insert([{ ip_address: ip, reason }]);
+  if (error) throw new Error(`Failed to log abuse: ${error.message}`);
+}
+
+const formLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 2,
+  message: { message: 'Too many submissions from this IP, try again later.' },
+  handler: (req, res) => {
+    logAbuse(req.ip, 'Rate limit exceeded');
+    res.status(429).json({ message: 'Too many submissions from this IP, try again later.' });
+  }
+});
+
 // POST /sign-in
 app.post('/sign-in', async (req, res) => {
   const { email, password } = req.body;
@@ -305,22 +321,6 @@ app.get('/', async (req, res) => {
     ? 'https://www.ravensnest.ink/admin/dashboard'
     : 'https://www.ravensnest.ink/index.html';
   res.redirect(302, `${redirectUrl}?token=${token}`);
-});
-
-// Abuse logging
-async function logAbuse(ip, reason) {
-  const { error } = await supabase.from('abuse_logs').insert([{ ip_address: ip, reason }]);
-  if (error) throw new Error(`Failed to log abuse: ${error.message}`);
-}
-
-const formLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 2,
-  message: { message: 'Too many submissions from this IP, try again later.' },
-  handler: (req, res) => {
-    logAbuse(req.ip, 'Rate limit exceeded');
-    res.status(429).json({ message: 'Too many submissions from this IP, try again later.' });
-  }
 });
 
 // Start Server
