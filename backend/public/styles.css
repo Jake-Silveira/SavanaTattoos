@@ -45,7 +45,7 @@ body {
     padding: 0;
     cursor: pointer;
     font-weight: 600;
-    font-size: 30px;
+    font-size: 1.5rem;
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #aaa;
     min-width: 20%;
