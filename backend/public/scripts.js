@@ -13,17 +13,6 @@ function cleanInput(value) {
   return sanitizeInput(stripEmojis(value));
 }
 
-function enableSubmit() {
-  const isAuthenticated = !!sessionStorage.getItem('access_token');
-  if (isAuthenticated) {
-    document.getElementById('inquirySubmitBtn').disabled = false;
-  }
-}
-
-function disableSubmit() {
-  document.getElementById('inquirySubmitBtn').disabled = true;
-}
-
 function showToast(message = 'Submission received!') {
   const toast = document.getElementById('toast');
   if (toast) {
@@ -37,12 +26,8 @@ function showToast(message = 'Submission received!') {
   }
 }
 
-document.addEventListener('DOMContentLoaded', async () => {
-  const SUPABASE_URL = 'https://klsgtwlcvpngkwbzromr.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsc2d0d2xjdnBuZ2t3Ynpyb21yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMyMTUxNDMsImV4cCI6MjA2ODc5MTE0M30.KZnF7Rp_tabRNk7VSY44KYojYzLPAcsp96I07Kxd1EU';
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // Get the modal
+document.addEventListener('DOMContentLoaded', () => {
+  // Modal elements
   const modal = document.getElementById("menuModal");
   const modalContent = document.getElementById("modalContent");
   const menuList = document.getElementById("menuList");
@@ -52,52 +37,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   const inquiryModal = document.getElementById("inquiryModal");
   const galleryModal = document.getElementById("galleryModal");
 
-  // Get the button that opens the modal
+  // Modal buttons
   const menuBtn = document.getElementById("menuBtn");
   const socialsBtn = document.getElementById("socialsBtn");
   const flashBtn = document.getElementById("flashBtn");
   const savana = document.getElementById("savana");
   const inquiryBtn = document.getElementById("inquiry");
   const galleryBtn = document.getElementById("gallery");
-  const signInBtn = document.getElementById("signIn");
 
-  // Get the <span> element that closes the modal
+  // Close button
   const span = document.getElementsByClassName("close")[0];
-
-  // Check authentication status
-  let isAuthenticated = false;
-  let token = sessionStorage.getItem('access_token');
-  if (!token) {
-    const urlParams = new URLSearchParams(window.location.search);
-    token = urlParams.get('token');
-    if (token) {
-      sessionStorage.setItem('access_token', token);
-    }
-  }
-
-  if (token) {
-    const { data: userData, error } = await supabase.auth.getUser(token);
-    if (error || !userData.user) {
-      sessionStorage.removeItem('access_token');
-    } else {
-      isAuthenticated = true;
-    }
-  }
-
-  // Redirect to sign-in page from modal button
-  const signInFromModal = document.getElementById('signInFromModal');
-  if (signInFromModal) {
-    signInFromModal.onclick = function() {
-      window.location.href = 'https://www.ravensnest.ink/signIn.html';
-    };
-  }
-
-  // Redirect to sign-in page
-  if (signInBtn) {
-    signInBtn.onclick = function() {
-      window.location.href = 'https://www.ravensnest.ink/signIn.html';
-    };
-  }
 
   // Modal button handlers
   if (menuBtn) {
@@ -179,23 +128,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       socialsList.style.display = 'none';
       galleryModal.style.display = 'none';
       inquiryModal.style.display = 'flex';
-
-      const authMessage = document.getElementById('authMessage');
-      const inquiryFormContainer = document.getElementById('inquiryFormContainer');
-      const formInputs = document.querySelectorAll('#inquiryForm .inquiryInput');
-      const submitBtn = document.getElementById('inquirySubmitBtn');
-
-      if (isAuthenticated) {
-        authMessage.style.display = 'none';
-        inquiryFormContainer.style.display = 'block';
-        formInputs.forEach(input => input.removeAttribute('disabled'));
-      } else {
-        authMessage.style.display = 'flex';
-        inquiryFormContainer.style.display = 'none';
-        formInputs.forEach(input => input.setAttribute('disabled', 'true'));
-        submitBtn.setAttribute('disabled', 'true');
-        showToast('Please sign in to access the inquiry form.');
-      }
     };
   }
 
@@ -218,7 +150,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   };
 
-  const wideModal = function() {
+  function wideModal() {
     modal.style.display = "flex";
     modal.style.alignItems = "center";
     modal.style.justifyContent = "center";
@@ -230,7 +162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     modalContent.style.padding = "20px";
     modalContent.style.overflow = "auto";
     menuList.style.display = "none";
-  };
+  }
 
   // Gallery Generation
   const galleryPhotos = document.querySelector(".galleryPhotos");
@@ -238,7 +170,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const galleryPopup = document.getElementById("galleryPopup");
   const leftBtn = document.getElementById("galleryLeft");
   const rightBtn = document.getElementById("galleryRight");
-
   let currentPopupIndex = 0;
 
   async function loadGalleryImages() {
@@ -246,7 +177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const response = await fetch("https://www.ravensnest.ink/api/images/gallery");
       if (!response.ok) throw new Error('Failed to fetch gallery images');
       const imageUrls = await response.json();
-      gallery.length = 0; // Clear existing gallery
+      gallery.length = 0;
       imageUrls.forEach(url => gallery.push(new Photo(url)));
       displayGallery();
       startGallery();
@@ -262,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function displayGallery() {
-    galleryPhotos.innerHTML = ''; // Clear existing photos
+    galleryPhotos.innerHTML = '';
     for (let i = 0; i < gallery.length; i++) {
       let cell = document.createElement('div');
       cell.className = "grid-item";
@@ -293,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function updatePopupImage() {
     const modal = document.getElementById("galleryPopup");
-    modal.innerHTML = ''; // Clear previous content
+    modal.innerHTML = '';
 
     const popupIcon = document.createElement('img');
     popupIcon.className = 'popupImg';
@@ -314,7 +245,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     modal.appendChild(popupIcon);
   }
 
-  // Navigation buttons
   if (leftBtn) {
     leftBtn.addEventListener("click", () => {
       if (gallery.length === 0) return;
@@ -331,9 +261,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  loadGalleryImages(); // Start gallery
+  loadGalleryImages();
 
-  // FlashGrid Generation
+  // Flash Grid Generation
   const flashGridContainer = document.querySelector(".flashGridContainer");
   const flashGrid = [];
 
@@ -342,7 +272,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const response = await fetch("https://www.ravensnest.ink/api/images/flash");
       if (!response.ok) throw new Error('Failed to fetch flash images');
       const imageUrls = await response.json();
-      flashGrid.length = 0; // Clear existing grid
+      flashGrid.length = 0;
       imageUrls.forEach(url => flashGrid.push(new Photo(url)));
       displayFlashGrid();
     } catch (err) {
@@ -351,7 +281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function displayFlashGrid() {
-    flashGridContainer.innerHTML = ''; // Clear existing photos
+    flashGridContainer.innerHTML = '';
     for (let i = 0; i < flashGrid.length; i++) {
       let cell = document.createElement('div');
       cell.className = "flash-grid-item";
@@ -379,6 +309,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   loadFlashGridImages();
+
+  // Form handling
+  const form = document.getElementById('inquiryForm');
+  if (!form) {
+    console.error('Inquiry form not found');
+    return;
+  }
 
   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
 
@@ -410,14 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   }
 
-  // Form handling
-  const form = document.getElementById('inquiryForm');
-  if (!form) {
-    console.error('Inquiry form not found');
-    return;
-  }
-
-  form.setAttribute('novalidate', true); // Disable native validation
+  form.setAttribute('novalidate', true);
 
   const fields = [
     { id: 'inquiryLocation', errorId: 'locationError', name: 'placement' },
@@ -448,17 +378,40 @@ document.addEventListener('DOMContentLoaded', async () => {
   const sizeInput = document.getElementById('inquirySize');
   if (sizeInput) {
     sizeInput.addEventListener('input', (e) => {
-      let v = e.target.value.replace(/[^\d]/g, '').substring(0, 4);
-      let formatted = '';
-      if (v.length <= 2) {
-        formatted = v;
-      } else {
-        formatted = v.substring(0, 2) + `"x` + v.substring(2) + '"';
+      const input = e.target;
+      const cursorPos = input.selectionStart;
+      const prevValue = input.value;
+      let digits = prevValue.replace(/[^\d]/g, '').substring(0, 4);
+      
+      // Allow backspace/delete without immediate reformatting
+      if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+        input.value = prevValue;
+        input.setSelectionRange(cursorPos, cursorPos);
+        return;
       }
-      e.target.value = formatted;
+
+      let formatted = '';
+      if (digits.length <= 2) {
+        formatted = digits;
+      } else {
+        formatted = digits.substring(0, 2) + `"x` + digits.substring(2) + '"';
+      }
+
+      // Adjust cursor position
+      let newCursorPos = cursorPos;
+      if (digits.length > 2 && cursorPos > 2) {
+        newCursorPos += 3; // Account for '"x' added
+      }
+      if (prevValue.length > formatted.length) {
+        newCursorPos = Math.max(0, cursorPos - 1);
+      }
+
+      input.value = formatted;
+      input.setSelectionRange(newCursorPos, newCursorPos);
     });
   }
 
+  // Error handling
   const showError = (input, errorId, message) => {
     input.classList.add('invalid');
     const errorEl = document.getElementById(errorId);
@@ -473,7 +426,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (errorEl) errorEl.textContent = '';
   };
 
-  // Live error clearing
   fields.forEach(({ id, errorId }) => {
     const input = document.getElementById(id);
     if (input) {
@@ -481,15 +433,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  // Form submission
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
-    const isAuthenticated = !!sessionStorage.getItem('access_token');
-    if (!isAuthenticated) {
-      showToast('Please sign in to submit an inquiry.');
-      window.location.href = 'https://www.ravensnest.ink/signIn.html';
-      return;
-    }
 
     let hasErrors = false;
 
@@ -556,9 +502,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       const response = await fetch('https://www.ravensnest.ink/submit-form', {
         method: 'POST',
         body: formData,
-        headers: {
-          'Authorization': `Bearer ${sessionStorage.getItem('access_token')}`
-        },
         credentials: 'include'
       });
 

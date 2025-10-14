@@ -317,6 +317,13 @@ a:hover {
     color: #aaa;
     font-size: 28px;
     font-weight: bold;
+    margin: 5px;
+    cursor: pointer;
+    border-style: solid;
+    border-width: 1px;
+    border-color: #aaa;
+    border-radius: 5px;
+    padding: 10px;
 }
 .galleryPhotos {
     display: flex;
@@ -338,15 +345,6 @@ a:hover {
     border-top: 0;
     border-width: 1px;
     border-bottom-color: #aaa;
-    padding: 10px;
-}
-#galleryLeft, #galleryRight {
-    margin: 5px;
-    cursor: pointer;
-    border-style: solid;
-    border-width: 1px;
-    border-color: #aaa;
-    border-radius: 5px;
     padding: 10px;
 }
 #galleryPopup.fullscreen {
@@ -386,64 +384,6 @@ a:hover {
 }
 .flash-grid-item-icon {
     cursor: pointer;
-}
-#authMessage {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 300px;
-    width: 100%;
-    padding: 20px;
-    background-image: linear-gradient(to bottom, rgba(99, 70, 64, .65) 0%, rgba(63, 79, 68, .65) 100%);
-    border: 2px solid #aaa;
-    border-radius: 10px;
-    text-align: center;
-}
-#authMessage p {
-    color: #030c05;
-    font-size: 2rem;
-    font-weight: 600;
-    -webkit-text-stroke-width: 1px;
-    -webkit-text-stroke-color: #aaa;
-    margin: 0 0 20px 0;
-}
-.lock-icon {
-    font-size: 3rem;
-    color: #aaa;
-    margin-bottom: 20px;
-}
-.signInBtn {
-    width: 20rem;
-    padding: 0.75rem;
-    font-size: 1.5rem;
-    background-color: #030c05d9;
-    color: #aaa;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    -webkit-text-stroke-width: 1px;
-    -webkit-text-stroke-color: #aaa;
-    transition: background-color 0.3s, color 0.3s;
-}
-.signInBtn:hover {
-    background-color: #aaa;
-    color: #030c05;
-}
-.navBtn#inquiry:hover::after {
-    content: attr(title);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #333;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 3px;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    z-index: 10;
 }
 .g-recaptcha {
     display: flex;
