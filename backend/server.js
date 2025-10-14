@@ -199,42 +199,8 @@ app.get('/api/images/:bucket', async (req, res) => {
   res.json(data.map(item => item.url));
 });
 
-// Root route
-app.get('/', async (req, res) => {
-  const token = getTokenFromHeaderOrCookie(req);
-  if (!token) {
-    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  }
-
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data?.user) {
-    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
-  }
-
-  const role = data.user.app_metadata?.role;
-  const redirectUrl = role === 'admin' && req.path !== '/admin/dashboard'
-    ? 'https://www.ravensnest.ink/admin/dashboard'
-    : 'https://www.ravensnest.ink/index.html';
-  res.redirect(302, `${redirectUrl}?token=${token}`);
-});
-
-// Abuse logging
-async function logAbuse(ip, reason) {
-  const { error } = await supabase.from('abuse_logs').insert([{ ip_address: ip, reason }]);
-  if (error) throw new Error(`Failed to log abuse: ${error.message}`);
-}
-
-const formLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000,
-  max: 2,
-  message: { message: 'Too many submissions from this IP, try again later.' },
-  handler: (req, res) => {
-    logAbuse(req.ip, 'Rate limit exceeded');
-    res.status(429).json({ message: 'Too many submissions from this IP, try again later.' });
-  }
-});
-
-app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (req, res) => {
+// Submit form (public, no authentication)
+app.post('/submit-form', upload.single('file'), formLimiter, async (req, res) => {
   try {
     const { placement, size, desc, firstName, lastName, email, phone, dateFrom, dateTo, 'g-recaptcha-response': token } = req.body;
 
@@ -277,17 +243,28 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
       const filename = `${Date.now()}-${crypto.randomUUID()}${ext}`;
       const { error: uploadError } = await supabase.storage
         .from(process.env.SUPABASE_BUCKET)
-        .upload(filename, req.file.buffer, { contentType: req.file.mimetype, metadata: { owner: req.user.id } });
+        .upload(filename, req.file.buffer, { contentType: req.file.mimetype });
 
-      if (!uploadError) {
-        const { data: publicData } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(filename);
-        fileUrl = publicData?.publicUrl || null;
-      }
+      if (uploadError) throw uploadError;
+
+      const { data: publicData } = supabase.storage.from(process.env.SUPABASE_BUCKET).getPublicUrl(filename);
+      fileUrl = publicData?.publicUrl || null;
     }
 
     const { error: insertError } = await supabase
       .from('inquiries')
-      .insert([{ first_name: cleanData.first_name, last_name: cleanData.last_name, email: cleanData.email, phone: phone ? sanitizeText(phone) : null, placement: cleanData.placement, size: cleanData.size, description: cleanData.description, date_from: dateFrom, date_to: dateTo, image_url: fileUrl, user_id: req.user.id }]);
+      .insert([{ 
+        first_name: cleanData.first_name, 
+        last_name: cleanData.last_name, 
+        email: cleanData.email, 
+        phone: phone ? sanitizeText(phone) : null, 
+        placement: cleanData.placement, 
+        size: cleanData.size, 
+        description: cleanData.description, 
+        date_from: dateFrom, 
+        date_to: dateTo, 
+        image_url: fileUrl 
+      }]);
 
     if (insertError) throw new Error(`Database insert failed: ${insertError.message}`);
 
@@ -302,12 +279,47 @@ app.post('/submit-form', upload.single('file'), formLimiter, verifyUser, async (
       from: process.env.FROM_EMAIL,
       to: email,
       subject: `Thanks for your inquiry, ${firstName}!`,
-      html: `<p>Hey ${firstName},</p><p>Thanks for reaching out! I’ve received your inquiry and will get back to you shortly.</p><p><strong>Your Submission:</strong></p><ul><li><strong>Placement:</strong> ${placement}</li><li><strong>Size:</strong> ${size}</li><li><strong>Description:</strong> ${desc}</li><li><strong>Availability:</strong> ${dateFrom} – ${dateTo}</li></ul><p>– Raven's Nest Co.</p>`
+      html: `<p>Hey ${firstName},</p><p>Thanks for reaching out! I've received your inquiry and will get back to you shortly.</p><p><strong>Your Submission:</strong></p><ul><li><strong>Placement:</strong> ${placement}</li><li><strong>Size:</strong> ${size}</li><li><strong>Description:</strong> ${desc}</li><li><strong>Availability:</strong> ${dateFrom} – ${dateTo}</li></ul><p>– Raven's Nest Co.</p>`
     }, { headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' } });
 
     res.status(200).json({ message: 'Inquiry submitted successfully!' });
   } catch (err) {
     res.status(500).json({ message: 'Internal Server Error. Please try again later.' });
+  }
+});
+
+// Root route
+app.get('/', async (req, res) => {
+  const token = getTokenFromHeaderOrCookie(req);
+  if (!token) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) {
+    return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+  }
+
+  const role = data.user.app_metadata?.role;
+  const redirectUrl = role === 'admin' && req.path !== '/admin/dashboard'
+    ? 'https://www.ravensnest.ink/admin/dashboard'
+    : 'https://www.ravensnest.ink/index.html';
+  res.redirect(302, `${redirectUrl}?token=${token}`);
+});
+
+// Abuse logging
+async function logAbuse(ip, reason) {
+  const { error } = await supabase.from('abuse_logs').insert([{ ip_address: ip, reason }]);
+  if (error) throw new Error(`Failed to log abuse: ${error.message}`);
+}
+
+const formLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 2,
+  message: { message: 'Too many submissions from this IP, try again later.' },
+  handler: (req, res) => {
+    logAbuse(req.ip, 'Rate limit exceeded');
+    res.status(429).json({ message: 'Too many submissions from this IP, try again later.' });
   }
 });
 
