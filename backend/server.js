@@ -75,17 +75,7 @@ const verifyAdmin = async (req, res, next) => {
   next();
 };
 
-// Middleware to verify regular user
-const verifyUser = async (req, res, next) => {
-  const token = getTokenFromHeaderOrCookie(req);
-  if (!token) return res.status(401).json({ error: 'Unauthorized: No token' });
 
-  const { data, error } = await supabase.auth.getUser(token);
-  if (error || !data.user) return res.status(401).json({ error: 'Forbidden: Invalid token' });
-
-  req.user = data.user;
-  next();
-};
 
 // Abuse logging
 async function logAbuse(ip, reason) {
@@ -103,8 +93,8 @@ const formLimiter = rateLimit({
   }
 });
 
-// POST /sign-in
-app.post('/sign-in', async (req, res) => {
+// POST /admin/sign-in
+app.post('/admin/sign-in', async (req, res) => {
   const { email, password } = req.body;
 
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -113,6 +103,12 @@ app.post('/sign-in', async (req, res) => {
   }
 
   const { user, session } = data;
+  
+  // Check if user has admin role
+  if (user.app_metadata?.role !== 'admin') {
+    return res.status(403).json({ message: 'Access denied: Admin privileges required' });
+  }
+
   res.cookie('access_token', session.access_token, {
     httpOnly: true,
     secure: true,
@@ -125,9 +121,16 @@ app.post('/sign-in', async (req, res) => {
   res.json({ user, access_token: session.access_token });
 });
 
-// Serve signIn page
+// Serve signIn page with secret access
 app.get('/signIn', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
+  // Secret access: Check for a specific query parameter or header
+  const secretKey = req.query.secret || req.headers['x-secret-key'];
+  if (secretKey === process.env.ADMIN_SECRET_KEY) {
+    res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
+  } else {
+    // Return 404 to hide the existence of the sign-in page
+    res.status(404).json({ error: 'Not found' });
+  }
 });
 
 // Get inquiries - Admin only
@@ -322,6 +325,20 @@ app.get('/', async (req, res) => {
     : 'https://www.ravensnest.ink/index.html';
   res.redirect(302, `${redirectUrl}?token=${token}`);
 });
+
+// Secret route for admin sign-in access
+// Access method: /secret-admin-access?access={ADMIN_SECRET_ACCESS}
+app.get('/secret-admin-access', (req, res) => {
+  // Another secret access method: Check for secret query parameter
+  const secretAccess = req.query.access;
+  if (secretAccess === process.env.ADMIN_SECRET_ACCESS) {
+    res.redirect(`/signIn?secret=${process.env.ADMIN_SECRET_KEY}`);
+  } else {
+    res.status(404).json({ error: 'Not found' });
+  }
+});
+
+// Additional secret access: /signIn?secret={ADMIN_SECRET_KEY}
 
 // Start Server
 app.listen(PORT, () => {

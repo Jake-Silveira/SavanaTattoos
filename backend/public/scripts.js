@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const savana = document.getElementById("savana");
   const inquiryBtn = document.getElementById("inquiry");
   const galleryBtn = document.getElementById("gallery");
+  const adminSignIn = document.getElementById("adminSignIn");
 
   // Close button
   const span = document.getElementsByClassName("close")[0];
@@ -128,6 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
       socialsList.style.display = 'none';
       galleryModal.style.display = 'none';
       inquiryModal.style.display = 'flex';
+    };
+  }
+
+  if (adminSignIn) {
+    adminSignIn.onclick = function() {
+      // Redirect to sign-in page with secret key
+      const secretKey = prompt('Enter admin secret key:');
+      if (secretKey) {
+        window.location.href = `/signIn?secret=${encodeURIComponent(secretKey)}`;
+      }
+      modal.style.display = "none";
     };
   }
 
