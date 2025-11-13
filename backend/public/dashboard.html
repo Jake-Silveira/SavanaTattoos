@@ -54,9 +54,8 @@
       <button class="navBtn" onclick="uploadImage('flash')">Upload to Flash</button>
       <ul id="flashList" style="list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 10px;"></ul>
     </div>
-  </div>
 
-      <h3 id="abuseLogsHeader" class="signInLabel">Abuse Logs</h3>
+    <h3 id="abuseLogsHeader" class="signInLabel">Abuse Logs</h3>
     <div class="filter-container">
       <input type="text" id="abuseFilterIP" placeholder="Filter IP Address" oninput="filterAbuseLogs()">
       <input type="text" id="abuseFilterReason" placeholder="Filter Reason" oninput="filterAbuseLogs()">
@@ -73,6 +72,8 @@
         <tbody id="abuseLogsBody"></tbody>
       </table>
     </div>
+  </div>
+  </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
