@@ -121,16 +121,9 @@ app.post('/admin/sign-in', async (req, res) => {
   res.json({ user, access_token: session.access_token });
 });
 
-// Serve signIn page with secret access
+// Serve signIn page
 app.get('/signIn', (req, res) => {
-  // Secret access: Check for a specific query parameter or header
-  const secretKey = req.query.secret || req.headers['x-secret-key'];
-  if (secretKey === process.env.ADMIN_SECRET_KEY) {
-    res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
-  } else {
-    // Return 404 to hide the existence of the sign-in page
-    res.status(404).json({ error: 'Not found' });
-  }
+  res.sendFile(path.join(__dirname, 'public', 'signIn.html'));
 });
 
 // Get inquiries - Admin only
@@ -326,19 +319,7 @@ app.get('/', async (req, res) => {
   res.redirect(302, `${redirectUrl}?token=${token}`);
 });
 
-// Secret route for admin sign-in access
-// Access method: /secret-admin-access?access={ADMIN_SECRET_ACCESS}
-app.get('/secret-admin-access', (req, res) => {
-  // Another secret access method: Check for secret query parameter
-  const secretAccess = req.query.access;
-  if (secretAccess === process.env.ADMIN_SECRET_ACCESS) {
-    res.redirect(`/signIn?secret=${process.env.ADMIN_SECRET_KEY}`);
-  } else {
-    res.status(404).json({ error: 'Not found' });
-  }
-});
 
-// Additional secret access: /signIn?secret={ADMIN_SECRET_KEY}
 
 // Start Server
 app.listen(PORT, () => {

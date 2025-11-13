@@ -134,11 +134,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (adminSignIn) {
     adminSignIn.onclick = function() {
-      // Redirect to sign-in page with secret key
-      const secretKey = prompt('Enter admin secret key:');
-      if (secretKey) {
-        window.location.href = `/signIn?secret=${encodeURIComponent(secretKey)}`;
-      }
+      // Redirect to sign-in page directly
+      window.location.href = '/signIn';
       modal.style.display = "none";
     };
   }
