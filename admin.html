@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Savana Tattoos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- ENV_PLACEHOLDER_START -->
+    <script id="env-script">
+      window.__ENV__ = {
+        "SUPABASE_URL": "__SUPABASE_URL__",
+        "SUPABASE_ANON_KEY": "__SUPABASE_ANON_KEY__"
+      };
+    </script>
+    <!-- ENV_PLACEHOLDER_END -->
+</head>
+<body class="admin-body">
+    <div id="loginSection" class="container">
+        <div class="login-card text-center">
+            <h1 style="color: var(--primary);">Staff Access</h1>
+            <p>Sign in to manage your studio.</p>
+            <div id="loginFormContainer" class="login-form">
+                <div class="form-group text-left">
+                    <label for="adminEmail">Email</label>
+                    <input type="email" id="adminEmail" required placeholder="admin@example.com">
+                </div>
+                <div class="form-group text-left">
+                    <label for="adminPassword">Password</label>
+                    <input type="password" id="adminPassword" required>
+                </div>
+                <button type="button" id="loginBtn" class="admin-btn">Sign In</button>
+                <div id="loginError" class="error-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dashboardSection" style="display: none;">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="admin-layout">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <span class="brand-name" style="color: var(--primary);">SAVANA ADMIN</span>
+                    <button class="close-sidebar" id="closeSidebar">&times;</button>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="/" class="nav-item">
+                        <span class="icon">&#127968;</span>
+                        <span>Studio Site</span>
+                    </a>
+                    <button class="nav-item active" data-panel="appointments">
+                        <span class="icon">&#128197;</span>
+                        <span>Leads</span>
+                    </button>
+                    <button class="nav-item" data-panel="scheduler">
+                        <span class="icon">&#128197;</span>
+                        <span>Scheduler</span>
+                    </button>
+                    <button class="nav-item" data-panel="client-index">
+                        <span class="icon">&#128101;</span>
+                        <span>Clients</span>
+                    </button>
+                    <button class="nav-item" data-panel="site-mgmt">
+                        <span class="icon">&#9881;</span>
+                        <span>Site Mgmt</span>
+                    </button>
+                </nav>
+                <div class="sidebar-footer">
+                    <span id="userEmail" class="user-email"></span>
+                    <button id="logoutBtn" class="logout-btn">Logout</button>
+                </div>
+            </aside>
+
+            <div class="sidebar-collapsed-rail">
+                <div class="rail-item" title="Studio Site" onclick="window.location.href='/'">&#127968;</div>
+                <div class="rail-item active" title="Leads" data-panel="appointments">&#128197;</div>
+                <div class="rail-item" title="Scheduler" data-panel="scheduler">&#128197;</div>
+                <div class="rail-item" title="Clients" data-panel="client-index">&#128101;</div>
+                <div class="rail-item" title="Site Mgmt" data-panel="site-mgmt">&#9881;</div>
+            </div>
+
+            <main class="main-content">
+                <header class="mobile-top-bar">
+                    <button class="menu-toggle" id="menuToggle">&#9776;</button>
+                    <span class="logo">SAVANA TATTOOS</span>
+                    <div style="width: 24px;"></div>
+                </header>
+
+                <section id="appointmentsPanel" class="admin-panel active">
+                    <header class="dashboard-header">
+                        <div>
+                            <h2>Leads</h2>
+                            <p>Manage inquiries and appointments.</p>
+                        </div>
+                        <div class="stats-row" id="dashboardStats"></div>
+                    </header>
+                    <div class="table-card">
+                        <table class="leads-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Service</th>
+                                    <th>Size</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leadsTableBody"></tbody>
+                        </table>
+                        <div id="emptyState" class="empty-state" style="display: none;">
+                            <p>No leads found in the pipeline yet.</p>
+                        </div>
+                        <div id="loadingState" class="loading-state">
+                            <div class="spinner" style="display: inline-block; border-top-color: var(--primary);"></div>
+                            <p>Fetching leads...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="schedulerPanel" class="admin-panel">
+                    <header class="dashboard-header">
+                        <div>
+                            <h2>Scheduler</h2>
+                            <p>Manage your studio schedule.</p>
+                        </div>
+                        <button id="newApptBtn" class="cta-button">+ New Appointment</button>
+                    </header>
+                    <div id="schedulerContainer" class="scheduler-container"></div>
+
+                    <div id="editApptPopover" class="popover-modal" style="display: none;">
+                        <div class="popover-content">
+                            <h4 id="editApptTitle">Edit Appointment</h4>
+                            <input type="hidden" id="editApptId">
+                            <div class="form-grid" style="margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;">
+                                <div class="form-group">
+                                    <label>Service</label>
+                                    <p id="editApptService" style="font-weight: 600; margin: 0;"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>Size</label>
+                                    <p id="editApptSize" style="font-weight: 600; margin: 0;"></p>
+                                </div>
+                                <div class="form-group">
+                                    <label>Date & Time</label>
+                                    <p id="editApptDateTime" style="font-weight: 600; margin: 0;"></p>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Body Placement</label>
+                                <p id="editApptPlacement" style="font-weight: 600; margin: 0;"></p>
+                            </div>
+                            <div class="form-group">
+                                <label>Message</label>
+                                <p id="editApptMessage" style="font-weight: 500; margin: 0; color: var(--text-muted);">No customer notes</p>
+                            </div>
+                            <div class="form-group">
+                                <label>Confirmed Time</label>
+                                <select id="editApptTime" style="width: 100%;"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>Duration (Minutes)</label>
+                                <select id="editApptDuration">
+                                    <option value="15">15 min</option>
+                                    <option value="30">30 min</option>
+                                    <option value="45">45 min</option>
+                                    <option value="60">60 min (1 hr)</option>
+                                    <option value="90">90 min (1 hr 30 min)</option>
+                                    <option value="120">120 min (2 hr)</option>
+                                    <option value="180">180 min (3 hr)</option>
+                                    <option value="240">240 min (4 hr)</option>
+                                    <option value="300">300 min (5 hr)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="editApptStatus">
+                                    <option value="pending">Pending</option>
+                                    <option value="confirmed">Confirmed</option>
+                                    <option value="cancelled">Cancelled</option>
+                                </select>
+                            </div>
+                            <div class="popover-actions">
+                                <button id="saveApptBtn" class="admin-btn">Save Changes</button>
+                                <button id="closeApptPopover" class="delete-card-btn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="blockTimePopover" class="popover-modal" style="display: none;">
+                        <div class="popover-content">
+                            <h4>Block Time</h4>
+                            <div class="form-group">
+                                <label>Type</label>
+                                <select id="blockType">
+                                    <option value="range">Time Range</option>
+                                    <option value="full">Full Day</option>
+                                </select>
+                            </div>
+                            <div id="timeRangeInputs" class="form-grid">
+                                <div class="form-group">
+                                    <label>Start</label>
+                                    <select id="blockStart"></select>
+                                </div>
+                                <div class="form-group">
+                                    <label>End</label>
+                                    <select id="blockEnd"></select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Note</label>
+                                <input type="text" id="blockNote" placeholder="Lunch, Vacation, etc.">
+                            </div>
+                            <div class="popover-actions">
+                                <button id="saveBlockBtn" class="admin-btn">Save Block</button>
+                                <button id="cancelBlockBtn" class="delete-card-btn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="client-indexPanel" class="admin-panel">
+                    <header class="dashboard-header">
+                        <div>
+                            <h2>Clients</h2>
+                            <p>Manage your client directory.</p>
+                        </div>
+                        <button id="createClientBtn" class="cta-button-small">+ Create New Client</button>
+                    </header>
+                    <div class="fur-index-search">
+                        <input type="text" id="clientSearch" placeholder="Search by name..." class="search-input">
+                    </div>
+                    <div id="clientGrid" class="mgmt-card-grid"></div>
+                </section>
+
+                <section id="site-mgmtPanel" class="admin-panel">
+                    <header class="dashboard-header">
+                        <div>
+                            <h2>Site Management</h2>
+                            <p>Update gallery, flash, reviews and feedback.</p>
+                        </div>
+                    </header>
+                    <div class="mgmt-tabs">
+                        <button class="tab-btn active" data-tab="gallery">Portfolio</button>
+                        <button class="tab-btn" data-tab="flash">Flash Gallery</button>
+                        <button class="tab-btn" data-tab="reviews">Reviews</button>
+                        <button class="tab-btn" data-tab="feedback">Feedback</button>
+                    </div>
+
+                    <div id="galleryTab" class="mgmt-panel active">
+                        <div class="mgmt-header">
+                            <h3>Portfolio Items</h3>
+                            <button id="addGalleryItemBtn" class="cta-button-small">+ Add Item</button>
+                        </div>
+                        <div id="galleryMgmtGrid" class="mgmt-card-grid"></div>
+                    </div>
+
+                    <div id="flashTab" class="mgmt-panel">
+                        <div class="mgmt-header">
+                            <h3>Flash Designs</h3>
+                            <button id="addFlashBtn" class="cta-button-small">+ Add Flash</button>
+                        </div>
+                        <div id="flashMgmtGrid" class="mgmt-card-grid"></div>
+                    </div>
+
+                    <div id="reviewsTab" class="mgmt-panel">
+                        <div class="mgmt-header">
+                            <h3>Client Reviews</h3>
+                            <button id="addReviewBtn" class="cta-button-small">+ Add Review</button>
+                        </div>
+                        <div id="reviewsMgmtGrid" class="mgmt-card-grid"></div>
+                    </div>
+
+                    <div id="feedbackTab" class="mgmt-panel">
+                        <div class="mgmt-header">
+                            <h3>Site Feedback Tracker</h3>
+                            <button id="addFeedbackBtn" class="cta-button-small">+ Add New</button>
+                        </div>
+                        <div id="feedbackTableWrapper">
+                            <table class="feedback-table" id="feedbackTable">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Priority</th>
+                                        <th>Comment</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="feedbackTableBody"></tbody>
+                            </table>
+                        </div>
+                        <div id="inlineFeedbackForm" class="inline-add-form" style="display: none;">
+                            <div class="card-main">
+                                <h4>Add New Feedback</h4>
+                                <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                    <div class="form-group" style="margin: 0;">
+                                        <label>Priority</label>
+                                        <select id="newFeedbackPriority" class="mgmt-input">
+                                            <option value="low">Low</option>
+                                            <option value="medium" selected>Medium</option>
+                                            <option value="high">High</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin: 0;">
+                                        <label>Date Submitted</label>
+                                        <input type="text" id="newFeedbackDate" class="mgmt-input" readonly placeholder="Auto-filled">
+                                    </div>
+                                </div>
+                                <div class="form-group" style="margin-top: 12px; margin-bottom: 0;">
+                                    <label>Comment / Issue Description</label>
+                                    <textarea id="newFeedbackComment" class="mgmt-textarea" placeholder="Describe the issue, bug, or feature request..." rows="3"></textarea>
+                                </div>
+                                <div class="card-footer" style="margin-top: 12px;">
+                                    <button class="cta-button-small" data-action="save-feedback">Save</button>
+                                    <button class="delete-card-btn" data-action="cancel-feedback">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <!-- Lead Detail Modal -->
+    <div id="leadModal" class="modal" style="display: none;">
+        <div class="modal-content form-card">
+            <button class="close-btn">&times;</button>
+            <div id="modalBody"></div>
+        </div>
+    </div>
+
+    <!-- Client Modal -->
+    <div id="clientModal" class="modal" style="display: none;">
+        <div class="modal-content form-card" style="max-width: 600px;">
+            <button class="close-btn" id="closeClientModal">&times;</button>
+            <div class="lively-modal">
+                <div class="modal-hero" style="background: var(--primary); padding: 30px;">
+                    <h2 id="clientModalTitle">Client Details</h2>
+                    <span id="clientModalIdBadge" class="hero-status" style="font-family: monospace;">ID: NEW</span>
+                </div>
+                <form id="clientForm" class="modal-sections" style="display: block; padding: 30px;">
+                    <input type="hidden" id="clientId">
+                    <div class="form-group">
+                        <label>Client Name <span class="required">*</span></label>
+                        <input type="text" id="clientName" required>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="clientPhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="clientEmail">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="admin-btn" id="saveClientBtn">Save Client</button>
+                        <button type="button" class="admin-btn delete" id="deleteClientBtn" style="display: none;">Delete Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Client Profile Modal -->
+    <div id="profileModal" class="modal" style="display: none;">
+        <div class="modal-content form-card" style="max-width: 650px;">
+            <button class="close-btn" id="closeProfileModal">&times;</button>
+            <div class="lively-modal">
+                <div class="modal-hero" style="background: var(--primary); padding: 30px;">
+                    <h2 id="profileModalTitle">Create Profile</h2>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                        <span id="profileIdBadge" class="hero-status" style="font-family: monospace; background: rgba(0,0,0,0.1); color: white; border: 1px solid rgba(255,255,255,0.3);">ID: NEW</span>
+                        <span id="profileClientIdBadge" class="hero-status" style="font-family: monospace; background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);">Client: NEW</span>
+                    </div>
+                </div>
+                <form id="profileForm" class="modal-sections" style="display: block; padding: 30px;">
+                    <input type="hidden" id="profileId">
+                    <input type="hidden" id="profileClientId">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Name <span class="required">*</span></label>
+                            <input type="text" id="profName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Client Code</label>
+                            <input type="text" id="profClientId" placeholder="6-digit code" maxlength="6">
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Phone Number <span class="required">*</span></label>
+                            <input type="tel" id="profPhone" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="profEmail">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="profNotes" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Appointment History</label>
+                        <div id="profileHistory" class="profile-history-list">
+                            <p class="history-loading">Loading history...</p>
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px;">
+                        <button type="submit" class="admin-btn" id="saveProfileBtn" style="grid-column: 1 / -1;">Save Profile</button>
+                        <button type="button" class="admin-btn delete" id="deleteProfileBtn" style="grid-column: 1 / -1; display: none;">Delete Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Appointment Modal -->
+    <div id="newApptModal" class="modal" style="display: none;">
+        <div class="modal-content form-card" style="max-width: 750px;">
+            <button class="close-btn" id="closeNewApptModal">&times;</button>
+            <div class="lively-modal">
+                <div class="modal-hero" style="background: var(--success); padding: 30px;">
+                    <h2>New Appointment</h2>
+                    <p>Create a confirmed appointment from the scheduler.</p>
+                </div>
+                <form id="newApptForm" class="modal-sections" style="display: block; padding: 30px;">
+                    <div class="form-group">
+                        <label>Client <span class="required">*</span></label>
+                        <select id="newApptClientId" required>
+                            <option value="">-- New Client (create during booking) --</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Service <span class="required">*</span></label>
+                        <select id="newApptService" required>
+                            <option value="">Select a service...</option>
+                            <option value="Small Tattoo">Small Tattoo (2-4 inches)</option>
+                            <option value="Medium Tattoo">Medium Tattoo (4-6 inches)</option>
+                            <option value="Large Tattoo">Large Tattoo (6-10 inches)</option>
+                            <option value="Custom Design">Custom Design</option>
+                            <option value="Cover-Up">Cover-Up</option>
+                            <option value="Touch-Up">Touch-Up</option>
+                            <option value="Flash Tattoo">Flash Tattoo</option>
+                            <option value="Consultation">Free Consultation</option>
+                        </select>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Size <span class="required">*</span></label>
+                            <select id="newApptSize" required>
+                                <option value="XS">XS</option>
+                                <option value="Small" selected>Small</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Large">Large</option>
+                                <option value="XL">XL</option>
+                                <option value="XXL">XXL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Body Placement</label>
+                            <input type="text" id="newApptPlacement" placeholder="e.g. forearm">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Select Date <span class="required">*</span></label>
+                        <div class="calendar-card" style="padding: 15px; border-radius: 12px; border: 1px solid var(--border);">
+                            <div class="calendar-header" style="margin-bottom: 10px;">
+                                <h4 id="newApptCalMonthYear" style="margin: 0; font-size: 16px;">Month Year</h4>
+                                <div class="calendar-nav">
+                                    <button type="button" class="nav-btn" id="newApptPrevMonth" style="width: 30px; height: 30px; font-size: 14px;">&larr;</button>
+                                    <button type="button" class="nav-btn" id="newApptNextMonth" style="width: 30px; height: 30px; font-size: 14px;">&rarr;</button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid" id="newApptCalendarGrid" style="gap: 5px;"></div>
+                        </div>
+                        <input type="hidden" id="newApptDate" required>
+                    </div>
+                    <div id="newApptTimeSection" class="form-group" style="display: none;">
+                        <label>Select Time <span class="required">*</span></label>
+                        <div id="newApptTimeGrid" class="time-slot-grid" style="grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));"></div>
+                        <div id="newApptUnavailableMsg" style="display: none; padding: 15px; background: var(--bg-input); border-radius: 8px; text-align: center; font-size: 13px;">This date is unavailable.</div>
+                        <input type="hidden" id="newApptTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Duration (Minutes)</label>
+                        <select id="newApptDuration">
+                            <option value="30">30 min</option>
+                            <option value="45">45 min</option>
+                            <option value="60" selected>60 min (1 hr)</option>
+                            <option value="90">90 min (1 hr 30 min)</option>
+                            <option value="120">120 min (2 hr)</option>
+                            <option value="180">180 min (3 hr)</option>
+                            <option value="240">240 min (4 hr)</option>
+                            <option value="300">300 min (5 hr)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Notes / Message</label>
+                        <textarea id="newApptMessage" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="admin-btn" id="confirmNewApptBtn" style="background: var(--success);">Confirm Appointment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirmModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px; padding: 32px; text-align: center;">
+            <p id="confirmMessage" style="margin-bottom: 24px; font-size: 1rem;"></p>
+            <div style="display: flex; gap: 12px; justify-content: center;">
+                <button id="confirmOkBtn" class="admin-btn">Confirm</button>
+                <button id="confirmCancelBtn" class="delete-card-btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="utils.js"></script>
+    <script src="admin.js"></script>
+</body>
+</html>

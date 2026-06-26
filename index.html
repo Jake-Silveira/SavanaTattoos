@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savana Tattoos | Custom Tattoo Art & Flash Designs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <!-- ENV_PLACEHOLDER_START -->
+    <script id="env-script">
+      window.__ENV__ = {
+        "SUPABASE_URL": "__SUPABASE_URL__",
+        "SUPABASE_ANON_KEY": "__SUPABASE_ANON_KEY__"
+      };
+    </script>
+    <!-- ENV_PLACEHOLDER_END -->
+</head>
+<body>
+    <nav class="main-nav">
+        <div class="nav-container">
+            <div class="logo-group">
+                <span class="logo">SAVANA TATTOOS</span>
+            </div>
+            <div class="nav-links">
+                <button id="openFormBtn" class="cta-button-small">Book Consultation</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="hero-section">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Art That <span>Lasts</span> Forever</h1>
+                <p>Custom tattoo designs crafted with precision and passion. From bold originals to refined cover-ups, our studio brings your vision to life.</p>
+                <div class="hero-actions">
+                    <button id="heroBookBtn" class="cta-button">Request Appointment</button>
+                    <a href="#gallery" class="secondary-button">View Portfolio</a>
+                    <a href="#flash" class="secondary-button">Flash Sheet</a>
+                    <a href="#reviews" class="secondary-button">Reviews</a>
+                </div>
+            </div>
+            <div class="hero-image-wrapper">
+                <img src="assets/hero-tattoo.jpg" alt="Savana Tattoos Studio" class="hero-main-img" style="background: var(--bg-card); min-height: 400px; display: flex; align-items: center; justify-content: center; color: var(--text-dim);">
+            </div>
+        </div>
+    </main>
+
+    <section id="gallery" class="gallery-section">
+        <div class="container">
+            <h2 class="text-center">Portfolio</h2>
+            <p class="text-center text-muted" style="margin-top: 8px; margin-bottom: 24px;">A selection of our finished work</p>
+            <div class="gallery-carousel-container">
+                <button class="carousel-btn prev-btn" id="prevGallery">&#8249;</button>
+                <div class="gallery-viewport">
+                    <div class="gallery-slider" id="gallerySlider"></div>
+                </div>
+                <button class="carousel-btn next-btn" id="nextGallery">&#8250;</button>
+            </div>
+            <div class="carousel-dots" id="galleryDots"></div>
+        </div>
+    </section>
+
+    <section id="flash" class="flash-section">
+        <div class="container">
+            <h2 class="text-center">Flash Gallery</h2>
+            <p class="text-center text-muted" style="margin-top: 8px; margin-bottom: 8px;">Ready-to-tattoo designs &mdash; walk in and get inked</p>
+            <div id="flashGrid" class="flash-grid"></div>
+            <div id="flashEmpty" class="empty-state" style="display: none;">
+                <p>No flash designs available yet. Check back soon!</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="reviews" class="reviews-section">
+        <div class="section-container">
+            <h2 class="text-center">Client Reviews</h2>
+            <div class="reviews-carousel-container">
+                <button class="carousel-btn prev-btn" id="prevReview">&#8249;</button>
+                <div class="reviews-carousel" id="reviewsCarousel"></div>
+                <button class="carousel-btn next-btn" id="nextReview">&#8250;</button>
+            </div>
+            <div class="carousel-dots" id="carouselDots"></div>
+        </div>
+    </section>
+
+    <section id="services" class="services-section">
+        <div class="section-container">
+            <h2 class="text-center">What We Offer</h2>
+            <div class="services-container">
+                <div class="service-card">
+                    <div class="service-card-icon">&#9998;</div>
+                    <h3>Custom Designs</h3>
+                    <p>Original artwork tailored to your vision. We work closely with you from concept to completion.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-card-icon">&#9878;</div>
+                    <h3>Flash Tattoos</h3>
+                    <p>Pre-designed artwork ready to go. Walk in, pick a piece, and get inked the same day.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-card-icon">&#10024;</div>
+                    <h3>Cover-Ups</h3>
+                    <p>Transform old or unwanted tattoos into stunning new artwork.</p>
+                </div>
+                <div class="service-card">
+                    <div class="service-card-icon">&#9898;</div>
+                    <h3>Touch-Ups</h3>
+                    <p>Keep your existing pieces looking fresh. Free touch-ups within 30 days.</p>
+                </div>
+            </div>
+            <p class="text-center text-muted" style="margin-top: 24px; font-size: 0.85rem;">All pricing is estimated and subject to change based on scope, detail, and placement. Reach out for a free consultation.</p>
+        </div>
+    </section>
+
+    <section id="contact" class="contact-section">
+        <div class="section-container">
+            <h2 class="text-center">Get In Touch</h2>
+            <div class="contact-card-container">
+                <div class="contact-card">
+                    <div class="contact-info-box text-center">
+                        <h3>Visit the Studio</h3>
+                        <p class="phone-number">&#128222; (555) 123-4567</p>
+                        <div class="social-grid">
+                            <a href="#" target="_blank" class="social-btn ig">Instagram</a>
+                            <a href="#" target="_blank" class="social-btn tt">TikTok</a>
+                            <a href="#" target="_blank" class="social-btn fb">Facebook</a>
+                        </div>
+                        <p class="location-text">&#128205; 123 Ink Avenue, Suite 4 &mdash; Serving the greater metro area.</p>
+                        <p class="location-text" style="margin-top: 4px; font-size: 0.85rem;">Hours: Tue&ndash;Sat 11am&ndash;7pm | Sun&ndash;Mon Closed</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="main-footer">
+        <div class="section-container text-center">
+            <p style="font-size: 1.1rem; font-weight: 700; color: var(--primary); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;">Savana Tattoos</p>
+            <p>&copy; <span id="currentYear">2025</span> Savana Tattoos. All rights reserved.</p>
+            <div class="footer-socials" style="margin-top: 12px;">
+                <a href="#" target="_blank">Instagram</a> | 
+                <a href="#" target="_blank">TikTok</a> | 
+                <a href="#" target="_blank">Facebook</a>
+            </div>
+        </div>
+    </footer>
+
+    <div class="founderops-credit">
+        Looking for a website like this? 
+        <a href="https://founderopsautomation.carrd.co/" target="_blank">Get Started</a>
+    </div>
+
+    <div id="bookingModal" class="modal" style="display: none;">
+        <div class="modal-content form-card">
+            <button class="close-btn">&times;</button>
+            <div class="modal-header text-center" style="padding: 32px 32px 0;">
+                <h1 style="color: var(--primary);">Request an Appointment</h1>
+                <p style="color: var(--text-muted); margin-top: 8px;">Tell us about your tattoo idea and we'll get you scheduled!</p>
+            </div>
+            <form id="leadForm">
+                <div class="form-grid" style="padding: 20px 32px;">
+                    <div class="form-group">
+                        <label for="client_name">First Name <span class="required">*</span></label>
+                        <input type="text" id="client_name" name="client_name" required placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Last Name <span class="required">*</span></label>
+                        <input type="text" id="category" name="last_name" required placeholder="Doe">
+                    </div>
+                </div>
+                <div class="form-grid" style="padding: 0 32px 20px;">
+                    <div class="form-group">
+                        <label for="phone">Phone Number <span class="required">*</span></label>
+                        <input type="tel" id="phone" name="phone" required placeholder="(555) 000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" placeholder="you@example.com">
+                    </div>
+                </div>
+
+                <div id="bookingDetails">
+                    <div class="services-included-note">
+                        <strong>All sessions include:</strong> free consultation, quality work, and aftercare guidance.
+                    </div>
+
+                    <div class="form-group" style="padding: 0 32px;">
+                        <label for="service">Service Requested <span class="required">*</span></label>
+                        <select id="service" name="service" required>
+                            <option value="" disabled selected>Select a service...</option>
+                            <option value="Small Tattoo">Small Tattoo (2-4 inches)</option>
+                            <option value="Medium Tattoo">Medium Tattoo (4-6 inches)</option>
+                            <option value="Large Tattoo">Large Tattoo (6-10 inches)</option>
+                            <option value="Custom Design">Custom Design</option>
+                            <option value="Cover-Up">Cover-Up</option>
+                            <option value="Touch-Up">Touch-Up</option>
+                            <option value="Flash Tattoo">Flash Tattoo</option>
+                            <option value="Consultation">Free Consultation</option>
+                        </select>
+                    </div>
+
+                    <div class="form-grid" style="padding: 0 32px;">
+                        <div class="form-group">
+                            <label for="size_category">Size <span class="required">*</span></label>
+                            <select id="size_category" name="size_category" required>
+                                <option value="" disabled selected>Select size...</option>
+                                <option value="XS">XS — Small (2-4&quot;)</option>
+                                <option value="Small">Small — Medium (4-6&quot;)</option>
+                                <option value="Medium">Medium — Standard (6-10&quot;)</option>
+                                <option value="Large">Large — Large (10-16&quot;)</option>
+                                <option value="XL">XL — Extra Large (16-24&quot;)</option>
+                                <option value="XXL">XXL — Full Sleeve/Back</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="body_placement">Body Placement</label>
+                            <input type="text" id="body_placement" name="body_placement" placeholder="e.g. forearm, back, thigh">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="padding: 0 32px;">
+                        <label for="message">Additional notes or reference ideas</label>
+                        <textarea id="message" name="message" rows="3" placeholder="Describe your tattoo idea, style preferences, reference images, etc."></textarea>
+                    </div>
+
+                    <div id="bookingCalendar" class="public-datepicker">
+                        <label>Select Preferred Date <span class="required">*</span></label>
+                        <div class="calendar-card" style="padding: 20px; border-radius: 16px;">
+                            <div class="calendar-header" style="margin-bottom: 16px;">
+                                <h4 id="calendarMonthYear" style="margin: 0; font-size: 18px;">Month Year</h4>
+                                <div class="calendar-nav">
+                                    <button type="button" class="nav-btn" id="prevMonthBtn" style="width: 32px; height: 32px; font-size: 14px;">&larr;</button>
+                                    <button type="button" class="nav-btn" id="nextMonthBtn" style="width: 32px; height: 32px; font-size: 14px;">&rarr;</button>
+                                </div>
+                            </div>
+                            <div class="calendar-grid" id="calendarGrid" style="gap: 8px;"></div>
+                        </div>
+                        <input type="hidden" name="requested_date" id="requestedDate" required>
+                        <div id="dateSelectionError" class="status-message error" style="display: none; text-align: left; margin-top: 8px; font-size: 14px;">Please select an available date.</div>
+                    </div>
+
+                    <div id="timePickerSection" class="form-group" style="display: none;">
+                        <label>Select Preferred Time <span class="required">*</span></label>
+                        <div id="timeSlotGrid" class="time-slot-grid"></div>
+                        <div id="unavailableMessage" style="display: none; padding: 20px; background: var(--bg-input); border-radius: 12px; text-align: center; color: var(--text-muted);">
+                            This date is fully booked or unavailable. Please choose another date.
+                        </div>
+                        <input type="hidden" name="requested_time" id="requestedTime" required>
+                        <div id="timeSelectionError" class="status-message error" style="display: none; text-align: left; margin-top: 8px; font-size: 14px;">Please select a time slot.</div>
+                    </div>
+                </div>
+
+                <button type="submit" id="submitBtn" style="margin: 20px 32px;">
+                    <span class="btn-text">Book Consultation</span>
+                    <span class="spinner" id="spinner"></span>
+                </button>
+                <div id="statusMessage" class="status-message"></div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="utils.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
