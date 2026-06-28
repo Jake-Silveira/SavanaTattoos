@@ -1286,11 +1286,10 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 
 /* === Main Content === */
 .main-content {
-    flex: 1 0 auto;
+    flex: 1;
     margin-left: 260px;
     min-height: 100vh;
     min-width: 0;
-    width: 100%;
 }
 
 /* === Mobile Top Bar === */
@@ -1332,14 +1331,11 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 .admin-panel {
     display: none;
     padding: 32px;
-    width: 100%;
-    max-width: 100%;
 }
 .admin-panel.active {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    max-width: 100%;
+    min-width: 0;
     flex: 1;
     gap: 20px;
 }
