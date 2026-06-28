@@ -1285,10 +1285,11 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 
 /* === Main Content === */
 .main-content {
-    flex: 1;
+    flex: 1 0 auto;
     margin-left: 260px;
     min-height: 100vh;
     min-width: 0;
+    width: 100%;
 }
 
 /* === Mobile Top Bar === */
@@ -1328,19 +1329,23 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     display: none;
     padding: 32px;
     width: 100%;
+    max-width: 100%;
 }
 .admin-panel.active {
     display: block;
     width: 100%;
-}
-.admin-panel.active {
-    display: block;
+    max-width: 100%;
 }
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 24px;
+    width: 100%;
+}
+.dashboard-header > div:first-child {
+    flex: 1;
+    min-width: 0;
 }
 .dashboard-header p {
     color: var(--text-muted);
@@ -1352,6 +1357,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 .stats-row {
     display: flex;
     gap: 12px;
+    flex-shrink: 0;
 }
 .stat-card {
     padding: 12px 20px;
@@ -1381,6 +1387,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border-radius: var(--radius-lg);
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
 }
 .leads-table {
     width: 100%;
@@ -1477,6 +1484,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     overflow: hidden;
+    width: 100%;
 }
 .scheduler-header {
     display: flex;
@@ -1688,6 +1696,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 16px;
     margin-top: 16px;
+    width: 100%;
 }
 .profile-card {
     background: var(--bg-card);
@@ -1960,6 +1969,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     gap: 4px;
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
+    width: 100%;
 }
 .tab-btn {
     padding: 10px 20px;
@@ -1981,9 +1991,11 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 }
 .mgmt-panel {
     display: none;
+    width: 100%;
 }
 .mgmt-panel.active {
     display: block;
+    width: 100%;
 }
 .mgmt-header {
     display: flex;
