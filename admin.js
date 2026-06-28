@@ -726,8 +726,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var todayMonthBtn = document.getElementById('schedTodayMonth');
         if (todayMonthBtn) {
             todayMonthBtn.onclick = function() {
-                calendarDate = new Date();
+                dayDate = new Date();
+                schedulerViewMode = 'day';
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                container.querySelector('.view-btn[data-view="day"]')?.classList.add('active');
                 renderScheduler();
+                setTimeout(scrollToTimeGrid, 100);
             };
         }
 
@@ -967,6 +971,23 @@ var html = '<div class="scheduler-header">' +
         if (container._dayEventsAttached) return;
         container._dayEventsAttached = true;
         container.addEventListener('click', function(e) {
+            if (e.target.closest('.appt-card')) return;
+            var gridEl = e.target.closest('.time-grid-content');
+            if (gridEl) {
+                var rowHeight = 48;
+                var rect = gridEl.getBoundingClientRect();
+                var offsetY = e.clientY - rect.top;
+                var rowIdx = Math.floor(offsetY / rowHeight);
+                if (rowIdx >= 0 && rowIdx < 20) {
+                    var totalMin = 8 * 60 + rowIdx * 30;
+                    var h = Math.floor(totalMin / 60);
+                    var m = totalMin % 60;
+                    var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                    var dateStr = dayDate.toISOString().split('T')[0];
+                    openNewApptFromTimeSlot(dateStr, timeStr);
+                }
+                return;
+            }
             var apptCard = e.target.closest('.appt-card[data-action="edit-appt"]');
             if (apptCard) { openEditApptPopover(apptCard.dataset.id); return; }
             var blockBar = e.target.closest('.blocked-slot-bar[data-action="delete-block"]');
@@ -992,6 +1013,41 @@ var html = '<div class="scheduler-header">' +
                     });
                 }
             }
+        });
+    }
+
+    function openNewApptFromTimeSlot(dateStr, timeStr) {
+        loadClients().then(function() {
+            var modal = document.getElementById('newApptModal');
+            modal.style.display = 'block';
+            var dateInput = document.getElementById('newApptDate');
+            var timeInput = document.getElementById('newApptTime');
+            var timeSection = document.getElementById('newApptTimeSection');
+            initNewApptPickers();
+            dateInput.value = dateStr;
+            timeInput.value = timeStr;
+            timeSection.style.display = 'block';
+            newApptSelectedTime = timeStr;
+            showNewApptTimePicker(dateStr);
+            var retryCount = 0;
+            var highlightBtn = function() {
+                var btn = document.querySelector('#newApptTimeGrid .time-slot-btn[data-time="' + timeStr + '"]');
+                if (btn) {
+                    if (!btn.disabled) {
+                        btn.style.background = 'var(--primary)';
+                        btn.style.borderColor = 'var(--primary)';
+                        btn.style.color = '#fff';
+                        newApptSelectedTime = timeStr;
+                        document.getElementById('newApptTime').value = timeStr;
+                    }
+                    return;
+                }
+                retryCount++;
+                if (document.querySelector('#newApptTimeGrid') && retryCount < 20) {
+                    setTimeout(highlightBtn, 200);
+                }
+            };
+            setTimeout(highlightBtn, 500);
         });
     }
 
