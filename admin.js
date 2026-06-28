@@ -306,6 +306,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Scheduler Panel ---
+    // Scheduler State
+    var schedulerViewMode = 'month';
+    var weekStartDate = new Date();
+    var dayDate = new Date();
+    var blockedSlotsData = [];
+    var confirmedDates = {};
+    var pendingDates = {};
+    var blockedDates = {};
+
     async function loadClients() {
         var clientsResult = await db.from('clients').select('*');
         clients = clientsResult.data || [];
@@ -565,62 +574,359 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Scheduler Calendar ---
-    async function renderScheduler() {
-        var container = document.getElementById('schedulerContainer');
-        var leadsRes = await db.from('leads').select('*').order('requested_date', { ascending: true });
-        var blockedRes = await db.from('blocked_slots').select('*').order('date', { ascending: true });
-        dailyLeads = (leadsRes.data || []).filter(function(l) { return l.status !== 'deleted'; });
-        var fullBlocks = (blockedRes.data || []).filter(function(b) { return b.is_full_day; });
-
-        var counts = {};
+    async function fetchSchedulerData(weekStartOverride, weekEndOverride) {
+        var startStr, endStr;
+        if (weekStartOverride && weekEndOverride) {
+            startStr = weekStartOverride.toISOString().split('T')[0];
+            endStr = weekEndOverride.toISOString().split('T')[0];
+        } else {
+            startStr = new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).toISOString().split('T')[0];
+            endStr = new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).toISOString().split('T')[0];
+        }
+        var blockedRes = await db.from('blocked_slots').select('*').gte('date', startStr).lte('date', endStr);
+        blockedSlotsData = blockedRes.data || [];
+        var leadsRes = await db.from('leads').select('*').gte('requested_date', startStr).lte('requested_date', endStr);
+        dailyLeads = leadsRes.data || [];
+        confirmedDates = {};
+        pendingDates = {};
         dailyLeads.forEach(function(l) {
-            if (!counts[l.requested_date]) counts[l.requested_date] = { confirmed: 0, pending: 0 };
-            counts[l.requested_date][l.status] = (counts[l.requested_date][l.status] || 0) + 1;
+            if (l.status === 'confirmed' || l.status === 'completed') {
+                confirmedDates[l.requested_date] = (confirmedDates[l.requested_date] || 0) + 1;
+            } else if (l.status === 'pending' || l.status === 'new_lead') {
+                pendingDates[l.requested_date] = (pendingDates[l.requested_date] || 0) + 1;
+            }
         });
+        blockedDates = {};
+        blockedSlotsData.forEach(function(s) {
+            var d = s.date;
+            if (!blockedDates[d]) blockedDates[d] = { is_full_day: false, has_partial: false };
+            if (s.is_full_day) blockedDates[d].is_full_day = true;
+            else blockedDates[d].has_partial = true;
+        });
+    }
 
-        var year = calendarDate.getFullYear();
-        var month = calendarDate.getMonth();
+    function generateCalendarDays(month, year) {
         var firstDay = new Date(year, month, 1).getDay();
         var daysInMonth = new Date(year, month + 1, 0).getDate();
         var today = new Date().toISOString().split('T')[0];
-        var monthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(calendarDate);
+        var html = '';
+        for (var i = 0; i < firstDay; i++) {
+            html += '<div class="calendar-day empty-day"></div>';
+        }
+        for (var day = 1; day <= daysInMonth; day++) {
+            var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            var blocked = blockedDates[dateStr];
+            var classes = ['calendar-day'];
+            if (dateStr === today) classes.push('today');
+            if (blocked) {
+                if (blocked.is_full_day) classes.push('fully-blocked');
+                else if (blocked.has_partial) classes.push('partially-blocked');
+            }
+            var indicators = '<div class="dot-container">';
+            if (confirmedDates[dateStr]) indicators += '<span class="scheduler-dot confirmed-dot" title="Confirmed appointments"></span>';
+            if (pendingDates[dateStr]) indicators += '<span class="scheduler-dot pending-dot" title="Pending requests"></span>';
+            indicators += '</div>';
+            html += '<div class="' + classes.join(' ') + '" data-date="' + dateStr + '"><span class="day-number">' + day + '</span>' + indicators + '</div>';
+        }
+        return html;
+    }
 
+    function generateTimeLabels() {
+        var html = '';
+        for (var h = 8; h <= 17; h++) {
+            var displayH = h > 12 ? h - 12 : h;
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            html += '<div class="time-label">' + displayH + ':00 ' + ampm + '</div>';
+            html += '<div class="time-label half-hour">' + displayH + ':30 ' + ampm + '</div>';
+        }
+        return html;
+    }
+
+    function renderTimeGridBackground() {
+        var html = '<div class="grid-background">';
+        for (var i = 0; i < 20; i++) {
+            html += '<div class="grid-row"></div>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function timeToIdx(timeStr) {
+        if (!timeStr) return 0;
+        var parts = timeStr.split(':').map(Number);
+        return (parts[0] - 8) * 2 + (parts[1] >= 30 ? 1 : 0);
+    }
+
+    function showBlockTimeButton() {
+        var btn = document.getElementById('newApptBtn');
+        if (btn) btn.style.display = 'inline-block';
+    }
+
+    function hideBlockTimeButton() {
+        var btn = document.getElementById('newApptBtn');
+        if (btn) btn.style.display = 'none';
+    }
+
+    async function renderScheduler() {
+        if (schedulerViewMode === 'month') renderMonthlyView();
+        else if (schedulerViewMode === 'week') renderWeeklyView();
+        else if (schedulerViewMode === 'day') renderDailyView();
+    }
+
+    function renderMonthlyView() {
+        fetchSchedulerData();
+        var container = document.getElementById('schedulerContainer');
+        var year = calendarDate.getFullYear();
+        var month = calendarDate.getMonth();
+        var monthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(calendarDate);
         var html = '<div class="scheduler-header">' +
             '<div class="scheduler-nav">' +
                 '<button class="nav-btn" id="schedPrevMonth">&#8249;</button>' +
                 '<span class="scheduler-month-label">' + monthName + '</span>' +
                 '<button class="nav-btn" id="schedNextMonth">&#8250;</button>' +
             '</div>' +
-            '<div class="view-toggle"><button class="view-btn active" data-view="month">Month</button></div>' +
+            '<div class="view-toggle">' +
+                '<button class="view-btn active" data-view="month">Month</button>' +
+                '<button class="view-btn" data-view="week">Week</button>' +
+                '<button class="view-btn" data-view="day">Day</button>' +
+            '</div>' +
         '</div><div class="scheduler-grid">' +
             '<div class="scheduler-day-header">Sun</div><div class="scheduler-day-header">Mon</div>' +
             '<div class="scheduler-day-header">Tue</div><div class="scheduler-day-header">Wed</div>' +
             '<div class="scheduler-day-header">Thu</div><div class="scheduler-day-header">Fri</div>' +
-            '<div class="scheduler-day-header">Sat</div>';
-
-        for (var i = 0; i < firstDay; i++) html += '<div class="scheduler-day-cell" style="visibility:hidden;"></div>';
-        for (var day = 1; day <= daysInMonth; day++) {
-            var dateStr = year + '-' + String(month + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
-            var isToday = dateStr === today;
-            var count = counts[dateStr];
-            var isBlocked = fullBlocks.some(function(b) { return b.date === dateStr; });
-            var cls = 'scheduler-day-cell';
-            if (isToday) cls += ' today';
-            if (isBlocked) cls += ' has-appointments';
-            html += '<div class="' + cls + '" data-date="' + dateStr + '">' +
-                '<div class="scheduler-day-number">' + day + '</div>' +
-                (isBlocked ? '<div class="scheduler-day-label">BLOCKED</div>' : '') +
-                (count ? '<span class="scheduler-lead-count ' + (count.confirmed > 0 ? 'confirmed' : 'pending') + '">' + (count.pending || 0) + 'P / ' + (count.confirmed || 0) + 'C</span>' : '') +
-            '</div>';
-        }
-        html += '</div>';
+            '<div class="scheduler-day-header">Sat</div>' + generateCalendarDays(month, year) + '</div>';
+        html += '<div class="scheduler-legend">' +
+            '<span class="legend-item"><span class="scheduler-dot confirmed-dot"></span> Confirmed</span>' +
+            '<span class="legend-item"><span class="scheduler-dot pending-dot"></span> Pending</span>' +
+            '<span class="legend-item"><span class="scheduler-dot blocked-dot"></span> Blocked</span>' +
+        '</div>';
         container.innerHTML = html;
 
         document.getElementById('schedPrevMonth').onclick = function() { calendarDate.setMonth(calendarDate.getMonth() - 1); renderScheduler(); };
         document.getElementById('schedNextMonth').onclick = function() { calendarDate.setMonth(calendarDate.getMonth() + 1); renderScheduler(); };
 
-        container.querySelectorAll('.scheduler-day-cell[data-date]').forEach(function(cell) {
-            cell.onclick = function() { openBlockPopover(cell.dataset.date); };
+        container.querySelectorAll('.calendar-day[data-date]').forEach(function(cell) {
+            cell.onclick = function() {
+                dayDate = new Date(cell.dataset.date + 'T00:00:00');
+                renderScheduler();
+            };
+        });
+
+        container.querySelectorAll('.view-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                schedulerViewMode = btn.dataset.view;
+                renderScheduler();
+            };
+        });
+
+        hideBlockTimeButton();
+    }
+
+    function renderWeeklyView() {
+        fetchSchedulerData(weekStartDate, new Date(weekStartDate.getTime() + 6 * 86400000));
+        var container = document.getElementById('schedulerContainer');
+        var weekEnd = new Date(weekStartDate.getTime() + 6 * 86400000);
+        var startLabel = weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        var endLabel = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        var html = '<div class="scheduler-header">' +
+            '<div class="scheduler-nav">' +
+                '<button class="nav-btn" id="schedPrevWeek">&#8249;</button>' +
+                '<span class="scheduler-month-label">Week of ' + startLabel + ' - ' + endLabel + '</span>' +
+                '<button class="nav-btn" id="schedNextWeek">&#8250;</button>' +
+            '</div>' +
+            '<div class="view-toggle">' +
+                '<button class="view-btn" data-view="month">Month</button>' +
+                '<button class="view-btn active" data-view="week">Week</button>' +
+                '<button class="view-btn" data-view="day">Day</button>' +
+            '</div>' +
+        '</div><div class="week-grid">';
+        for (var d = 0; d < 7; d++) {
+            var curDate = new Date(weekStartDate.getTime() + d * 86400000);
+            var dateStr = curDate.toISOString().split('T')[0];
+            var dayName = curDate.toLocaleDateString('en-US', { weekday: 'short' });
+            var dayNum = curDate.getDate();
+            var blocked = blockedDates[dateStr];
+            var indicators = '<div class="week-indicators">';
+            if (confirmedDates[dateStr]) indicators += '<span class="scheduler-dot confirmed-dot" title="Confirmed"></span>';
+            if (pendingDates[dateStr]) indicators += '<span class="scheduler-dot pending-dot" title="Pending"></span>';
+            if (blocked) {
+                if (blocked.is_full_day) indicators += '<span class="scheduler-dot blocked-dot" title="Blocked"></span>';
+                else if (blocked.has_partial) indicators += '<span class="scheduler-dot blocked-dot" title="Partial block"></span>';
+            }
+            indicators += '</div>';
+            var today = new Date().toISOString().split('T')[0];
+            var dateCls = dateStr === today ? ' week-today' : '';
+            var colHtml = '<div class="week-column" data-date="' + dateStr + '">' +
+                '<div class="week-column-header"><span class="week-day-name">' + dayName + '</span>' +
+                '<span class="week-day-num' + dateCls + '">' + dayNum + '</span></div>' + indicators;
+            var dayLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && l.status !== 'deleted'; });
+            if (blocked && blocked.is_full_day) {
+                colHtml += '<div class="full-day-block-label">FULLY BLOCKED</div>';
+            }
+            dayLeads.forEach(function(lead) {
+                var timeStr = lead.requested_time ? formatTime12(lead.requested_time) : '';
+                colHtml += '<div class="appt-card" data-action="edit-appt" data-id="' + lead.id + '">' +
+                    '<div class="appt-time">' + escapeHtml(timeStr) + '</div>' +
+                    '<div class="appt-client">' + escapeHtml(lead.name || 'Unknown') + '</div>' +
+                    '<div class="appt-service">' + escapeHtml(lead.service || '') + '</div>' +
+                    '<span class="status-badge status-' + escapeHtml(lead.status) + '" style="font-size:0.65rem;padding:1px 4px;">' + escapeHtml(lead.status) + '</span>' +
+                '</div>';
+            });
+            if (dayLeads.length) {
+                colHtml += '<a href="#" class="view-day-link" data-date="' + dateStr + '">View Day &#8250;</a>';
+            }
+            colHtml += '</div>';
+            html += colHtml;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+
+        document.getElementById('schedPrevWeek').onclick = function() { weekStartDate.setDate(weekStartDate.getDate() - 7); renderScheduler(); };
+        document.getElementById('schedNextWeek').onclick = function() { weekStartDate.setDate(weekStartDate.getDate() + 7); renderScheduler(); };
+
+        container.querySelectorAll('.week-column').forEach(function(col) {
+            col.onclick = function(e) {
+                if (e.target.closest('.view-day-link')) return;
+                dayDate = new Date(col.dataset.date + 'T00:00:00');
+                renderScheduler();
+            };
+        });
+
+        container.querySelectorAll('.view-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                schedulerViewMode = btn.dataset.view;
+                renderScheduler();
+            };
+        });
+
+        setupDayViewEvents(container);
+        hideBlockTimeButton();
+    }
+
+    function renderDailyView() {
+        fetchSchedulerData(dayDate, dayDate);
+        var container = document.getElementById('schedulerContainer');
+        var dateStr = dayDate.toISOString().split('T')[0];
+        var headerDate = dayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+        var html = '<div class="scheduler-header">' +
+            '<div class="scheduler-nav">' +
+                '<button class="nav-btn" id="schedPrevDay">&#8249;</button>' +
+                '<span class="scheduler-month-label">' + headerDate + '</span>' +
+                '<button class="nav-btn" id="schedNextDay">&#8250;</button>' +
+            '</div>' +
+            '<div class="view-toggle">' +
+                '<button class="view-btn" data-view="month">Month</button>' +
+                '<button class="view-btn" data-view="week">Week</button>' +
+                '<button class="view-btn active" data-view="day">Day</button>' +
+            '</div>' +
+        '</div>';
+        html += '<button class="admin-btn" id="blockDayBtn">Block Time</button>';
+        var blocked = blockedDates[dateStr];
+        if (blocked && blocked.is_full_day) {
+            html += '<div class="full-day-block-banner"><strong>FULLY BLOCKED</strong>' +
+                '<button class="remove-full-day-block-btn" data-date="' + dateStr + '">Remove Block</button></div>';
+        } else if (blocked && blocked.has_partial) {
+            html += '<div class="partial-block-banner">Partial block today - click Block Time to add/remove</div>';
+        }
+        html += '<div class="day-view-layout"><div class="time-grid">' +
+            '<div class="time-grid-labels">' + generateTimeLabels() + '</div>' +
+            renderTimeGridBackground();
+        html += '<div class="time-grid-content">';
+        var dayLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && l.status !== 'deleted'; });
+        dayLeads.forEach(function(lead) {
+            var startIdx = timeToIdx(lead.requested_time);
+            var dur = parseInt(lead.duration_minutes) || 60;
+            var rowDur = Math.ceil(dur / 30);
+            var topPos = startIdx * 30;
+            var cardHeight = rowDur * 30;
+            html += '<div class="appt-card day-appt-card" data-action="edit-appt" data-id="' + lead.id + '" style="top:' + topPos + 'px;height:' + cardHeight + 'px;">' +
+                '<div class="appt-time">' + (lead.requested_time ? formatTime12(lead.requested_time) : '') + '</div>' +
+                '<div class="appt-details">' +
+                    '<div class="appt-client">' + escapeHtml(lead.name || 'Unknown') + '</div>' +
+                    '<div class="appt-service">' + escapeHtml(lead.service || '') + (lead.size ? ' - ' + escapeHtml(lead.size) : '') + '</div>' +
+                    '<span class="status-badge status-' + escapeHtml(lead.status) + '">' + escapeHtml(lead.status) + '</span>' +
+                '</div>' +
+            '</div>';
+        });
+        html += '</div></div>';
+        var pendingLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && (l.status === 'pending' || l.status === 'new_lead'); });
+        if (pendingLeads.length) {
+            html += '<div class="day-pending-section"><h3>Pending Requests for ' + dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</h3>';
+            pendingLeads.forEach(function(lead) {
+                html += '<div class="pending-request-card">' +
+                    '<div class="pending-header"><strong>' + escapeHtml(lead.name || 'Unknown') + '</strong>' +
+                    '<span class="status-badge status-new_lead">New Lead</span></div>' +
+                    '<div class="pending-details">' +
+                        '<div>' + escapeHtml(lead.service || '') + ' - ' + escapeHtml(lead.size || '-') + '</div>' +
+                        (lead.message ? '<div class="pending-message">"' + escapeHtml(lead.message) + '"</div>' : '') +
+                        '<div class="pending-actions">' +
+                            '<button class="admin-btn-outline" data-action="confirm-pending" data-id="' + lead.id + '">Confirm</button>' +
+                        '</div>' +
+                    '</div></div>';
+            });
+            html += '</div>';
+        }
+        container.innerHTML = html;
+
+        document.getElementById('schedPrevDay').onclick = function() { dayDate.setDate(dayDate.getDate() - 1); renderScheduler(); };
+        document.getElementById('schedNextDay').onclick = function() { dayDate.setDate(dayDate.getDate() + 1); renderScheduler(); };
+        var todayBtn = document.getElementById('schedToday');
+        if (todayBtn) todayBtn.onclick = function() { dayDate = new Date(); renderScheduler(); };
+
+        var blockBtn = document.getElementById('blockDayBtn');
+        if (blockBtn) {
+            blockBtn.onclick = function() {
+                document.getElementById('blockTimePopover').dataset.date = dateStr;
+                openBlockPopover(dateStr);
+            };
+        }
+
+        container.querySelectorAll('.view-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                schedulerViewMode = btn.dataset.view;
+                renderScheduler();
+            };
+        });
+
+        setupDayViewEvents(container);
+        showBlockTimeButton();
+    }
+
+    function setupDayViewEvents(container) {
+        if (container._dayEventsAttached) return;
+        container._dayEventsAttached = true;
+        container.addEventListener('click', function(e) {
+            var apptCard = e.target.closest('.appt-card[data-action="edit-appt"]');
+            if (apptCard) { openEditApptPopover(apptCard.dataset.id); return; }
+            var blockBar = e.target.closest('.blocked-slot-bar[data-action="delete-block"]');
+            if (blockBar) {
+                e.stopPropagation();
+                showConfirm('Remove this blocked time slot?').then(function(ok) {
+                    if (!ok) return;
+                    db.from('blocked_slots').delete().eq('id', blockBar.dataset.blockId).then(function() {
+                        renderScheduler();
+                        showToast('Block removed.', 'success');
+                    });
+                });
+                return;
+            }
+            var removeBlockBtn = e.target.closest('.remove-full-day-block-btn');
+            if (removeBlockBtn) {
+                var date = removeBlockBtn.dataset.date;
+                var slot = blockedSlotsData.find(function(s) { return s.date === date && s.is_full_day; });
+                if (slot) {
+                    db.from('blocked_slots').delete().eq('id', slot.id).then(function() {
+                        renderScheduler();
+                        showToast('Full-day block removed.', 'success');
+                    });
+                }
+            }
         });
     }
 
@@ -692,15 +998,29 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('editApptPopover').style.display = 'flex';
     }
 
+    // --- Save Appointment Handler ---
     document.getElementById('saveApptBtn').addEventListener('click', async function() {
         var id = document.getElementById('editApptId').value;
         var confirmedTime = document.getElementById('editApptTime').value;
-        var duration = document.getElementById('editApptDuration').value;
+        var duration = parseInt(document.getElementById('editApptDuration').value) || 60;
         var status = document.getElementById('editApptStatus').value;
+        var startMin = timeToIdx(confirmedTime) * 30 + 480;
+        var endMin = startMin + duration;
+        var activeLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dayDate.toISOString().split('T')[0] && l.status !== 'deleted' && l.id !== id; });
+        for (var i = 0; i < activeLeads.length; i++) {
+            if (activeLeads[i].requested_time) {
+                var lStart = timeToIdx(activeLeads[i].requested_time) * 30 + 480;
+                var lEnd = lStart + (parseInt(activeLeads[i].duration_minutes) || 60);
+                if (startMin < lEnd && endMin > lStart) {
+                    showToast('Time conflict with ' + (activeLeads[i].name || 'another appointment') + ' at ' + formatTime12(activeLeads[i].requested_time), 'error');
+                    return;
+                }
+            }
+        }
         try {
             await db.from('leads').update({
                 confirmed_time: confirmedTime + ':00',
-                duration_minutes: parseInt(duration),
+                duration_minutes: duration,
                 status: status
             }).eq('id', id);
             document.getElementById('editApptPopover').style.display = 'none';
