@@ -1125,6 +1125,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     display: flex;
     width: 100%;
     min-height: 100vh;
+    min-width: 0;
 }
 
 /* === Sidebar === */
@@ -1331,10 +1332,12 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 .admin-panel {
     display: none;
     padding: 32px;
+    width: 100%;
 }
 .admin-panel.active {
     display: flex;
     flex-direction: column;
+    width: 100%;
     min-width: 0;
     flex: 1;
     gap: 20px;
@@ -1345,6 +1348,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     align-items: flex-start;
     margin-bottom: 12px;
     width: 100%;
+    min-width: 0;
 }
 .dashboard-header > div:first-child {
     flex: 1;
@@ -1356,11 +1360,16 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     margin-top: 4px;
 }
 
+.mgmt-header {
+    min-width: 0;
+}
+
 /* === Stats Row (KPI Cards) === */
 .stats-row {
     display: flex;
     gap: 12px;
     flex-shrink: 0;
+    flex-wrap: nowrap;
 }
 .stat-card {
     padding: 12px 20px;
@@ -1391,9 +1400,11 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     width: 100%;
+    min-width: 0;
 }
 .leads-table {
     width: 100%;
+    min-width: 0;
     border-collapse: collapse;
 }
 .leads-table thead {
@@ -1488,7 +1499,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border-radius: var(--radius-lg);
     overflow: hidden;
     width: 100%;
-    max-width: 100%;
+    min-width: 0;
     margin: 0;
     flex: 1;
     min-height: 0;
@@ -1585,6 +1596,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     width: 100%;
+    min-width: 0;
 }
 .scheduler-day-header {
     padding: 12px 8px;
@@ -1836,6 +1848,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     display: flex;
     flex-direction: column;
     gap: 16px;
+    width: 100%;
+    min-width: 0;
 }
 
 .day-view-layout {
@@ -1843,6 +1857,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     min-height: 0;
     display: flex;
     flex-direction: column;
+    width: 100%;
+    min-width: 0;
 }
 
 .time-grid {
@@ -1855,6 +1871,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
     background: var(--bg-card);
+    width: 100%;
+    min-width: 0;
 }
 
 .time-grid-labels {
@@ -2042,6 +2060,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     min-height: 500px;
+    width: 100%;
+    min-width: 0;
 }
 
 .week-column {
@@ -2206,6 +2226,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     overflow-y: auto;
     min-height: 0;
     flex-shrink: 1;
+    width: 100%;
+    min-width: 0;
 }
 
 .day-grid-layout.full-day-blocked::after {
@@ -2548,6 +2570,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     gap: 16px;
     margin-top: 16px;
     width: 100%;
+    min-width: 0;
 }
 .profile-card {
     background: var(--bg-card);
@@ -2555,6 +2578,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: all 0.2s;
+    width: 100%;
+    min-width: 0;
 }
 .profile-card:hover {
     border-color: var(--border-light);
@@ -2683,10 +2708,11 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 /* === Search === */
 .fur-index-search {
     margin-bottom: 20px;
+    width: 100%;
 }
 .search-input {
     width: 100%;
-    max-width: 400px;
+    max-width: 100%;
     padding: 10px 16px;
     background: var(--bg-card);
     border: 1px solid var(--border);
@@ -2821,6 +2847,7 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border-bottom: 1px solid var(--border);
     margin-bottom: 20px;
     width: 100%;
+    min-width: 0;
 }
 .tab-btn {
     padding: 10px 20px;
@@ -2843,19 +2870,24 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 .mgmt-panel {
     display: none;
     width: 100%;
+    min-width: 0;
 }
 .mgmt-panel.active {
     display: block;
     width: 100%;
+    min-width: 0;
 }
 .mgmt-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    width: 100%;
+    min-width: 0;
 }
 .mgmt-header h3 {
     color: var(--text-main);
+    min-width: 0;
 }
 
 /* === Mgmt Cards (Gallery/Reviews) === */
@@ -2865,6 +2897,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border-radius: var(--radius-lg);
     overflow: hidden;
     transition: all 0.2s;
+    width: 100%;
+    min-width: 0;
 }
 .mgmt-card:hover {
     border-color: var(--border-light);
@@ -3015,11 +3049,14 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 /* === Feedback Table === */
 .feedback-table-wrapper {
     overflow-x: auto;
+    width: 100%;
+    min-width: 0;
 }
 .feedback-table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    min-width: 0;
 }
 .feedback-table th {
     text-align: left;
@@ -3065,6 +3102,8 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 /* === Inline Add Form === */
 .inline-add-form {
     margin-top: 16px;
+    width: 100%;
+    min-width: 0;
 }
 .inline-add-form .card-main h4 {
     margin-bottom: 16px;
