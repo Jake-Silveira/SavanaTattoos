@@ -679,16 +679,20 @@ document.addEventListener('DOMContentLoaded', function() {
         var year = calendarDate.getFullYear();
         var month = calendarDate.getMonth();
         var monthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(calendarDate);
+        var todayStr = new Date().toISOString().split('T')[0];
         var html = '<div class="scheduler-header">' +
             '<div class="scheduler-nav">' +
                 '<button class="nav-btn" id="schedPrevMonth">&#8249;</button>' +
                 '<span class="scheduler-month-label">' + monthName + '</span>' +
                 '<button class="nav-btn" id="schedNextMonth">&#8250;</button>' +
             '</div>' +
-            '<div class="view-toggle">' +
-                '<button class="view-btn active" data-view="month">Month</button>' +
-                '<button class="view-btn" data-view="week">Week</button>' +
-                '<button class="view-btn" data-view="day">Day</button>' +
+            '<div style="display: flex; align-items: center; gap: 8px;">' +
+                '<button class="sched-today-btn" id="schedTodayMonth">Today</button>' +
+                '<div class="view-toggle">' +
+                    '<button class="view-btn active" data-view="month">Month</button>' +
+                    '<button class="view-btn" data-view="week">Week</button>' +
+                    '<button class="view-btn" data-view="day">Day</button>' +
+                '</div>' +
             '</div>' +
         '</div><div class="scheduler-grid">' +
             '<div class="scheduler-day-header">Sun</div><div class="scheduler-day-header">Mon</div>' +
@@ -704,6 +708,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('schedPrevMonth').onclick = function() { calendarDate.setMonth(calendarDate.getMonth() - 1); renderScheduler(); };
         document.getElementById('schedNextMonth').onclick = function() { calendarDate.setMonth(calendarDate.getMonth() + 1); renderScheduler(); };
+        var todayMonthBtn = document.getElementById('schedTodayMonth');
+        if (todayMonthBtn) {
+            todayMonthBtn.onclick = function() {
+                calendarDate = new Date();
+                renderScheduler();
+            };
+        }
 
         container.querySelectorAll('.calendar-day[data-date]').forEach(function(cell) {
             cell.onclick = function() {
@@ -730,18 +741,21 @@ document.addEventListener('DOMContentLoaded', function() {
         var weekEnd = new Date(weekStartDate.getTime() + 6 * 86400000);
         var startLabel = weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         var endLabel = weekEnd.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-        var html = '<div class="scheduler-header">' +
-            '<div class="scheduler-nav">' +
-                '<button class="nav-btn" id="schedPrevWeek">&#8249;</button>' +
-                '<span class="scheduler-month-label">Week of ' + startLabel + ' - ' + endLabel + '</span>' +
-                '<button class="nav-btn" id="schedNextWeek">&#8250;</button>' +
-            '</div>' +
-            '<div class="view-toggle">' +
-                '<button class="view-btn" data-view="month">Month</button>' +
-                '<button class="view-btn active" data-view="week">Week</button>' +
-                '<button class="view-btn" data-view="day">Day</button>' +
-            '</div>' +
-        '</div><div class="week-grid">';
+      var html = '<div class="scheduler-header">' +
+                '<div class="scheduler-nav">' +
+                    '<button class="nav-btn" id="schedPrevWeek">&#8249;</button>' +
+                    '<span class="scheduler-month-label">Week of ' + startLabel + ' - ' + endLabel + '</span>' +
+                    '<button class="nav-btn" id="schedNextWeek">&#8250;</button>' +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    '<button class="sched-today-btn" id="schedTodayWeek">Today</button>' +
+                    '<div class="view-toggle">' +
+                        '<button class="view-btn" data-view="month">Month</button>' +
+                        '<button class="view-btn active" data-view="week">Week</button>' +
+                        '<button class="view-btn" data-view="day">Day</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div><div class="week-grid">';
         for (var d = 0; d < 7; d++) {
             var curDate = new Date(weekStartDate.getTime() + d * 86400000);
             var dateStr = curDate.toISOString().split('T')[0];
@@ -785,6 +799,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('schedPrevWeek').onclick = function() { weekStartDate.setDate(weekStartDate.getDate() - 7); renderScheduler(); };
         document.getElementById('schedNextWeek').onclick = function() { weekStartDate.setDate(weekStartDate.getDate() + 7); renderScheduler(); };
+        var todayWeekBtn = document.getElementById('schedTodayWeek');
+        if (todayWeekBtn) {
+            todayWeekBtn.onclick = function() {
+                weekStartDate = new Date();
+                renderScheduler();
+            };
+        }
 
         container.querySelectorAll('.week-column').forEach(function(col) {
             col.onclick = function(e) {
@@ -812,18 +833,21 @@ document.addEventListener('DOMContentLoaded', function() {
         var container = document.getElementById('schedulerContainer');
         var dateStr = dayDate.toISOString().split('T')[0];
         var headerDate = dayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-        var html = '<div class="scheduler-header">' +
-            '<div class="scheduler-nav">' +
-                '<button class="nav-btn" id="schedPrevDay">&#8249;</button>' +
-                '<span class="scheduler-month-label">' + headerDate + '</span>' +
-                '<button class="nav-btn" id="schedNextDay">&#8250;</button>' +
-            '</div>' +
-            '<div class="view-toggle">' +
-                '<button class="view-btn" data-view="month">Month</button>' +
-                '<button class="view-btn" data-view="week">Week</button>' +
-                '<button class="view-btn active" data-view="day">Day</button>' +
-            '</div>' +
-        '</div>';
+var html = '<div class="scheduler-header">' +
+                '<div class="scheduler-nav">' +
+                    '<button class="nav-btn" id="schedPrevDay">&#8249;</button>' +
+                    '<span class="scheduler-month-label">' + headerDate + '</span>' +
+                    '<button class="nav-btn" id="schedNextDay">&#8250;</button>' +
+                '</div>' +
+                '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    '<button class="sched-today-btn" id="schedTodayDay">Today</button>' +
+                    '<div class="view-toggle">' +
+                        '<button class="view-btn" data-view="month">Month</button>' +
+                        '<button class="view-btn" data-view="week">Week</button>' +
+                        '<button class="view-btn active" data-view="day">Day</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
         html += '<button class="admin-btn" id="blockDayBtn">Block Time</button>';
         var blocked = blockedDates[dateStr];
         if (blocked && blocked.is_full_day) {
@@ -874,8 +898,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('schedPrevDay').onclick = function() { dayDate.setDate(dayDate.getDate() - 1); renderScheduler(); };
         document.getElementById('schedNextDay').onclick = function() { dayDate.setDate(dayDate.getDate() + 1); renderScheduler(); };
-        var todayBtn = document.getElementById('schedToday');
-        if (todayBtn) todayBtn.onclick = function() { dayDate = new Date(); renderScheduler(); };
+        var todayDayBtn = document.getElementById('schedTodayDay');
+        if (todayDayBtn) {
+            todayDayBtn.onclick = function() {
+                dayDate = new Date();
+                renderScheduler();
+            };
+        }
 
         var blockBtn = document.getElementById('blockDayBtn');
         if (blockBtn) {
