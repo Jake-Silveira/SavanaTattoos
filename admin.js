@@ -734,6 +734,9 @@ document.addEventListener('DOMContentLoaded', function() {
         container.querySelectorAll('.calendar-day[data-date]').forEach(function(cell) {
             cell.onclick = function() {
                 dayDate = new Date(cell.dataset.date + 'T00:00:00');
+                schedulerViewMode = 'day';
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                container.querySelector('.view-btn[data-view="day"]')?.classList.add('active');
                 renderScheduler();
                 setTimeout(scrollToTimeGrid, 100);
             };
@@ -827,6 +830,9 @@ document.addEventListener('DOMContentLoaded', function() {
             col.onclick = function(e) {
                 if (e.target.closest('.view-day-link')) return;
                 dayDate = new Date(col.dataset.date + 'T00:00:00');
+                schedulerViewMode = 'day';
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                container.querySelector('.view-btn[data-view="day"]')?.classList.add('active');
                 renderScheduler();
                 setTimeout(scrollToTimeGrid, 100);
             };
@@ -836,6 +842,9 @@ document.addEventListener('DOMContentLoaded', function() {
             link.onclick = function(e) {
                 e.preventDefault();
                 dayDate = new Date(link.dataset.date + 'T00:00:00');
+                schedulerViewMode = 'day';
+                container.querySelectorAll('.view-btn').forEach(function(b) { b.classList.remove('active'); });
+                container.querySelector('.view-btn[data-view="day"]')?.classList.add('active');
                 renderScheduler();
                 setTimeout(scrollToTimeGrid, 100);
             };
