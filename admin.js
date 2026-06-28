@@ -657,6 +657,21 @@ document.addEventListener('DOMContentLoaded', function() {
         return (parts[0] - 8) * 2 + (parts[1] >= 30 ? 1 : 0);
     }
 
+    function scrollToTimeGrid() {
+        var grid = document.querySelector('.time-grid');
+        if (!grid) return;
+        var appts = grid.querySelectorAll('.day-appt-card');
+        if (appts.length) {
+            var first = appts[0];
+            var top = parseInt(first.style.top) || 0;
+            var gridRect = grid.getBoundingClientRect();
+            var scrollTarget = grid.scrollTop + top - gridRect.top - gridRect.height / 3;
+            grid.scrollTo({ top: Math.max(0, scrollTarget), behavior: 'smooth' });
+        } else {
+            grid.scrollTop = 0;
+        }
+    }
+
     function showBlockTimeButton() {
         var btn = document.getElementById('newApptBtn');
         if (btn) btn.style.display = 'inline-block';
@@ -720,6 +735,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cell.onclick = function() {
                 dayDate = new Date(cell.dataset.date + 'T00:00:00');
                 renderScheduler();
+                setTimeout(scrollToTimeGrid, 100);
             };
         });
 
@@ -812,6 +828,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (e.target.closest('.view-day-link')) return;
                 dayDate = new Date(col.dataset.date + 'T00:00:00');
                 renderScheduler();
+                setTimeout(scrollToTimeGrid, 100);
+            };
+        });
+
+        container.querySelectorAll('.view-day-link').forEach(function(link) {
+            link.onclick = function(e) {
+                e.preventDefault();
+                dayDate = new Date(link.dataset.date + 'T00:00:00');
+                renderScheduler();
+                setTimeout(scrollToTimeGrid, 100);
             };
         });
 
@@ -903,6 +929,7 @@ var html = '<div class="scheduler-header">' +
             todayDayBtn.onclick = function() {
                 dayDate = new Date();
                 renderScheduler();
+                setTimeout(scrollToTimeGrid, 100);
             };
         }
 
