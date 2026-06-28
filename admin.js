@@ -970,8 +970,9 @@ var html = '<div class="scheduler-header">' +
     function setupDayViewEvents(container) {
         if (container._dayEventsAttached) return;
         container._dayEventsAttached = true;
-        container.addEventListener('click', function(e) {
-            if (e.target.closest('.appt-card')) return;
+            container.addEventListener('click', function(e) {
+            var apptCard = e.target.closest('.appt-card[data-action="edit-appt"]');
+            if (apptCard) { openEditApptPopover(apptCard.dataset.id); return; }
             var gridEl = e.target.closest('.time-grid-content');
             if (gridEl) {
                 var rowHeight = 48;
@@ -988,8 +989,6 @@ var html = '<div class="scheduler-header">' +
                 }
                 return;
             }
-            var apptCard = e.target.closest('.appt-card[data-action="edit-appt"]');
-            if (apptCard) { openEditApptPopover(apptCard.dataset.id); return; }
             var blockBar = e.target.closest('.blocked-slot-bar[data-action="delete-block"]');
             if (blockBar) {
                 e.stopPropagation();
