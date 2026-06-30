@@ -895,25 +895,27 @@ var html = '<div class="scheduler-header">' +
         } else if (blocked && blocked.has_partial) {
             html += '<div class="partial-block-banner">Partial block today - click Block Time to add/remove</div>';
         }
-        html += '<div class="day-view-layout"><div class="time-grid">' +
-            '<div class="time-grid-labels">' + generateTimeLabels() + '</div>' +
-            renderTimeGridBackground() +
-            '<div class="time-grid-content">';
+       html += '<div class="time-grid-content">';
         for (var i = 0; i < 20; i++) {
-            var slotH = 8 + Math.floor(i / 2);
-            var slotM = (i % 2) * 30;
-            var slotTime = String(slotH).padStart(2, '0') + ':' + String(slotM).padStart(2, '0');
-            var slotTop = i * 48;
-            html += '<div class="time-slot" data-time="' + slotTime + '" style="top:' + slotTop + 'px;height:48px;"></div>';
+            var h = 8 + Math.floor(i / 2);
+            var m = (i % 2) * 30;
+            var displayH = h > 12 ? h - 12 : h;
+            var ampm = h >= 12 ? 'PM' : 'AM';
+            var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+            html += '<div class="time-slot" data-time="' + timeStr + '">' +
+                '<span class="time-slot-label">' + displayH + ':' + String(m).padStart(2, '0') + ' ' + ampm + '</span>' +
+                '<span class="time-slot-click"></span>' +
+            '</div>';
         }
         var dayLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && l.status !== 'deleted'; });
+        var apptCards = '';
         dayLeads.forEach(function(lead) {
             var startIdx = timeToIdx(lead.requested_time);
             var dur = parseInt(lead.duration_minutes) || 60;
             var rowDur = Math.ceil(dur / 30);
             var topPos = startIdx * 48;
             var cardHeight = rowDur * 48;
-            html += '<div class="appt-card day-appt-card" data-action="edit-appt" data-id="' + lead.id + '" style="top:' + topPos + 'px;height:' + cardHeight + 'px;">' +
+            apptCards += '<div class="appt-card day-appt-card" data-action="edit-appt" data-id="' + lead.id + '" style="top:' + topPos + 'px;height:' + cardHeight + 'px;">' +
                 '<div class="appt-time">' + (lead.requested_time ? formatTime12(lead.requested_time) : '') + '</div>' +
                 '<div class="appt-details">' +
                     '<div class="appt-client">' + escapeHtml(lead.name || 'Unknown') + '</div>' +
@@ -922,7 +924,7 @@ var html = '<div class="scheduler-header">' +
                 '</div>' +
             '</div>';
         });
-        html += '</div></div>';
+        html += '<div class="appt-overlay">' + apptCards + '</div></div>';
         var pendingLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && (l.status === 'pending' || l.status === 'new_lead'); });
         if (pendingLeads.length) {
             html += '<div class="day-pending-section"><h3>Pending Requests for ' + dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</h3>';

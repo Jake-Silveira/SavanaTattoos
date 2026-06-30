@@ -1886,6 +1886,9 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     min-height: 960px;
     position: relative;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
 .day-pending-section {
@@ -2315,17 +2318,32 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 }
 
 .time-slot {
-    position: absolute;
-    left: 0;
-    right: 0;
+    display: flex;
     height: 48px;
-    background: transparent;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    flex-shrink: 0;
+}
+.time-slot-label {
+    flex: 0 0 80px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+}
+.time-slot-click {
+    flex: 1;
     cursor: pointer;
-    transition: background 0.15s ease;
+    position: relative;
     z-index: 1;
 }
-.time-slot:hover {
+.time-slot-click:hover {
     background: rgba(201, 168, 124, 0.08);
+}
+.appt-overlay {
+    position: relative;
 }
 
 /* Appointment Cards */
