@@ -1,8 +1,8 @@
 # SavanaTattoos — Developments & Progress Tracker
 
 > Created: 2025-06-25
-> Last updated: 2026-06-26
-> Status: **Source code complete + validated. Template comparison done (2026-06-26). Ready for Supabase provisioning & deployment.**
+> Last updated: 2026-06-30
+> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Ready for Supabase provisioning & deployment.**
 
 ---
 
@@ -157,6 +157,9 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 - ~~All JS files fail syntax check~~ — All 8 JS files pass `node --check` ✅
 - ~~Build fails~~ — `npm run build` completes successfully, `/public/` generated ✅
 - ~~`package-lock.json` missing~~ — Present (created by `npm install`) ✅
+- ~~Sunday/Monday blocks on booking forms~~ — Removed 2026-06-30: both public (`script.js` line 49) and admin (`admin.js` line 1192) now allow bookings on any day
+- ~~Client modal uses household/pet terminology~~ — Removed 2026-06-30: all `household-*/pet-*/pet-mini-*` CSS/JS classes renamed to `client-card-header/client-profiles-list/client-profile-mini/client-icon/client-profile-info/client-profile-name/client-profile-notes`
+- ~~Admin scheduler time blocks not injecting~~ — Fixed 2026-06-30: `showNewApptTimePicker` converted from `.then()` promise chains to `async/await`; `openNewApptFromTimeSlot` now properly awaits time picker before attempting to highlight the selected time slot button
 
 ### Remaining Issues / Notes
 
@@ -287,13 +290,14 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 | **`gallery.js` image upload** | ✅ Multipart form upload to storage buckets | ❌ Missing | Admin can only add gallery via Supabase dashboard or direct DB insert. No image upload UI/API. |
 | **`profiles.last_activity`** | ✅ Updated after each booking | ❌ Not implemented | Client profiles don't track last service/activity date. |
 | **`client_profiles` table** | ❌ N/A (template uses flat `profiles`) | ✅ New table | SavanaTattoos has separate `clients` (owner info) + `client_profiles` (detailed records). Template has just `profiles`. |
+| **Client modal terminology** | Uses "household"/"pet" language | ✅ Fixed 2026-06-30 | All household/pet references removed from client grid rendering and CSS — replaced with client-focused terminology. |
 | **`flash_gallery` table** | ❌ N/A | ✅ New table | Tattoo-specific flash design grid — new feature, no template equivalent. |
 | **`feedback` management** | ✅ `api/feedback.js` + admin panel | ⚠️ Admin uses direct DB | Dead API route removed (2026-06-26), but admin panel still has feedback tab. |
 | **`profiles.js` API routes** | ✅ CRUD for profiles | ❌ Dead code removed | Admin.js uses direct Supabase DB calls for all profile operations. |
 | **Storage buckets** | `profile-pictures`, `gallery-before`, `gallery-after` | `portfolio`, `flash-images`, `client-photos` | Tattoo-specific names — intentional change. |
 | **DURATION_MAP services** | Standard, Premium, Express, etc. | Custom Design, Cover-Up, Touch-Up, Flash Tattoo, Consultation | Tattoo-specific services with their own time estimates. |
 | **DURATION_MAP sizes** | XS, Small, Medium, Large, XL, XXL | XS, Small, Medium, Large, XL, XXL, **XXXL** | Added XXXL (custom sleeve/back piece with weight-based calculation). |
-| **Blocked days** | Sundays (day 0) blocked | Sundays + Mondays (days 0, 1) blocked | Tattoo studios typically closed 2 days/week. |
+| ~~**Blocked days**~~ | ~~Sundays (day 0) blocked~~ | ~~Sundays + Mondays (days 0, 1) blocked~~ | ~~Tattoo studios typically closed 2 days/week.~~ | ~~FIXED 2026-06-30: Both blockedDayOfWeek arrays set to [] on public and admin booking forms.~~ |
 
 ---
 

@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
             nextBtnId: 'nextMonthBtn',
             pickerDate: now,
             blockedDates: new Set(),
-            blockedDayOfWeek: [0, 1],
+            blockedDayOfWeek: [],
             selectedDate: null,
             onSelectDate: (dateStr) => {
                 selectedDate = dateStr;

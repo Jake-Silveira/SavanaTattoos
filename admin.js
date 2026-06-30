@@ -353,21 +353,21 @@ document.addEventListener('DOMContentLoaded', function() {
             var profiles = clientProfiles.filter(function(p) { return p.client_ref_id === client.id; });
             var profilesHtml = profiles.map(function(p) {
                 var shortNotes = p.notes ? p.notes.substring(0, 30) + (p.notes.length > 30 ? '...' : '') : 'No notes';
-                return '<div class="pet-mini-row" data-action="open-profile" data-id="' + p.id + '">' +
-                    '<div class="pet-mini-pic">&#128100;</div>' +
-                    '<div class="pet-mini-info"><span class="pet-name">' + escapeHtml(p.name) + '</span>' +
-                    '<span class="pet-breed">' + escapeHtml(shortNotes) + '</span></div></div>';
+                return '<div class="client-profile-mini" data-action="open-profile" data-id="' + p.id + '">' +
+                    '<div class="client-icon">&#128100;</div>' +
+                    '<div class="client-profile-info"><span class="client-profile-name">' + escapeHtml(p.name) + '</span>' +
+                    '<span class="client-profile-notes">' + escapeHtml(shortNotes) + '</span></div></div>';
             }).join('');
             if (!profiles.length) profilesHtml = '<p class="history-empty">No profiles yet.</p>';
             var card = document.createElement('div');
             card.className = 'profile-card';
             card.innerHTML =
-                '<div class="household-header">' +
+                '<div class="client-card-header">' +
                     '<span class="client-id-badge">' + escapeHtml(client.client_id || 'N/A') + '</span>' +
                     '<h3>' + escapeHtml(client.owner_name) + '</h3>' +
                     '<div class="owner-contact">' + escapeHtml(client.phone) + (client.email ? ' | ' + escapeHtml(client.email) : '') + '</div>' +
                 '</div>' +
-                '<div class="household-pets-list">' + profilesHtml + '</div>' +
+                '<div class="client-profiles-list">' + profilesHtml + '</div>' +
                 '<div class="card-actions-row">' +
                     '<button class="action-btn-outline" data-action="edit-client" data-id="' + client.id + '">Edit</button>' +
                     '<button class="action-btn-primary" data-action="add-profile" data-id="' + client.id + '">+ Profile</button>' +
@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (grid._delegationAttached) return;
         grid._delegationAttached = true;
         grid.addEventListener('click', function(e) {
-            var row = e.target.closest('.pet-mini-row[data-action="open-profile"]');
+            var row = e.target.closest('.client-profile-mini[data-action="open-profile"]');
             if (row) { openProfileModalById(row.dataset.id); return; }
             var editBtn = e.target.closest('.action-btn-outline[data-action="edit-client"]');
             if (editBtn) { openClientModalById(editBtn.dataset.id); return; }
@@ -1015,39 +1015,38 @@ var html = '<div class="scheduler-header">' +
         });
     }
 
-    function openNewApptFromTimeSlot(dateStr, timeStr) {
-        loadClients().then(function() {
-            var modal = document.getElementById('newApptModal');
-            modal.style.display = 'block';
-            var dateInput = document.getElementById('newApptDate');
-            var timeInput = document.getElementById('newApptTime');
-            var timeSection = document.getElementById('newApptTimeSection');
-            initNewApptPickers();
-            dateInput.value = dateStr;
-            timeInput.value = timeStr;
-            timeSection.style.display = 'block';
-            newApptSelectedTime = timeStr;
-            showNewApptTimePicker(dateStr);
-            var retryCount = 0;
-            var highlightBtn = function() {
-                var btn = document.querySelector('#newApptTimeGrid .time-slot-btn[data-time="' + timeStr + '"]');
-                if (btn) {
-                    if (!btn.disabled) {
-                        btn.style.background = 'var(--primary)';
-                        btn.style.borderColor = 'var(--primary)';
-                        btn.style.color = '#fff';
-                        newApptSelectedTime = timeStr;
-                        document.getElementById('newApptTime').value = timeStr;
-                    }
-                    return;
+    async function openNewApptFromTimeSlot(dateStr, timeStr) {
+        await loadClients();
+        var modal = document.getElementById('newApptModal');
+        modal.style.display = 'block';
+        var dateInput = document.getElementById('newApptDate');
+        var timeInput = document.getElementById('newApptTime');
+        var timeSection = document.getElementById('newApptTimeSection');
+        initNewApptPickers();
+        dateInput.value = dateStr;
+        timeInput.value = timeStr;
+        timeSection.style.display = 'block';
+        newApptSelectedTime = timeStr;
+        await showNewApptTimePicker(dateStr);
+        var retryCount = 0;
+        var highlightBtn = function() {
+            var btn = document.querySelector('#newApptTimeGrid .time-slot-btn[data-time="' + timeStr + '"]');
+            if (btn) {
+                if (!btn.disabled) {
+                    btn.style.background = 'var(--primary)';
+                    btn.style.borderColor = 'var(--primary)';
+                    btn.style.color = '#fff';
+                    newApptSelectedTime = timeStr;
+                    document.getElementById('newApptTime').value = timeStr;
                 }
-                retryCount++;
-                if (document.querySelector('#newApptTimeGrid') && retryCount < 20) {
-                    setTimeout(highlightBtn, 200);
-                }
-            };
-            setTimeout(highlightBtn, 500);
-        });
+                return;
+            }
+            retryCount++;
+            if (document.querySelector('#newApptTimeGrid') && retryCount < 20) {
+                setTimeout(highlightBtn, 200);
+            }
+        };
+        setTimeout(highlightBtn, 100);
     }
 
     // --- Block Time Popover ---
@@ -1189,7 +1188,7 @@ var html = '<div class="scheduler-header">' +
             nextBtnId: 'newApptNextMonth',
             pickerDate: new Date(),
             blockedDates: new Set(),
-            blockedDayOfWeek: [0, 1],
+            blockedDayOfWeek: [],
             selectedDate: null,
             onSelectDate: function(dateStr) {
                 document.getElementById('newApptDate').value = dateStr;
@@ -1218,7 +1217,7 @@ var html = '<div class="scheduler-header">' +
         newApptCalendarPicker.render();
     }
 
-    function showNewApptTimePicker(dateStr) {
+    async function showNewApptTimePicker(dateStr) {
         if (!dateStr) return;
         var section = document.getElementById('newApptTimeSection');
         section.style.display = 'block';
@@ -1238,60 +1237,55 @@ var html = '<div class="scheduler-header">' +
         var serviceKey = serviceMap[service] || 'Consultation';
         var duration = getSuggestedDuration(serviceKey, size, null);
 
-        var startTime = 11 * 60; // 11am in minutes
-        var endTime = 19 * 60;   // 7pm in minutes
-        var slotMinutes = 30;
-        var allLeads = [];
-        var allBlocked = [];
+        var startTime = 11 * 60;
+        var endTime = 19 * 60;
 
-        var leadsRes = db.from('leads').select('*').eq('requested_date', dateStr);
-        var blockedRes = db.from('blocked_slots').select('*').eq('date', dateStr);
+        var leadsRes = await db.from('leads').select('*').eq('requested_date', dateStr);
+        var blockedRes = await db.from('blocked_slots').select('*').eq('date', dateStr);
 
-        Promise.all([leadsRes, blockedRes]).then(function(responses) {
-            allLeads = (responses[0].data || []).filter(function(l) { return l.status !== 'deleted'; });
-            allBlocked = (responses[1].data || []).filter(function(b) { return !b.is_full_day; });
+        var allLeads = (leadsRes.data || []).filter(function(l) { return l.status !== 'deleted'; });
+        var allBlocked = (blockedRes.data || []).filter(function(b) { return !b.is_full_day; });
 
-            var unavailable = buildUnavailableIntervals(allLeads, allBlocked, null);
+        var unavailable = buildUnavailableIntervals(allLeads, allBlocked, null);
 
-            for (var t = startTime; t < endTime; t += slotMinutes) {
-                var slotEnd = t + slotMinutes;
-                if (slotEnd - duration > endTime) continue;
-                var h = Math.floor(t / 60);
-                var m = t % 60;
-                var slotStart = t;
-                var slotEndAbs = t + duration;
-                var overlaps = false;
-                for (var i = 0; i < unavailable.length; i++) {
-                    if (slotStart < unavailable[i].end && slotEndAbs > unavailable[i].start) {
-                        overlaps = true;
-                        break;
-                    }
+        for (var t = startTime; t < endTime; t += 30) {
+            var slotEnd = t + 30;
+            if (slotEnd - duration > endTime) continue;
+            var h = Math.floor(t / 60);
+            var m = t % 60;
+            var slotStart = t;
+            var slotEndAbs = t + duration;
+            var overlaps = false;
+            for (var i = 0; i < unavailable.length; i++) {
+                if (slotStart < unavailable[i].end && slotEndAbs > unavailable[i].start) {
+                    overlaps = true;
+                    break;
                 }
-                var disabled = !overlaps ? '' : 'disabled';
-                var label = formatTime12(t);
-                slotsHtml += '<button type="button" class="time-slot-btn ' + (disabled ? 'disabled' : '') + '" data-time="' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + '">' + label + '</button>';
             }
+            var disabled = overlaps ? 'disabled' : '';
+            var label = formatTime12(t);
+            slotsHtml += '<button type="button" class="time-slot-btn ' + (disabled ? 'disabled' : '') + '" data-time="' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + '">' + label + '</button>';
+        }
 
-            var grid = document.getElementById('newApptTimeGrid');
-            var msg = document.getElementById('newApptUnavailableMsg');
-            if (!slotsHtml) {
-                msg.style.display = 'block';
-                grid.innerHTML = '';
-            } else {
-                msg.style.display = 'none';
-                grid.innerHTML = slotsHtml;
-                grid.querySelectorAll('.time-slot-btn:not(.disabled)').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        grid.querySelectorAll('.time-slot-btn').forEach(function(b) { b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; });
-                        btn.style.background = 'var(--primary)';
-                        btn.style.borderColor = 'var(--primary)';
-                        btn.style.color = '#fff';
-                        newApptSelectedTime = btn.dataset.time;
-                        document.getElementById('newApptTime').value = newApptSelectedTime;
-                    });
+        var grid = document.getElementById('newApptTimeGrid');
+        var msg = document.getElementById('newApptUnavailableMsg');
+        if (!slotsHtml) {
+            msg.style.display = 'block';
+            grid.innerHTML = '';
+        } else {
+            msg.style.display = 'none';
+            grid.innerHTML = slotsHtml;
+            grid.querySelectorAll('.time-slot-btn:not(.disabled)').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    grid.querySelectorAll('.time-slot-btn').forEach(function(b) { b.style.background = ''; b.style.borderColor = ''; b.style.color = ''; });
+                    btn.style.background = 'var(--primary)';
+                    btn.style.borderColor = 'var(--primary)';
+                    btn.style.color = '#fff';
+                    newApptSelectedTime = btn.dataset.time;
+                    document.getElementById('newApptTime').value = newApptSelectedTime;
                 });
-            }
-        });
+            });
+        }
     }
 
     // --- New Appt Form Submit ---
