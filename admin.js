@@ -432,7 +432,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (id) {
                 await db.from('clients').update(payload).eq('id', id);
             } else {
-                payload.client_id = String(Math.floor(100000 + Math.random() * 900000));
+                payload.client_code = String(Math.floor(100000 + Math.random() * 900000));
                 await db.from('clients').insert([payload]);
             }
             await loadClients();
