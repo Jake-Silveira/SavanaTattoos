@@ -899,13 +899,20 @@ var html = '<div class="scheduler-header">' +
             '<div class="time-grid-labels">' + generateTimeLabels() + '</div>' +
             renderTimeGridBackground();
         html += '<div class="time-grid-content">';
+        for (var i = 0; i < 20; i++) {
+            var slotH = 8 + Math.floor(i / 2);
+            var slotM = (i % 2) * 30;
+            var slotTime = String(slotH).padStart(2, '0') + ':' + String(slotM).padStart(2, '0');
+            var slotTop = i * 48;
+            html += '<div class="time-slot" data-time="' + slotTime + '" style="top:' + slotTop + 'px;height:48px;"></div>';
+        }
         var dayLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && l.status !== 'deleted'; });
         dayLeads.forEach(function(lead) {
             var startIdx = timeToIdx(lead.requested_time);
             var dur = parseInt(lead.duration_minutes) || 60;
             var rowDur = Math.ceil(dur / 30);
-            var topPos = startIdx * 30;
-            var cardHeight = rowDur * 30;
+            var topPos = startIdx * 48;
+            var cardHeight = rowDur * 48;
             html += '<div class="appt-card day-appt-card" data-action="edit-appt" data-id="' + lead.id + '" style="top:' + topPos + 'px;height:' + cardHeight + 'px;">' +
                 '<div class="appt-time">' + (lead.requested_time ? formatTime12(lead.requested_time) : '') + '</div>' +
                 '<div class="appt-details">' +
@@ -973,20 +980,11 @@ var html = '<div class="scheduler-header">' +
             container.addEventListener('click', function(e) {
             var apptCard = e.target.closest('.appt-card[data-action="edit-appt"]');
             if (apptCard) { openEditApptPopover(apptCard.dataset.id); return; }
-            var gridEl = e.target.closest('.time-grid-content');
-            if (gridEl) {
-                var rowHeight = 48;
-                var rect = gridEl.getBoundingClientRect();
-                var offsetY = e.clientY - rect.top;
-                var rowIdx = Math.floor(offsetY / rowHeight);
-                if (rowIdx >= 0 && rowIdx < 20) {
-                    var totalMin = 8 * 60 + rowIdx * 30;
-                    var h = Math.floor(totalMin / 60);
-                    var m = totalMin % 60;
-                    var timeStr = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                    var dateStr = dayDate.toISOString().split('T')[0];
-                    openNewApptFromTimeSlot(dateStr, timeStr);
-                }
+            var timeSlot = e.target.closest('.time-slot');
+            if (timeSlot) {
+                var timeStr = timeSlot.dataset.time;
+                var dateStr = dayDate.toISOString().split('T')[0];
+                openNewApptFromTimeSlot(dateStr, timeStr);
                 return;
             }
             var blockBar = e.target.closest('.blocked-slot-bar[data-action="delete-block"]');

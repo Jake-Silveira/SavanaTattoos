@@ -2314,6 +2314,20 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+.time-slot {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background: transparent;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    z-index: 1;
+}
+.time-slot:hover {
+    background: rgba(201, 168, 124, 0.08);
+}
+
 /* Appointment Cards */
 .appt-card {
     border-radius: 6px;
