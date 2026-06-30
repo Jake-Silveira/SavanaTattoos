@@ -1883,9 +1883,9 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 
 .time-grid-content {
     flex: 1;
-    min-height: 0;
+    min-height: 960px;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 .day-pending-section {

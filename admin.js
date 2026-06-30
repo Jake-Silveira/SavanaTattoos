@@ -897,8 +897,8 @@ var html = '<div class="scheduler-header">' +
         }
         html += '<div class="day-view-layout"><div class="time-grid">' +
             '<div class="time-grid-labels">' + generateTimeLabels() + '</div>' +
-            renderTimeGridBackground();
-        html += '<div class="time-grid-content">';
+            renderTimeGridBackground() +
+            '<div class="time-grid-content">';
         for (var i = 0; i < 20; i++) {
             var slotH = 8 + Math.floor(i / 2);
             var slotM = (i % 2) * 30;
