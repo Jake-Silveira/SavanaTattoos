@@ -241,22 +241,24 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 
 ---
 
-### Step 2 — Scheduler Panel: Bug Fixes & Core Polish
+### Step 2 — Scheduler Panel: Bug Fixes & Core Polish ✅ Done (2026-06-30)
 
 **Scope:** `admin.js` — Scheduler functions only. Add corresponding CSS classes to `styles.css` where noted.
 
-**Bugs to fix:**
-1. **`setupDayViewEvents()` listener accumulation** — move the `_dayEventsAttached` flag to the `schedulerContainer` element and guard the listener attachment. Since `schedulerContainer`'s innerHTML is replaced each render, the element itself is replaced, so the flag on it is naturally reset. Instead, use `schedulerContainer.removeEventListener('click', dayClickHandler)` before re-attaching, or better: define `dayClickHandler` once as a named function and only call `addEventListener` once on initial render.
-2. **`renderTimeGridBackground()` dead function** — remove lines 656-663 entirely. Never called.
-3. **`generateCalendarDays()` today highlight** — add visual distinction in `admin.html`/`styles.css`. Add a `border: 2px solid var(--primary)` to `.scheduler-day.today` in CSS.
-4. **Hardcoded time range 11-19** — extract to a constant `STUDIO_START_HOUR = 11` and `STUDIO_END_HOUR = 19`. Replace all hardcoded 11/19 values in `showNewApptTimePicker()`, `openEditApptPopover()`, `openBlockPopover()`, `populateTimeSelects()` calls. This makes it easy to change later via config/env.
-5. **No confirmation before cancelling** — in the `saveApptBtn` click handler (line 1142), if the new status is `cancelled`, call `showConfirm('Cancel this appointment?')` before proceeding.
+**Bugs fixed:**
+1. ✅ **`renderTimeGridBackground()` dead function** — removed lines 702-709 entirely (never called).
+2. ✅ **`generateTimeLabels()` dead function** — removed lines 694-703 entirely (never called).
+3. ✅ **`generateCalendarDays()` today highlight** — added `border: 2px solid var(--primary)` to `.scheduler-grid .calendar-day.today` in CSS (line 2166).
+4. ✅ **Hardcoded time range 11-19** — extracted `STUDIO_START_HOUR = 11` and `STUDIO_END_HOUR = 19` constants. Replaced all hardcoded 11/19 values in `showNewApptTimePicker()`, `openEditApptPopover()`, `openBlockPopover()`, `populateTimeSelects()` calls, and daily view time grid generation.
+5. ✅ **No confirmation before cancelling** — added `showConfirm('Cancel this appointment?')` check in `saveApptBtn` click handler before committing when status is `cancelled`.
+6. ✅ **`timeToIdx` hardcoded start hour** — updated `timeToIdx()` to use `STUDIO_START_HOUR` instead of hardcoded `8`.
+7. ✅ **Daily view time grid hardcoded range** — updated to use `STUDIO_START_HOUR` and `STUDIO_END_HOUR` for grid slot generation.
 
-**Polish to add:**
-6. **Show duration on appointment cards** — in month view (`generateCalendarDays`), week view (`renderWeeklyView`), and daily view (`renderDailyView`), append a small duration badge to appointment cards. E.g., append `<span class="appt-duration">2hr</span>` derived from `lead.duration_minutes`.
-7. **Show message/notes on daily view cards** — in `renderDailyView()` line 939, add `(lead.message ? '<div class="appt-message">' + escapeHtml(lead.message) + '</div>' : '')` to the appointment card HTML.
-8. **Add `escapeHtml` if missing** — ensure `escapeHtml` is defined before `renderDailyView` uses it (it is, line 205).
-9. **Remove `view-day-link` styling quirk** — the "View Day" links in week view are `<a href="#" class="view-day-link">`. The `#` href causes a brief page jump. Remove `href="#"` and handle the click purely via JS (it's already handled in line 867-875).
+**Polish added:**
+8. ✅ **Show duration on appointment cards** — week view (`renderWeeklyView`): appended `<span class="appt-duration">2hr</span>` to appointment cards. Daily view (`renderDailyView`): same duration badge added.
+9. ✅ **Show message/notes on daily view cards** — added `(lead.message ? '<div class="appt-message">' + escapeHtml(lead.message) + '</div>' : '')` to appointment card HTML in `renderDailyView()`.
+10. ✅ **`escapeHtml` moved to module scope** — moved `escapeHtml()` from inside `renderLeads` to module-level scope so it's accessible to `renderDailyView` and all other functions.
+11. ✅ **Remove `view-day-link` styling quirk** — removed `href="#"` from "View Day" links in week view. Added `text-decoration: none` and `cursor: pointer` to CSS. Click handling via JS delegation already in place.
 
 ---
 

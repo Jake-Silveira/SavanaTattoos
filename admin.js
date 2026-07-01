@@ -229,6 +229,9 @@ document.addEventListener('DOMContentLoaded', function() {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
+    var STUDIO_START_HOUR = 11;
+    var STUDIO_END_HOUR = 19;
+
     function attachLeadsDelegation() {
         if (leadsTableBody._delegationAttached) return;
         leadsTableBody._delegationAttached = true;
@@ -688,30 +691,10 @@ document.addEventListener('DOMContentLoaded', function() {
         return html;
     }
 
-    function generateTimeLabels() {
-        var html = '';
-        for (var h = 8; h <= 17; h++) {
-            var displayH = h > 12 ? h - 12 : h;
-            var ampm = h >= 12 ? 'PM' : 'AM';
-            html += '<div class="time-label">' + displayH + ':00 ' + ampm + '</div>';
-            html += '<div class="time-label half-hour">' + displayH + ':30 ' + ampm + '</div>';
-        }
-        return html;
-    }
-
-    function renderTimeGridBackground() {
-        var html = '<div class="grid-background">';
-        for (var i = 0; i < 20; i++) {
-            html += '<div class="grid-row"></div>';
-        }
-        html += '</div>';
-        return html;
-    }
-
     function timeToIdx(timeStr) {
         if (!timeStr) return 0;
         var parts = timeStr.split(':').map(Number);
-        return (parts[0] - 8) * 2 + (parts[1] >= 30 ? 1 : 0);
+        return (parts[0] - STUDIO_START_HOUR) * 2 + (parts[1] >= 30 ? 1 : 0);
     }
 
     function scrollToTimeGrid() {
@@ -871,15 +854,18 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             dayLeads.forEach(function(lead) {
                 var timeStr = lead.requested_time ? formatTime12(lead.requested_time) : '';
+                var dur = parseInt(lead.duration_minutes) || 60;
+                var durLabel = dur >= 60 ? Math.round(dur / 60) + 'hr' : dur + 'min';
                 colHtml += '<div class="appt-card" data-action="edit-appt" data-id="' + lead.id + '">' +
                     '<div class="appt-time">' + escapeHtml(timeStr) + '</div>' +
                     '<div class="appt-client">' + escapeHtml(lead.name || 'Unknown') + '</div>' +
                     '<div class="appt-service">' + escapeHtml(lead.service || '') + '</div>' +
+                    '<span class="appt-duration">' + durLabel + '</span>' +
                     '<span class="status-badge status-' + escapeHtml(lead.status) + '" style="font-size:0.65rem;padding:1px 4px;">' + escapeHtml(lead.status) + '</span>' +
                 '</div>';
             });
             if (dayLeads.length) {
-                colHtml += '<a href="#" class="view-day-link" data-date="' + dateStr + '">View Day &#8250;</a>';
+                colHtml += '<a class="view-day-link" data-date="' + dateStr + '">View Day &#8250;</a>';
             }
             colHtml += '</div>';
             html += colHtml;
@@ -963,8 +949,8 @@ var html = '<div class="scheduler-header">' +
             html += '<div class="partial-block-banner">Partial block today - click Block Time to add/remove</div>';
         }
        html += '<div class="time-grid-content">';
-        for (var i = 0; i < 20; i++) {
-            var h = 8 + Math.floor(i / 2);
+        for (var i = 0; i < (STUDIO_END_HOUR - STUDIO_START_HOUR) * 2; i++) {
+            var h = STUDIO_START_HOUR + Math.floor(i / 2);
             var m = (i % 2) * 30;
             var displayH = h > 12 ? h - 12 : h;
             var ampm = h >= 12 ? 'PM' : 'AM';
@@ -982,11 +968,14 @@ var html = '<div class="scheduler-header">' +
             var rowDur = Math.ceil(dur / 30);
             var topPos = startIdx * 48;
             var cardHeight = rowDur * 48;
+            var durLabel = dur >= 60 ? Math.round(dur / 60) + 'hr' : dur + 'min';
             apptCards += '<div class="appt-card day-appt-card" data-action="edit-appt" data-id="' + lead.id + '" style="top:' + topPos + 'px;height:' + cardHeight + 'px;">' +
                 '<div class="appt-time">' + (lead.requested_time ? formatTime12(lead.requested_time) : '') + '</div>' +
                 '<div class="appt-details">' +
                     '<div class="appt-client">' + escapeHtml(lead.name || 'Unknown') + '</div>' +
                     '<div class="appt-service">' + escapeHtml(lead.service || '') + (lead.size ? ' - ' + escapeHtml(lead.size) : '') + '</div>' +
+                    '<span class="appt-duration">' + durLabel + '</span>' +
+                    (lead.message ? '<div class="appt-message">' + escapeHtml(lead.message) + '</div>' : '') +
                     '<span class="status-badge status-' + escapeHtml(lead.status) + '">' + escapeHtml(lead.status) + '</span>' +
                 '</div>' +
             '</div>';
@@ -1122,8 +1111,8 @@ var html = '<div class="scheduler-header">' +
         document.getElementById('blockType').value = 'range';
         document.getElementById('timeRangeInputs').style.display = 'block';
         document.getElementById('blockNote').value = '';
-        populateTimeSelects('blockStart', 11, 19);
-        populateTimeSelects('blockEnd', 11, 19);
+        populateTimeSelects('blockStart', STUDIO_START_HOUR, STUDIO_END_HOUR);
+        populateTimeSelects('blockEnd', STUDIO_START_HOUR, STUDIO_END_HOUR);
         popover.dataset.date = dateStr;
         popover.style.display = 'flex';
     }
@@ -1180,7 +1169,7 @@ var html = '<div class="scheduler-header">' +
         document.getElementById('editApptMessage').textContent = lead.message || 'No customer notes';
         document.getElementById('editApptDuration').value = lead.duration_minutes || 60;
         document.getElementById('editApptStatus').value = lead.status || 'pending';
-        populateTimeSelects('editApptTime', 11, 19);
+        populateTimeSelects('editApptTime', STUDIO_START_HOUR, STUDIO_END_HOUR);
         document.getElementById('editApptPopover').style.display = 'flex';
     }
 
@@ -1190,6 +1179,10 @@ var html = '<div class="scheduler-header">' +
         var confirmedTime = document.getElementById('editApptTime').value;
         var duration = parseInt(document.getElementById('editApptDuration').value) || 60;
         var status = document.getElementById('editApptStatus').value;
+        if (status === 'cancelled') {
+            var ok = await showConfirm('Cancel this appointment?');
+            if (!ok) return;
+        }
         var startMin = timeToIdx(confirmedTime) * 30 + 480;
         var endMin = startMin + duration;
         var activeLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dayDate.toISOString().split('T')[0] && l.status !== 'deleted' && l.id !== id; });
@@ -1304,8 +1297,8 @@ var html = '<div class="scheduler-header">' +
         var serviceKey = serviceMap[service] || 'Consultation';
         var duration = getSuggestedDuration(serviceKey, size, null);
 
-        var startTime = 11 * 60;
-        var endTime = 19 * 60;
+        var startTime = STUDIO_START_HOUR * 60;
+        var endTime = STUDIO_END_HOUR * 60;
 
         var leadsRes = await db.from('leads').select('*').eq('requested_date', dateStr);
         var blockedRes = await db.from('blocked_slots').select('*').eq('date', dateStr);

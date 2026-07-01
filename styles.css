@@ -2114,8 +2114,10 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     color: var(--primary);
     font-size: 0.8rem;
     font-weight: 500;
+    text-decoration: none;
     border-top: 1px solid var(--border);
     margin-top: auto;
+    cursor: pointer;
 }
 
 .view-day-link:hover {
@@ -2161,8 +2163,9 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     background: var(--bg-card-hover);
 }
 
-.scheduler-grid .calendar-day.today {
+ .scheduler-grid .calendar-day.today {
     background: var(--primary-glow);
+    border: 2px solid var(--primary);
 }
 
 .scheduler-grid .calendar-day.fully-blocked {
@@ -2397,6 +2400,23 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
     font-style: italic;
     font-size: 0.7rem;
     margin-top: 2px;
+}
+
+.appt-duration {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+    font-weight: 500;
+}
+
+.appt-message {
+    font-size: 0.65rem;
+    color: var(--text-dim);
+    font-style: italic;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .appt-status-badge {
