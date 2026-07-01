@@ -2,7 +2,7 @@
 
 > Created: 2025-06-25
 > Last updated: 2026-06-30
-> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Production polish complete (2026-06-30). Admin dashboard audit Step 3 complete (2026-06-30). Ready for Supabase provisioning & deployment.**
+> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Production polish complete (2026-06-30). Admin dashboard audit Steps 1-5 complete (2026-06-30). Ready for Supabase provisioning & deployment.**
 
 ---
 
@@ -108,6 +108,12 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 - Added `AGENTS.md` — tattoo-specific architecture reference
 - Added `README.md` — public-facing documentation
 
+### ✅ Admin Dashboard Audit Steps 1-4 (2026-06-30)
+1. **Step 1 — Leads Panel**: Bug fixes (deleted status filter, race condition, listener leak, status confirmation, stale data) + polish (search bar, status filter, lead age display)
+2. **Step 2 — Scheduler Panel**: Bug fixes (dead functions, hardcoded time ranges, missing confirmations, today highlight) + polish (duration badges, notes display, escapeHtml scope)
+3. **Step 3 — Client Profiles Panel**: Bug fixes (client code search, phone fallback, uniqueness check, modal caching, deletion warning) + polish (upcoming appointments, last visit, form validation)
+4. **Step 4 — Site Management Panel**: Bug fixes (dead edit button, flash toggle, soft-delete feedback, tab race, star CSS) + polish (3 new modals, URL validation, Up/Down reorder, broken image handling, event delegation)
+
 ### ✅ Production Polish (2026-06-30)
 1. **Removed dead `triggerConfirmedEmail` from `utils.js`** — shadowed by admin.js version, removed to reduce confusion
 2. **Added error boundary UI to public site** — `script.js`: `showPublicError()` function; `index.html`: `.public-error-banner` element; wrapped all init functions (reviews, gallery, flash); guard for missing Supabase client
@@ -117,6 +123,16 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 6. **Added rate limiting to inquiry emails** — `api/send-email.js`: prevents same email from sending >3 confirmations within 5-minute window (HTTP 429)
 7. **All 11 JS files pass `node --check`**
 8. **`npm run build` completes successfully**
+
+### ✅ Admin Dashboard Audit Step 5 — Global / Cross-Panel Polish (2026-06-30)
+1. **Toast stacking** — `showToast()` always creates `#toastContainer` if missing; toasts stack upward from bottom-right with `gap: 8px`; max 5 toasts (oldest removed when exceeded); CSS `.toast` uses `toast-in`/`toast-exit` animations
+2. **Loading states on save buttons** — Added `disabled` + `"Saving..."` text to clientForm (`#saveClientBtn`), profileForm (`#saveProfileBtn`), saveApptBtn, saveBlockBtn, galleryForm (`#saveGalleryBtn`), flashForm (`#saveFlashBtn`), reviewForm (`#saveReviewBtn`), and save-feedback; all re-enable in `finally` block
+3. **Modal focus trapping** — `setupModalFocus()` function traps `Tab`/`Shift+Tab` within modal content; focuses first input on open; added `tabindex="-1"` to all 8 modals in `admin.html`; called on all modal opens (leadModal, clientModal, profileModal, newApptModal, addGalleryModal, addFlashModal, addReviewModal)
+4. **Escape key closes all modals** — Global `keydown` listener closes any modal with `display === 'flex'` or `'block'` on Escape (except confirmModal which has its own handler)
+5. **Consistent error handling** — Added try/catch to `attachFeedbackMgmtEvents()` DB calls (the only mgmt event delegate missing it)
+6. **CSS: responsive modal max-height** — Added `max-height: 90vh; overflow-y: auto;` to `.modal` and `.modal-content` in `@media (max-width: 768px)` and `@media (max-width: 600px)` breakpoints
+7. **Add `.status-new_lead` CSS class** — Added `background: rgba(251, 191, 36, 0.2); color: #f59e0b;` matching the amber/warning palette of other status badges
+8. **Remove duplicate `renderStats`** — Confirmed `utils.js` has no `renderStats()` function; the admin.js version is the only one (already done in prior session)
 
 ---
 
@@ -183,6 +199,15 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 - ~~Client deletion has vague warning~~ — Fixed 2026-06-30: confirmation message now explains what gets deleted and that soft-delete restores leads
 - ~~Client cards missing upcoming/visit info~~ — Added 2026-06-30: `renderClients()` is now async; fetches confirmed future leads to show upcoming appointment count and last visit date on client cards
 - ~~No name validation on client/profile forms~~ — Added 2026-06-30: toast error shown if `owner_name` or profile name is blank on submit
+- ~~Dead "Edit" button on gallery items~~ — Added 2026-06-30: `editGalleryItem()` function + `#addGalleryModal` with full edit form
+- ~~Flash items missing activate/deactivate toggle~~ — Added 2026-06-30: `mgmt-toggle-flash` button on each flash card
+- ~~Feedback hard-delete → soft-delete~~ — Added 2026-06-30: `update({deleted: true})` + `.neq('deleted', true)` filter
+- ~~Tab switching loading state race~~ — Added 2026-06-30: `siteMgmtActive` flag guards stale completion callbacks
+- ~~Review star ratings unstyled~~ — Added 2026-06-30: `<span class="stars">` wrapper + CSS
+- ~~All add operations use prompt()~~ — Replaced 2026-06-30: `#addGalleryModal`, `#addFlashModal`, `#addReviewModal` with proper form validation
+- ~~No URL validation on manual adds~~ — Added 2026-06-30: `isValidImageUrl()` in admin.js mirrors API route version
+- ~~No reorder buttons on mgmt cards~~ — Added 2026-06-30: Up/Down arrow buttons on all gallery/flash/review cards with swap logic
+- ~~No broken image handling~~ — Added 2026-06-30: `onerror` handlers with placeholder overlay + "Fix URL" button
 
 ### Remaining Issues / Notes
 
@@ -288,38 +313,41 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 
 ---
 
-### Step 4 — Site Management Panel: Bug Fixes & Core Polish
+### Step 4 — Site Management Panel: Bug Fixes & Core Polish ✅ Done (2026-06-30)
 
 **Scope:** `admin.js` — Site management functions. HTML changes to `admin.html` for new modals. CSS changes to `styles.css`.
 
-**Bugs to fix:**
-1. **Dead "Edit" button on gallery items** — `attachGalleryMgmtEvents()` only binds delete handlers. The "Edit" button (`mgmt-edit-gallery`) is dead code. Either wire it up to an `editGalleryItem` function OR remove the button. Recommendation: wire it up to open a modal for editing title, image_url, display_order, and is_active.
-2. **Flash items missing activate/deactivate toggle** — add an `is_active` toggle button to flash item cards in `renderFlashMgmt()`, matching the review toggle pattern (line 1585). Flash items have `is_active` field in the DB.
-3. **Feedback hard-delete → soft-delete** — change `mgmt-delete-feedback` handler (line 1659) to use `db.from('site_feedback').update({ deleted: true })` instead of `delete()`. Add a `deleted` check in `loadFeedback()` filter: `.neq('deleted', true)`.
-4. **Tab switching loading state race** — in `initSiteMgmt()`, only hide `siteMgmtLoading` in the `finally` block after ALL four loads complete (already done). But add a guard: if the user switches tabs before loading completes, ignore the stale `initSiteMgmt` call. Use a `siteMgmtActive` boolean flag.
-5. **Review star ratings CSS** — wrap star characters in `<span class="stars">` and add CSS: `.stars { letter-spacing: 2px; color: var(--primary); }`.
+**Bugs fixed:**
+1. ✅ **Dead "Edit" button on gallery items** — Added `editGalleryItem()` function and wired it up via event delegation. Opens `#addGalleryModal` pre-filled with existing data for editing title, image_url, display_order, and is_active.
+2. ✅ **Flash items missing activate/deactivate toggle** — Added `mgmt-toggle-flash` button to flash item cards in `renderFlashMgmt()`, matching the review toggle pattern. Toggles `is_active` field.
+3. ✅ **Feedback hard-delete → soft-delete** — Changed `mgmt-delete-feedback` handler to use `db.from('site_feedback').update({ deleted: true })` instead of `delete()`. Added `.neq('deleted', true)` filter in `loadFeedback()`. Button text changed to "Soft Delete" with confirmation explaining the action.
+4. ✅ **Tab switching loading state race** — Added `siteMgmtActive` boolean flag in `initSiteMgmt()`. The `finally` callback checks `if (!siteMgmtActive) return;` so stale completion callbacks from tab switches are ignored.
+5. ✅ **Review star ratings CSS** — Wrapped star characters in `<span class="stars">` in `renderReviewsMgmt()`. Added `.stars { letter-spacing: 2px; color: var(--primary); }` CSS.
 
-**Polish to add (replace `prompt()` with modals):**
-6. **Add modals for adding gallery/flash/reviews** — create three new modal HTML blocks in `admin.html`: `#addGalleryModal`, `#addFlashModal`, `#addReviewModal`. Each with proper form fields, file/image URL input, and submit buttons. Replace the `prompt()` calls with `modal.style.display = 'flex'`.
-7. **Image URL validation on add** — before inserting gallery/flash items, validate URL format (reuse `isValidImageUrl` pattern from API routes). Show toast on invalid URL.
-8. **Reorder buttons on each card** — add Up/Down arrow buttons next to each gallery/flash/review card. Clicking Up decrements `display_order` and swaps with the item above. Clicking Down increments and swaps with item below. Simple swap logic.
-9. **Broken image error handling** — add `onerror` handler to gallery/flash images in the management grid. On error, show a placeholder icon and a "Fix URL" button inline.
+**Polish added:**
+6. ✅ **Added modals for adding gallery/flash/reviews** — Created `#addGalleryModal`, `#addFlashModal`, `#addReviewModal` in `admin.html` with proper form fields. All three `prompt()` calls replaced with `modal.style.display = 'flex'`.
+7. ✅ **Image URL validation on add** — Added `isValidImageUrl()` function to `admin.js` (mirrors API route version). All three form submit handlers validate URL format before inserting, showing toast error on invalid URL.
+8. ✅ **Reorder buttons on each card** — Added Up/Down arrow buttons (`mgmt-move-up`, `mgmt-move-down`) to all gallery/flash/review cards. Clicking swaps `display_order` values with the adjacent item. Uses event delegation for efficient binding.
+9. ✅ **Broken image error handling** — Added `onerror` handler to gallery/flash images that hides the broken image and shows a `.broken-image-overlay` with a camera icon and "Fix URL" button. Clicking "Fix URL" prompts for a replacement URL and updates the record.
+10. ✅ **Event delegation on all mgmt grids** — Converted all `attachGalleryMgmtEvents`, `attachFlashMgmtEvents`, `attachReviewsMgmtEvents`, and `attachFeedbackMgmtEvents` to use event delegation with `_delegationAttached` guard to prevent duplicate listeners.
+11. ✅ **Generic modal close buttons** — Added `.close-modal-btn` handler that closes any parent modal on click.
+12. ✅ **Review star interactive selector** — Added `setReviewStars()` helper with hover preview and click selection in the review modal.
 
 ---
 
-### Step 5 — Global / Cross-Panel Polish
+### Step 5 — Global / Cross-Panel Polish ✅ Done (2026-06-30)
 
 **Scope:** `admin.js` + `admin.html` + `styles.css`. Affects all panels.
 
-**To implement:**
-1. **Toast stacking** — replace `showToast()` (line 9) with stacked toasts. Each toast gets `position: fixed; bottom: 20px; right: 20px;` and stacks upward with `margin-bottom: 8px`. Remove the `if (!container)` branch (always create a container). Add a max of 5 toasts at a time (remove oldest if exceeded).
-2. **Loading states on save buttons** — in every submit handler (clientForm, profileForm, newApptForm, saveApptBtn, saveBlockBtn), disable the submit button and change text to "Saving..." before the async operation. Re-enable in `finally` block.
-3. **Modal focus trapping** — after opening any modal, set focus to the first input or the modal title. On `Escape` key (already handled for confirm modal), close the modal. Add `tabindex="-1"` to modals and trap `Tab` key within the modal content.
-4. **Escape key closes all modals** — add a global keydown listener: if `e.key === 'Escape'`, close any open modal (check `modal.style.display === 'flex'` or `'block'`). Currently only the confirm modal handles Escape.
-5. **Consistent error handling** — standardize all DB operations to use try/catch with toast errors. Add try/catch to `attachGalleryMgmtEvents`, `attachFlashMgmtEvents`, `attachReviewsMgmtEvents`, and `attachFeedbackMgmtEvents` DB calls.
-6. **CSS: responsive modal max-height** — add `@media (max-width: 768px)` rules for all modals: `max-height: 90vh; overflow-y: auto;` to prevent overflow on small screens.
-7. **Add `.status-new_lead` CSS class** — verify CSS has a style for the `new_lead` status badge (used in scheduler pending section line 955). If not, add one matching the other status badges.
-8. **Remove duplicate `renderStats`** — remove the `renderStats()` function from `utils.js` entirely (lines 249-264). The admin.js version (lines 1381-1392) is the one actually used in the leads panel. This eliminates confusion and potential inconsistency.
+**Completed:**
+1. ✅ **Toast stacking** — `showToast()` always creates `#toastContainer`; toasts stack from bottom-right; max 5 toasts; `toast-in`/`toast-exit` CSS animations
+2. ✅ **Loading states on save buttons** — Added to: clientForm (`#saveClientBtn`), profileForm (`#saveProfileBtn`), saveApptBtn, saveBlockBtn, galleryForm (`#saveGalleryBtn`), flashForm (`#saveFlashBtn`), reviewForm (`#saveReviewBtn`), save-feedback. All use `disabled` + "Saving..." text with `finally` re-enable.
+3. ✅ **Modal focus trapping** — `setupModalFocus()` traps `Tab`/`Shift+Tab` within modal; focuses first input; `tabindex="-1"` on all 8 modals in `admin.html`; called on every modal open
+4. ✅ **Escape key closes all modals** — Global `keydown` listener closes any open modal on Escape (except confirmModal)
+5. ✅ **Consistent error handling** — Added try/catch to `attachFeedbackMgmtEvents()` DB calls (only mgmt delegate missing it)
+6. ✅ **CSS: responsive modal max-height** — Added `max-height: 90vh; overflow-y: auto;` to `.modal` and `.modal-content` in both `@media (max-width: 768px)` and `@media (max-width: 600px)` breakpoints
+7. ✅ **Add `.status-new_lead` CSS class** — Added with amber background/warning color matching status badge palette
+8. ✅ **Remove duplicate `renderStats`** — Already done (no `renderStats()` exists in utils.js; admin.js version is the only one)
 
 ---
 

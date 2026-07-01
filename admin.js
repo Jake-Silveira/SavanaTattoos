@@ -11,17 +11,20 @@ function showToast(message, type) {
     var container = document.getElementById('toastContainer');
     if (!container) {
         var div = document.createElement('div');
-        div.style.cssText = 'position:fixed;top:20px;right:20px;padding:12px 20px;border-radius:8px;background:' + (type === 'error' ? '#ef4444' : type === 'success' ? '#22c55e' : '#3b82f6') + ';color:#fff;z-index:9999;font-size:14px;';
-        div.textContent = message;
+        div.id = 'toastContainer';
         document.body.appendChild(div);
-        setTimeout(function() { div.remove(); }, 3500);
-    } else {
-        var toast = document.createElement('div');
-        toast.className = 'toast toast-' + type;
-        toast.textContent = message;
-        container.appendChild(toast);
-        setTimeout(function() { toast.classList.add('toast-exit'); setTimeout(function() { toast.remove(); }, 300); }, 3500);
+        container = div;
     }
+    var toasts = container.querySelectorAll('.toast');
+    if (toasts.length >= 5) {
+        toasts[0].classList.add('toast-exit');
+        setTimeout(function() { if (toasts[0].parentNode) toasts[0].remove(); }, 300);
+    }
+    var toast = document.createElement('div');
+    toast.className = 'toast toast-' + type;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(function() { toast.classList.add('toast-exit'); setTimeout(function() { toast.remove(); }, 300); }, 3500);
 }
 
 function showConfirm(message) {
@@ -301,6 +304,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '</div>' +
             '</div>';
         modal.style.display = 'flex';
+        setupModalFocus(modal);
         modal.querySelector('.close-btn').onclick = function() { modal.style.display = 'none'; activeLeadId = null; };
         attachLeadModalActions(id);
     }
@@ -504,6 +508,7 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('clientEmail').value = client.email || '';
         document.getElementById('deleteClientBtn').style.display = client.id ? 'block' : 'none';
         clientModal.style.display = 'block';
+        setupModalFocus(clientModal);
     };
 
     window.openClientModalById = async function(id) {
@@ -517,13 +522,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!clientName) { showToast('Client name is required.', 'error'); return; }
         var phone = document.getElementById('clientPhone').value;
         if (!isValidPhoneNumber(phone)) { showToast('Invalid phone number.', 'error'); return; }
-        var id = document.getElementById('clientId').value;
-        var payload = {
-            owner_name: document.getElementById('clientName').value,
-            phone: phone,
-            email: document.getElementById('clientEmail').value || null
-        };
+        var saveBtn = document.getElementById('saveClientBtn');
+        var originalText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
         try {
+            var id = document.getElementById('clientId').value;
+            var payload = {
+                owner_name: document.getElementById('clientName').value,
+                phone: phone,
+                email: document.getElementById('clientEmail').value || null
+            };
             if (id) {
                 await db.from('clients').update(payload).eq('id', id);
             } else {
@@ -549,6 +557,8 @@ document.addEventListener('DOMContentLoaded', function() {
             showToast('Client saved!', 'success');
         } catch (err) {
             showToast('Error: ' + err.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
         }
     });
 
@@ -600,6 +610,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('profileHistory').innerHTML = '<p class="history-empty">Save profile first to see history.</p>';
         }
         profileModal.style.display = 'block';
+        setupModalFocus(profileModal);
     };
 
     window.openProfileModalById = async function(id) {
@@ -615,17 +626,20 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!profName) { showToast('Profile name is required.', 'error'); return; }
         var phone = document.getElementById('profPhone').value;
         if (!isValidPhoneNumber(phone)) { showToast('Invalid phone number.', 'error'); return; }
-        var id = document.getElementById('profileId').value;
-        var clientRefId = document.getElementById('profileClientId').value;
-        var payload = {
-            name: document.getElementById('profName').value,
-            client_id: document.getElementById('profClientId').value || null,
-            phone: phone,
-            email: document.getElementById('profEmail').value || null,
-            notes: document.getElementById('profNotes').value,
-            client_ref_id: clientRefId || null
-        };
+        var saveBtn = document.getElementById('saveProfileBtn');
+        var originalText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
         try {
+            var id = document.getElementById('profileId').value;
+            var clientRefId = document.getElementById('profileClientId').value;
+            var payload = {
+                name: document.getElementById('profName').value,
+                client_id: document.getElementById('profClientId').value || null,
+                phone: phone,
+                email: document.getElementById('profEmail').value || null,
+                notes: document.getElementById('profNotes').value,
+                client_ref_id: clientRefId || null
+            };
             if (id) await db.from('client_profiles').update(payload).eq('id', id);
             else await db.from('client_profiles').insert([payload]);
             await loadClients();
@@ -642,6 +656,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch (err) {
             showToast('Error: ' + err.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
         }
     });
 
@@ -1162,6 +1178,7 @@ var html = '<div class="scheduler-header">' +
         await loadClients();
         var modal = document.getElementById('newApptModal');
         modal.style.display = 'block';
+        setupModalFocus(modal);
         var dateInput = document.getElementById('newApptDate');
         var timeInput = document.getElementById('newApptTime');
         var timeSection = document.getElementById('newApptTimeSection');
@@ -1213,6 +1230,9 @@ var html = '<div class="scheduler-header">' +
             payload.start_time = document.getElementById('blockStart').value + ':00';
             payload.end_time = document.getElementById('blockEnd').value + ':00';
         }
+        var saveBtn = document.getElementById('saveBlockBtn');
+        var originalText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
         try {
             await db.from('blocked_slots').insert([payload]);
             document.getElementById('blockTimePopover').style.display = 'none';
@@ -1220,6 +1240,8 @@ var html = '<div class="scheduler-header">' +
             showToast('Block saved!', 'success');
         } catch (err) {
             showToast('Error: ' + err.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
         }
     });
 
@@ -1283,6 +1305,9 @@ var html = '<div class="scheduler-header">' +
                 }
             }
         }
+        var saveBtn = document.getElementById('saveApptBtn');
+        var originalText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
         try {
             await db.from('leads').update({
                 confirmed_time: confirmedTime + ':00',
@@ -1299,6 +1324,8 @@ var html = '<div class="scheduler-header">' +
             }
         } catch (err) {
             showToast('Error: ' + err.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
         }
     });
 
@@ -1311,7 +1338,9 @@ var html = '<div class="scheduler-header">' +
 
     document.getElementById('newApptBtn').addEventListener('click', async function() {
         await loadClients();
-        document.getElementById('newApptModal').style.display = 'block';
+        var modal = document.getElementById('newApptModal');
+        modal.style.display = 'block';
+        setupModalFocus(modal);
         document.getElementById('newApptDate').value = '';
         document.getElementById('newApptTime').value = '';
         document.getElementById('newApptTimeSection').style.display = 'none';
@@ -1557,10 +1586,36 @@ var html = '<div class="scheduler-header">' +
     })();
 
     // --- Site Management ---
+    function isValidImageUrl(url) {
+        if (!url || typeof url !== 'string' || !url.trim()) return false;
+        try {
+            var parsed = new URL(url);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    }
+
+    function editGalleryItem(id) {
+        var item = galleryItems.find(function(g) { return g.id == id; });
+        if (!item) { showToast('Gallery item not found.', 'error'); return; }
+        var modal = document.getElementById('addGalleryModal');
+        if (!modal) return;
+        document.getElementById('editGalleryId').value = item.id;
+        document.getElementById('galleryImageUrl').value = item.image_url || '';
+        document.getElementById('galleryTitle').value = item.title || '';
+        document.getElementById('galleryDisplayOrder').value = item.display_order || '';
+        document.getElementById('galleryIsActive').checked = !!item.is_active;
+        document.getElementById('saveGalleryBtn').textContent = 'Update Item';
+        modal.style.display = 'flex';
+        setupModalFocus(modal);
+    }
+
     var galleryItems = [];
     var flashItems = [];
     var reviewsData = [];
     var feedbackData = [];
+    var siteMgmtActive = false;
 
     function initSiteMgmt() {
         var siteMgmtLoading = document.getElementById('siteMgmtLoading');
@@ -1570,12 +1625,14 @@ var html = '<div class="scheduler-header">' +
         if (mgmtTabs) mgmtTabs.style.display = 'none';
         mgmtPanels.forEach(function(p) { p.style.display = 'none'; });
         
+        siteMgmtActive = true;
         Promise.all([
             loadGalleryItems(),
             loadFlashItems(),
             loadReviews(),
             loadFeedback()
         ]).finally(function() {
+            if (!siteMgmtActive) return;
             if (siteMgmtLoading) siteMgmtLoading.style.display = 'none';
             if (mgmtTabs) mgmtTabs.style.display = 'flex';
             var activeTab = document.querySelector('.mgmt-tabs .tab-btn.active');
@@ -1599,13 +1656,22 @@ var html = '<div class="scheduler-header">' +
         galleryItems.forEach(function(item) {
             var card = document.createElement('div');
             card.className = 'mgmt-card';
+            var imgErrorId = 'galleryImg' + item.id;
             card.innerHTML =
-                '<div class="mgmt-card-img"><img src="' + escapeHtml(item.image_url) + '" alt=""></div>' +
+                '<div class="mgmt-card-img">' +
+                    '<img id="' + imgErrorId + '" src="' + escapeHtml(item.image_url) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+                    '<div id="broken-' + imgErrorId + '" class="broken-image-overlay" style="display:none;align-items:center;justify-content:center;height:100%;background:var(--bg-input);flex-direction:column;gap:6px;">' +
+                        '<span style="font-size:28px;">&#x1F5BC;</span>' +
+                        '<button class="mgmt-fix-url" data-id="' + item.id + '" style="font-size:12px;padding:4px 8px;">Fix URL</button>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="mgmt-card-body">' +
                     '<div class="mgmt-card-title">' + escapeHtml(item.title || '') + '</div>' +
                     '<div class="mgmt-card-desc">Order: ' + (item.display_order || 0) + ' | Active: ' + (item.is_active ? 'Yes' : 'No') + '</div>' +
                 '</div>' +
                 '<div class="card-actions-row">' +
+                    '<button class="mgmt-move mgmt-move-up" data-id="' + item.id + '" title="Move up">&#9650;</button>' +
+                    '<button class="mgmt-move mgmt-move-down" data-id="' + item.id + '" title="Move down">&#9660;</button>' +
                     '<button class="admin-btn-outline mgmt-edit-gallery" data-id="' + item.id + '">Edit</button>' +
                     '<button class="admin-btn delete mgmt-delete-gallery" data-id="' + item.id + '">Delete</button>' +
                 '</div>';
@@ -1615,31 +1681,75 @@ var html = '<div class="scheduler-header">' +
     }
 
     function attachGalleryMgmtEvents() {
-        document.querySelectorAll('.mgmt-delete-gallery').forEach(function(btn) {
-            btn.onclick = async function() {
+        var grid = document.getElementById('galleryMgmtGrid');
+        if (!grid || grid._delegationAttached) return;
+        grid._delegationAttached = true;
+        grid.addEventListener('click', async function(e) {
+            var deleteBtn = e.target.closest('.mgmt-delete-gallery');
+            if (deleteBtn) {
                 var ok = await showConfirm('Delete this gallery item?');
                 if (!ok) return;
-                await db.from('gallery_items').delete().eq('id', btn.dataset.id);
+                await db.from('gallery_items').delete().eq('id', deleteBtn.dataset.id);
                 loadGalleryItems();
                 showToast('Gallery item deleted.', 'success');
-            };
+                return;
+            }
+            var editBtn = e.target.closest('.mgmt-edit-gallery');
+            if (editBtn) {
+                editGalleryItem(editBtn.dataset.id);
+                return;
+            }
+            var fixBtn = e.target.closest('.mgmt-fix-url');
+            if (fixBtn) {
+                var newItem = galleryItems.find(function(g) { return g.id == fixBtn.dataset.id; });
+                if (!newItem) return;
+                var newUrl = prompt('Enter new image URL:', newItem.image_url);
+                if (!newUrl || !newUrl.trim()) return;
+                try {
+                    await db.from('gallery_items').update({ image_url: newUrl.trim() }).eq('id', fixBtn.dataset.id);
+                    loadGalleryItems();
+                    showToast('URL updated.', 'success');
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+                return;
+            }
+            var moveBtn = e.target.closest('.mgmt-move');
+            if (moveBtn) {
+                var dir = moveBtn.classList.contains('mgmt-move-up') ? 'up' : 'down';
+                var item = galleryItems.find(function(g) { return g.id == moveBtn.dataset.id; });
+                if (!item) return;
+                var items = galleryItems.slice().sort(function(a,b) { return (a.display_order||0) - (b.display_order||0); });
+                var curIdx = items.findIndex(function(x) { return x.id == item.id; });
+                var swapIdx = dir === 'up' ? curIdx - 1 : curIdx + 1;
+                if (swapIdx < 0 || swapIdx >= items.length) { showToast(dir === 'up' ? 'Already first.' : 'Already last.', 'info'); return; }
+                var swapItem = items[swapIdx];
+                try {
+                    await Promise.all([
+                        db.from('gallery_items').update({ display_order: swapItem.display_order }).eq('id', item.id),
+                        db.from('gallery_items').update({ display_order: item.display_order }).eq('id', swapItem.id)
+                    ]);
+                    loadGalleryItems();
+                    showToast('Item reordered.', 'success');
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+                return;
+            }
         });
     }
 
-    document.getElementById('addGalleryItemBtn').addEventListener('click', async function() {
-        var url = prompt('Enter image URL:');
-        if (!url) return;
-        var title = prompt('Enter title (optional):', '') || '';
-        try {
-            var maxOrder = galleryItems.reduce(function(max, item) { return Math.max(max, item.display_order || 0); }, 0);
-            await db.from('gallery_items').insert([{
-                image_url: url, title: title, display_order: maxOrder + 1, is_active: true
-            }]);
-            loadGalleryItems();
-            showToast('Gallery item added.', 'success');
-        } catch (err) {
-            showToast('Error: ' + err.message, 'error');
-        }
+    document.getElementById('addGalleryItemBtn').addEventListener('click', function() {
+        var modal = document.getElementById('addGalleryModal');
+        if (!modal) return;
+        document.getElementById('editGalleryId').value = '';
+        document.getElementById('galleryImageUrl').value = '';
+        document.getElementById('galleryTitle').value = '';
+        document.getElementById('galleryDisplayOrder').value = '';
+        document.getElementById('galleryIsActive').checked = true;
+        document.getElementById('saveGalleryBtn').textContent = 'Save Item';
+        modal.style.display = 'flex';
+        setupModalFocus(modal);
     });
 
     // Flash management
@@ -1655,15 +1765,25 @@ var html = '<div class="scheduler-header">' +
         flashItems.forEach(function(item) {
             var card = document.createElement('div');
             card.className = 'mgmt-card';
+            var imgErrorId = 'flashImg' + item.id;
             card.innerHTML =
-                '<div class="mgmt-card-img"><img src="' + escapeHtml(item.image_url) + '" alt=""></div>' +
+                '<div class="mgmt-card-img">' +
+                    '<img id="' + imgErrorId + '" src="' + escapeHtml(item.image_url) + '" alt="" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+                    '<div id="broken-' + imgErrorId + '" class="broken-image-overlay" style="display:none;align-items:center;justify-content:center;height:100%;background:var(--bg-input);flex-direction:column;gap:6px;">' +
+                        '<span style="font-size:28px;">&#x1F5BC;</span>' +
+                        '<button class="mgmt-fix-url" data-id="' + item.id + '" style="font-size:12px;padding:4px 8px;">Fix URL</button>' +
+                    '</div>' +
+                '</div>' +
                 '<div class="mgmt-card-body">' +
                     '<div class="mgmt-card-title">' + escapeHtml(item.title || 'Flash') + '</div>' +
                     '<div class="flash-card-desc" style="font-size:0.85rem;color:var(--text-muted);">' + escapeHtml(item.description || '') + '</div>' +
                     (item.price ? '<div class="flash-card-price" style="margin-top:4px;">' + escapeHtml(item.price) + '</div>' : '') +
-                    '<div class="mgmt-card-desc">Order: ' + (item.display_order || 0) + '</div>' +
+                    '<div class="mgmt-card-desc">Order: ' + (item.display_order || 0) + ' | Active: ' + (item.is_active ? 'Yes' : 'No') + '</div>' +
                 '</div>' +
                 '<div class="card-actions-row">' +
+                    '<button class="mgmt-move mgmt-move-up" data-id="' + item.id + '" title="Move up">&#9650;</button>' +
+                    '<button class="mgmt-move mgmt-move-down" data-id="' + item.id + '" title="Move down">&#9660;</button>' +
+                    '<button class="admin-btn-outline mgmt-toggle-flash" data-id="' + item.id + '">' + (item.is_active ? 'Deactivate' : 'Activate') + '</button>' +
                     '<button class="admin-btn delete mgmt-delete-flash" data-id="' + item.id + '">Delete</button>' +
                 '</div>';
             grid.appendChild(card);
@@ -1672,34 +1792,84 @@ var html = '<div class="scheduler-header">' +
     }
 
     function attachFlashMgmtEvents() {
-        document.querySelectorAll('.mgmt-delete-flash').forEach(function(btn) {
-            btn.onclick = async function() {
+        var grid = document.getElementById('flashMgmtGrid');
+        if (!grid || grid._delegationAttached) return;
+        grid._delegationAttached = true;
+        grid.addEventListener('click', async function(e) {
+            var deleteBtn = e.target.closest('.mgmt-delete-flash');
+            if (deleteBtn) {
                 var ok = await showConfirm('Delete this flash design?');
                 if (!ok) return;
-                await db.from('flash_gallery').delete().eq('id', btn.dataset.id);
+                await db.from('flash_gallery').delete().eq('id', deleteBtn.dataset.id);
                 loadFlashItems();
                 showToast('Flash design deleted.', 'success');
-            };
+                return;
+            }
+            var toggleBtn = e.target.closest('.mgmt-toggle-flash');
+            if (toggleBtn) {
+                var ok = await showConfirm('Toggle flash design active status?');
+                if (!ok) return;
+                var item = flashItems.find(function(f) { return f.id == toggleBtn.dataset.id; });
+                if (item) {
+                    await db.from('flash_gallery').update({ is_active: !item.is_active }).eq('id', toggleBtn.dataset.id);
+                    loadFlashItems();
+                    showToast('Flash design updated.', 'success');
+                }
+                return;
+            }
+            var fixBtn = e.target.closest('.mgmt-fix-url');
+            if (fixBtn) {
+                var item = flashItems.find(function(f) { return f.id == fixBtn.dataset.id; });
+                if (!item) return;
+                var newUrl = prompt('Enter new image URL:', item.image_url);
+                if (!newUrl || !newUrl.trim()) return;
+                try {
+                    await db.from('flash_gallery').update({ image_url: newUrl.trim() }).eq('id', fixBtn.dataset.id);
+                    loadFlashItems();
+                    showToast('URL updated.', 'success');
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+                return;
+            }
+            var moveBtn = e.target.closest('.mgmt-move');
+            if (moveBtn) {
+                var dir = moveBtn.classList.contains('mgmt-move-up') ? 'up' : 'down';
+                var item = flashItems.find(function(f) { return f.id == moveBtn.dataset.id; });
+                if (!item) return;
+                var items = flashItems.slice().sort(function(a,b) { return (a.display_order||0) - (b.display_order||0); });
+                var curIdx = items.findIndex(function(x) { return x.id == item.id; });
+                var swapIdx = dir === 'up' ? curIdx - 1 : curIdx + 1;
+                if (swapIdx < 0 || swapIdx >= items.length) { showToast(dir === 'up' ? 'Already first.' : 'Already last.', 'info'); return; }
+                var swapItem = items[swapIdx];
+                try {
+                    await Promise.all([
+                        db.from('flash_gallery').update({ display_order: swapItem.display_order }).eq('id', item.id),
+                        db.from('flash_gallery').update({ display_order: item.display_order }).eq('id', swapItem.id)
+                    ]);
+                    loadFlashItems();
+                    showToast('Item reordered.', 'success');
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+                return;
+            }
         });
     }
 
-    document.getElementById('addFlashBtn').addEventListener('click', async function() {
-        var url = prompt('Enter image URL:');
-        if (!url) return;
-        var title = prompt('Enter design title:', '');
-        var price = prompt('Enter price (optional):', '');
-        var desc = prompt('Enter description (optional):', '');
-        try {
-            var maxOrder = flashItems.reduce(function(max, item) { return Math.max(max, item.display_order || 0); }, 0);
-            await db.from('flash_gallery').insert([{
-                image_url: url, title: title || 'Flash Design', price: price || null,
-                description: desc || null, display_order: maxOrder + 1, is_active: true
-            }]);
-            loadFlashItems();
-            showToast('Flash design added.', 'success');
-        } catch (err) {
-            showToast('Error: ' + err.message, 'error');
-        }
+    document.getElementById('addFlashBtn').addEventListener('click', function() {
+        var modal = document.getElementById('addFlashModal');
+        if (!modal) return;
+        document.getElementById('editFlashId').value = '';
+        document.getElementById('flashImageUrl').value = '';
+        document.getElementById('flashTitle').value = '';
+        document.getElementById('flashDescription').value = '';
+        document.getElementById('flashPrice').value = '';
+        document.getElementById('flashDisplayOrder').value = '';
+        document.getElementById('flashIsActive').checked = true;
+        document.getElementById('saveFlashBtn').textContent = 'Save Design';
+        modal.style.display = 'flex';
+        setupModalFocus(modal);
     });
 
     // Reviews management
@@ -1715,14 +1885,18 @@ var html = '<div class="scheduler-header">' +
         reviewsData.forEach(function(item) {
             var card = document.createElement('div');
             card.className = 'mgmt-card';
-            var stars = '\u2605'.repeat(item.rating || 5) + '\u2606'.repeat(5 - (item.rating || 5));
+            var filled = '\u2605'.repeat(item.rating || 5);
+            var empty = '\u2606'.repeat(5 - (item.rating || 5));
+            var starsHtml = '<span class="stars">' + filled + empty + '</span>';
             card.innerHTML =
                 '<div class="mgmt-card-body">' +
                     '<div class="mgmt-card-title">' + escapeHtml(item.reviewer_name || 'Anonymous') + '</div>' +
                     '<p style="margin:8px 0;font-style:italic;">' + escapeHtml(item.review_text) + '</p>' +
-                    '<div class="flash-card-desc">Stars: ' + stars + ' | Order: ' + (item.display_order || 0) + '</div>' +
+                    '<div class="flash-card-desc">' + starsHtml + ' | Order: ' + (item.display_order || 0) + '</div>' +
                 '</div>' +
                 '<div class="card-actions-row">' +
+                    '<button class="mgmt-move mgmt-move-up" data-id="' + item.id + '" title="Move up">&#9650;</button>' +
+                    '<button class="mgmt-move mgmt-move-down" data-id="' + item.id + '" title="Move down">&#9660;</button>' +
                     '<button class="admin-btn-outline mgmt-toggle-review" data-id="' + item.id + '">' + (item.is_active ? 'Deactivate' : 'Activate') + '</button>' +
                     '<button class="admin-btn delete mgmt-delete-review" data-id="' + item.id + '">Delete</button>' +
                 '</div>';
@@ -1732,51 +1906,73 @@ var html = '<div class="scheduler-header">' +
     }
 
     function attachReviewsMgmtEvents() {
-        document.querySelectorAll('.mgmt-delete-review').forEach(function(btn) {
-            btn.onclick = async function() {
+        var grid = document.getElementById('reviewsMgmtGrid');
+        if (!grid || grid._delegationAttached) return;
+        grid._delegationAttached = true;
+        grid.addEventListener('click', async function(e) {
+            var deleteBtn = e.target.closest('.mgmt-delete-review');
+            if (deleteBtn) {
                 var ok = await showConfirm('Delete this review?');
                 if (!ok) return;
-                await db.from('reviews').delete().eq('id', btn.dataset.id);
+                await db.from('reviews').delete().eq('id', deleteBtn.dataset.id);
                 loadReviews();
                 showToast('Review deleted.', 'success');
-            };
-        });
-        document.querySelectorAll('.mgmt-toggle-review').forEach(function(btn) {
-            btn.onclick = async function() {
+                return;
+            }
+            var toggleBtn = e.target.closest('.mgmt-toggle-review');
+            if (toggleBtn) {
                 var ok = await showConfirm('Toggle review active status?');
                 if (!ok) return;
-                var review = reviewsData.find(function(r) { return r.id === btn.dataset.id; });
+                var review = reviewsData.find(function(r) { return r.id === toggleBtn.dataset.id; });
                 if (review) {
-                    await db.from('reviews').update({ is_active: !review.is_active }).eq('id', btn.dataset.id);
+                    await db.from('reviews').update({ is_active: !review.is_active }).eq('id', toggleBtn.dataset.id);
                     loadReviews();
                     showToast('Review updated.', 'success');
                 }
-            };
+                return;
+            }
+            var moveBtn = e.target.closest('.mgmt-move');
+            if (moveBtn) {
+                var dir = moveBtn.classList.contains('mgmt-move-up') ? 'up' : 'down';
+                var item = reviewsData.find(function(r) { return r.id == moveBtn.dataset.id; });
+                if (!item) return;
+                var items = reviewsData.slice().sort(function(a,b) { return (a.display_order||0) - (b.display_order||0); });
+                var curIdx = items.findIndex(function(x) { return x.id == item.id; });
+                var swapIdx = dir === 'up' ? curIdx - 1 : curIdx + 1;
+                if (swapIdx < 0 || swapIdx >= items.length) { showToast(dir === 'up' ? 'Already first.' : 'Already last.', 'info'); return; }
+                var swapItem = items[swapIdx];
+                try {
+                    await Promise.all([
+                        db.from('reviews').update({ display_order: swapItem.display_order }).eq('id', item.id),
+                        db.from('reviews').update({ display_order: item.display_order }).eq('id', swapItem.id)
+                    ]);
+                    loadReviews();
+                    showToast('Review reordered.', 'success');
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+                return;
+            }
         });
     }
 
-    document.getElementById('addReviewBtn').addEventListener('click', async function() {
-        var name = prompt('Reviewer name:');
-        if (!name) return;
-        var text = prompt('Review text:');
-        if (!text) return;
-        var rating = prompt('Rating (1-5):', '5');
-        try {
-            var maxOrder = reviewsData.reduce(function(max, r) { return Math.max(max, r.display_order || 0); }, 0);
-            await db.from('reviews').insert([{
-                reviewer_name: name, review_text: text, rating: parseInt(rating) || 5,
-                display_order: maxOrder + 1, is_active: true
-            }]);
-            loadReviews();
-            showToast('Review added.', 'success');
-        } catch (err) {
-            showToast('Error: ' + err.message, 'error');
-        }
+    document.getElementById('addReviewBtn').addEventListener('click', function() {
+        var modal = document.getElementById('addReviewModal');
+        if (!modal) return;
+        document.getElementById('editReviewId').value = '';
+        document.getElementById('reviewName').value = '';
+        document.getElementById('reviewText').value = '';
+        document.getElementById('reviewDisplayOrder').value = '';
+        document.getElementById('reviewIsActive').checked = true;
+        document.getElementById('saveReviewBtn').textContent = 'Save Review';
+        setReviewStars(5);
+        modal.style.display = 'flex';
+        setupModalFocus(modal);
     });
 
     // Feedback management
     async function loadFeedback() {
-        var result = await db.from('site_feedback').select('*').order('created_at', { ascending: false });
+        var result = await db.from('site_feedback').select('*').neq('deleted', true).order('created_at', { ascending: false });
         feedbackData = result.data || [];
         renderFeedback();
     }
@@ -1787,25 +1983,34 @@ var html = '<div class="scheduler-header">' +
         feedbackData.forEach(function(item) {
             var tr = document.createElement('tr');
             var date = item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A';
+            var statusBadge = item.is_deleted ? '<span class="status-badge" style="background:#6b7280;">Deleted</span>' : '';
             tr.innerHTML =
                 '<td>' + escapeHtml(date) + '</td>' +
                 '<td><span class="status-badge status-' + escapeHtml(item.priority) + '">' + escapeHtml(item.priority) + '</span></td>' +
                 '<td>' + escapeHtml(item.comment || '') + '</td>' +
-                '<td><button class="admin-btn delete mgmt-delete-feedback" data-id="' + item.id + '">Delete</button></td>';
+                '<td><button class="admin-btn delete mgmt-delete-feedback" data-id="' + item.id + '">Soft Delete</button></td>';
             tbody.appendChild(tr);
         });
         attachFeedbackMgmtEvents();
     }
 
     function attachFeedbackMgmtEvents() {
-        document.querySelectorAll('.mgmt-delete-feedback').forEach(function(btn) {
-            btn.onclick = async function() {
-                var ok = await showConfirm('Delete this feedback?');
+        var tbody = document.getElementById('feedbackTableBody');
+        if (!tbody || tbody._delegationAttached) return;
+        tbody._delegationAttached = true;
+        tbody.addEventListener('click', async function(e) {
+            var deleteBtn = e.target.closest('.mgmt-delete-feedback');
+            if (deleteBtn) {
+                var ok = await showConfirm('Soft-delete this feedback? It will be hidden from the active list but preserved.');
                 if (!ok) return;
-                await db.from('site_feedback').delete().eq('id', btn.dataset.id);
-                loadFeedback();
-                showToast('Feedback deleted.', 'success');
-            };
+                try {
+                    await db.from('site_feedback').update({ deleted: true }).eq('id', deleteBtn.dataset.id);
+                    loadFeedback();
+                    showToast('Feedback soft-deleted.', 'success');
+                } catch (err) {
+                    showToast('Error: ' + err.message, 'error');
+                }
+            }
         });
     }
 
@@ -1820,6 +2025,9 @@ var html = '<div class="scheduler-header">' +
         var comment = document.getElementById('newFeedbackComment').value;
         var priority = document.getElementById('newFeedbackPriority').value;
         if (!comment.trim()) { showToast('Please enter a comment.', 'error'); return; }
+        var saveBtn = document.querySelector('[data-action="save-feedback"]');
+        var originalText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
         try {
             await db.from('site_feedback').insert([{ comment: comment, priority: priority }]);
             document.getElementById('inlineFeedbackForm').style.display = 'none';
@@ -1827,12 +2035,197 @@ var html = '<div class="scheduler-header">' +
             showToast('Feedback added.', 'success');
         } catch (err) {
             showToast('Error: ' + err.message, 'error');
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
         }
     });
 
     document.querySelector('[data-action="cancel-feedback"]').addEventListener('click', function() {
         document.getElementById('inlineFeedbackForm').style.display = 'none';
     });
+
+    // --- Modal close buttons (generic) ---
+    document.querySelectorAll('.close-modal-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var modal = btn.closest('.modal');
+            if (modal) modal.style.display = 'none';
+        });
+    });
+
+    // --- Modal focus trapping ---
+    var trapFocusHandlers = {};
+    function setupModalFocus(modal) {
+        if (trapFocusHandlers[modal.id]) return;
+        trapFocusHandlers[modal.id] = true;
+        var focusableSelectors = 'input, select, textarea, button, [tabindex]:not([tabindex="-1"])';
+        modal.addEventListener('keydown', function(e) {
+            if (e.key !== 'Tab') return;
+            var focusable = modal.querySelectorAll(focusableSelectors);
+            var firstFocusable = focusable[0];
+            var lastFocusable = focusable[focusable.length - 1];
+            if (e.shiftKey) {
+                if (document.activeElement === firstFocusable) {
+                    e.preventDefault();
+                    lastFocusable.focus();
+                }
+            } else {
+                if (document.activeElement === lastFocusable) {
+                    e.preventDefault();
+                    firstFocusable.focus();
+                }
+            }
+        });
+        var firstInput = modal.querySelector(focusableSelectors);
+        if (firstInput) {
+            setTimeout(function() { firstInput.focus(); }, 100);
+        }
+    }
+
+    // --- Global Escape key closes all modals ---
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            if (modal.style.display === 'flex' || modal.style.display === 'block') {
+                if (modal.id === 'confirmModal') return;
+                modal.style.display = 'none';
+            }
+        });
+    });
+
+    // --- Review star rating selection ---
+    var currentRating = 5;
+    function setReviewStars(rating) {
+        currentRating = rating;
+        var spans = document.querySelectorAll('#reviewStars span');
+        spans.forEach(function(span) {
+            span.textContent = parseInt(span.dataset.rating) <= rating ? '\u2605' : '\u2606';
+        });
+    }
+    var reviewStarsEl = document.getElementById('reviewStars');
+    if (reviewStarsEl) {
+        reviewStarsEl.addEventListener('click', function(e) {
+            var span = e.target.closest('span[data-rating]');
+            if (span) setReviewStars(parseInt(span.dataset.rating));
+        });
+        reviewStarsEl.addEventListener('mouseover', function(e) {
+            var span = e.target.closest('span[data-rating]');
+            if (!span) return;
+            var rating = parseInt(span.dataset.rating);
+            reviewStarsEl.querySelectorAll('span').forEach(function(s) {
+                s.textContent = parseInt(s.dataset.rating) <= rating ? '\u2605' : '\u2606';
+            });
+        });
+        reviewStarsEl.addEventListener('mouseout', function() { setReviewStars(currentRating); });
+    }
+
+    // --- Gallery form submit ---
+    (function initGalleryForm() {
+        var form = document.getElementById('galleryForm');
+        if (!form) return;
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var editId = document.getElementById('editGalleryId').value;
+            var url = document.getElementById('galleryImageUrl').value.trim();
+            if (!isValidImageUrl(url)) { showToast('Invalid image URL format.', 'error'); return; }
+            var title = document.getElementById('galleryTitle').value.trim();
+            var orderVal = document.getElementById('galleryDisplayOrder').value;
+            var displayOrder = orderVal ? parseInt(orderVal) : null;
+            var isActive = document.getElementById('galleryIsActive').checked;
+            var saveBtn = document.getElementById('saveGalleryBtn');
+            var originalText = saveBtn ? saveBtn.textContent : '';
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+            try {
+                if (editId) {
+                    var update = { image_url: url, title: title, is_active: isActive };
+                    if (displayOrder !== null) update.display_order = displayOrder;
+                    await db.from('gallery_items').update(update).eq('id', editId);
+                } else {
+                    var maxOrder = galleryItems.reduce(function(max, item) { return Math.max(max, item.display_order || 0); }, 0);
+                    await db.from('gallery_items').insert([{ image_url: url, title: title, display_order: displayOrder || maxOrder + 1, is_active: isActive }]);
+                }
+                document.getElementById('addGalleryModal').style.display = 'none';
+                loadGalleryItems();
+                showToast(editId ? 'Gallery item updated.' : 'Gallery item added.', 'success');
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
+            }
+        });
+    })();
+
+    // --- Flash form submit ---
+    (function initFlashForm() {
+        var form = document.getElementById('flashForm');
+        if (!form) return;
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var editId = document.getElementById('editFlashId').value;
+            var url = document.getElementById('flashImageUrl').value.trim();
+            if (!isValidImageUrl(url)) { showToast('Invalid image URL format.', 'error'); return; }
+            var title = document.getElementById('flashTitle').value.trim();
+            if (!title) { showToast('Title is required.', 'error'); return; }
+            var price = document.getElementById('flashPrice').value.trim() || null;
+            var desc = document.getElementById('flashDescription').value.trim() || null;
+            var orderVal = document.getElementById('flashDisplayOrder').value;
+            var displayOrder = orderVal ? parseInt(orderVal) : null;
+            var isActive = document.getElementById('flashIsActive').checked;
+            var saveBtn = document.getElementById('saveFlashBtn');
+            var originalText = saveBtn ? saveBtn.textContent : '';
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+            try {
+                if (editId) {
+                    await db.from('flash_gallery').update({ image_url: url, title: title, price: price, description: desc, is_active: isActive }).eq('id', editId);
+                } else {
+                    var maxOrder = flashItems.reduce(function(max, item) { return Math.max(max, item.display_order || 0); }, 0);
+                    await db.from('flash_gallery').insert([{ image_url: url, title: title, price: price, description: desc, display_order: displayOrder || maxOrder + 1, is_active: isActive }]);
+                }
+                document.getElementById('addFlashModal').style.display = 'none';
+                loadFlashItems();
+                showToast(editId ? 'Flash design updated.' : 'Flash design added.', 'success');
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
+            }
+        });
+    })();
+
+    // --- Review form submit ---
+    (function initReviewForm() {
+        var form = document.getElementById('reviewForm');
+        if (!form) return;
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var editId = document.getElementById('editReviewId').value;
+            var name = document.getElementById('reviewName').value.trim();
+            if (!name) { showToast('Name is required.', 'error'); return; }
+            var text = document.getElementById('reviewText').value.trim();
+            if (!text) { showToast('Review text is required.', 'error'); return; }
+            var orderVal = document.getElementById('reviewDisplayOrder').value;
+            var displayOrder = orderVal ? parseInt(orderVal) : null;
+            var isActive = document.getElementById('reviewIsActive').checked;
+            var saveBtn = document.getElementById('saveReviewBtn');
+            var originalText = saveBtn ? saveBtn.textContent : '';
+            if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'Saving...'; }
+            try {
+                if (editId) {
+                    await db.from('reviews').update({ reviewer_name: name, review_text: text, rating: currentRating, display_order: displayOrder, is_active: isActive }).eq('id', editId);
+                } else {
+                    var maxOrder = reviewsData.reduce(function(max, r) { return Math.max(max, r.display_order || 0); }, 0);
+                    await db.from('reviews').insert([{ reviewer_name: name, review_text: text, rating: currentRating, display_order: displayOrder || maxOrder + 1, is_active: isActive }]);
+                }
+                document.getElementById('addReviewModal').style.display = 'none';
+                loadReviews();
+                showToast(editId ? 'Review updated.' : 'Review added.', 'success');
+            } catch (err) {
+                showToast('Error: ' + err.message, 'error');
+            } finally {
+                if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = originalText; }
+            }
+        });
+    })();
 
     // --- Tab switching for Site Management ---
     var mgmtTabs = document.querySelectorAll('.mgmt-tabs .tab-btn');

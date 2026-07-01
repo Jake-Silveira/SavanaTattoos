@@ -347,8 +347,127 @@
         </div>
     </div>
 
+    <!-- Add Gallery Modal -->
+    <div id="addGalleryModal" class="modal" style="display: none;" tabindex="-1">
+        <div class="modal-content form-card" style="max-width: 550px;">
+            <button class="close-btn close-modal-btn">&times;</button>
+            <h2 style="margin-bottom:20px;">Add Portfolio Item</h2>
+            <form id="galleryForm">
+                <input type="hidden" id="editGalleryId">
+                <div class="form-group">
+                    <label>Image URL <span class="required">*</span></label>
+                    <input type="text" id="galleryImageUrl" required placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Title</label>
+                    <input type="text" id="galleryTitle" placeholder="Optional title">
+                </div>
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" id="galleryDisplayOrder" placeholder="Leave empty for last">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="galleryIsActive" checked>
+                        Active
+                    </label>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+                    <button type="submit" class="admin-btn" id="saveGalleryBtn">Save Item</button>
+                    <button type="button" class="admin-btn delete close-modal-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Flash Modal -->
+    <div id="addFlashModal" class="modal" style="display: none;" tabindex="-1">
+        <div class="modal-content form-card" style="max-width: 550px;">
+            <button class="close-btn close-modal-btn">&times;</button>
+            <h2 style="margin-bottom:20px;">Add Flash Design</h2>
+            <form id="flashForm">
+                <input type="hidden" id="editFlashId">
+                <div class="form-group">
+                    <label>Image URL <span class="required">*</span></label>
+                    <input type="text" id="flashImageUrl" required placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Title <span class="required">*</span></label>
+                    <input type="text" id="flashTitle" required placeholder="Flash design name">
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea id="flashDescription" rows="2" placeholder="Optional description"></textarea>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Price</label>
+                        <input type="text" id="flashPrice" placeholder="e.g. $250">
+                    </div>
+                    <div class="form-group">
+                        <label>Display Order</label>
+                        <input type="number" id="flashDisplayOrder" placeholder="Leave empty for last">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="flashIsActive" checked>
+                        Active
+                    </label>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+                    <button type="submit" class="admin-btn" id="saveFlashBtn">Save Design</button>
+                    <button type="button" class="admin-btn delete close-modal-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Review Modal -->
+    <div id="addReviewModal" class="modal" style="display: none;" tabindex="-1">
+        <div class="modal-content form-card" style="max-width: 500px;">
+            <button class="close-btn close-modal-btn">&times;</button>
+            <h2 style="margin-bottom:20px;">Add Review</h2>
+            <form id="reviewForm">
+                <input type="hidden" id="editReviewId">
+                <div class="form-group">
+                    <label>Reviewer Name <span class="required">*</span></label>
+                    <input type="text" id="reviewName" required placeholder="Client name">
+                </div>
+                <div class="form-group">
+                    <label>Rating</label>
+                    <div id="reviewStars" style="font-size:28px; cursor:pointer; color:var(--primary); letter-spacing:4px; margin:8px 0;">
+                        <span data-rating="1">&#9734;</span>
+                        <span data-rating="2">&#9734;</span>
+                        <span data-rating="3">&#9734;</span>
+                        <span data-rating="4">&#9734;</span>
+                        <span data-rating="5">&#9734;</span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Review Text <span class="required">*</span></label>
+                    <textarea id="reviewText" rows="3" required placeholder="Client's review..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Display Order</label>
+                    <input type="number" id="reviewDisplayOrder" placeholder="Leave empty for last">
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="reviewIsActive" checked>
+                        Active
+                    </label>
+                </div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:20px;">
+                    <button type="submit" class="admin-btn" id="saveReviewBtn">Save Review</button>
+                    <button type="button" class="admin-btn delete close-modal-btn">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Lead Detail Modal -->
-    <div id="leadModal" class="modal" style="display: none;">
+    <div id="leadModal" class="modal" style="display: none;" tabindex="-1">
         <div class="modal-content form-card">
             <button class="close-btn">&times;</button>
             <div id="modalBody"></div>
@@ -356,7 +475,7 @@
     </div>
 
     <!-- Client Modal -->
-    <div id="clientModal" class="modal" style="display: none;">
+    <div id="clientModal" class="modal" style="display: none;" tabindex="-1">
         <div class="modal-content form-card" style="max-width: 600px;">
             <button class="close-btn" id="closeClientModal">&times;</button>
             <div class="lively-modal">
@@ -390,7 +509,7 @@
     </div>
 
     <!-- Client Profile Modal -->
-    <div id="profileModal" class="modal" style="display: none;">
+    <div id="profileModal" class="modal" style="display: none;" tabindex="-1">
         <div class="modal-content form-card" style="max-width: 650px;">
             <button class="close-btn" id="closeProfileModal">&times;</button>
             <div class="lively-modal">
@@ -444,7 +563,7 @@
     </div>
 
     <!-- New Appointment Modal -->
-    <div id="newApptModal" class="modal" style="display: none;">
+    <div id="newApptModal" class="modal" style="display: none;" tabindex="-1">
         <div class="modal-content form-card" style="max-width: 750px;">
             <button class="close-btn" id="closeNewApptModal">&times;</button>
             <div class="lively-modal">
@@ -534,7 +653,7 @@
     </div>
 
     <!-- Confirm Modal -->
-    <div id="confirmModal" class="modal" style="display: none;">
+    <div id="confirmModal" class="modal" style="display: none;" tabindex="-1">
         <div class="modal-content" style="max-width: 400px; padding: 32px; text-align: center;">
             <p id="confirmMessage" style="margin-bottom: 24px; font-size: 1rem;"></p>
             <div style="display: flex; gap: 12px; justify-content: center;">
