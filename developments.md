@@ -2,7 +2,7 @@
 
 > Created: 2025-06-25
 > Last updated: 2026-06-30
-> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Production polish complete (2026-06-30). Ready for Supabase provisioning & deployment.**
+> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Production polish complete (2026-06-30). Admin dashboard audit Step 3 complete (2026-06-30). Ready for Supabase provisioning & deployment.**
 
 ---
 
@@ -176,6 +176,13 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 - ~~No image URL validation~~ — Added 2026-06-30: `isValidImageUrl()` in gallery.js and flash.js
 - ~~Hardcoded phone/address in emails~~ — Added 2026-06-30: `STUDIO_PHONE`, `STUDIO_ADDRESS`, `STUDIO_HOURS` env vars
 - ~~No rate limiting on inquiry form~~ — Added 2026-06-30: max 3 emails per email per 5 minutes (HTTP 429)
+- ~~Client search excludes client_code~~ — Fixed 2026-06-30: `renderClients()` filter now includes `client_id` search
+- ~~Profile history has no phone fallback~~ — Fixed 2026-06-30: `fetchProfileHistory()` falls back to searching leads by phone when no profile_id matches
+- ~~Client code generated without uniqueness check~~ — Fixed 2026-06-30: client creation now validates `client_id` uniqueness with 10-attempt retry limit
+- ~~Profile modal re-fetches history on every open~~ — Fixed 2026-06-30: `data-loaded` attribute prevents re-fetching already-loaded history
+- ~~Client deletion has vague warning~~ — Fixed 2026-06-30: confirmation message now explains what gets deleted and that soft-delete restores leads
+- ~~Client cards missing upcoming/visit info~~ — Added 2026-06-30: `renderClients()` is now async; fetches confirmed future leads to show upcoming appointment count and last visit date on client cards
+- ~~No name validation on client/profile forms~~ — Added 2026-06-30: toast error shown if `owner_name` or profile name is blank on submit
 
 ### Remaining Issues / Notes
 
@@ -262,22 +269,22 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 
 ---
 
-### Step 3 — Client Profiles Panel: Bug Fixes & Core Polish
+### Step 3 — Client Profiles Panel: Bug Fixes & Core Polish ✅ Done (2026-06-30)
 
-**Scope:** `admin.js` — Client profile functions. CSS changes minimal.
+**Scope:** `admin.js` — Client profile functions. `admin.html` — search placeholder.
 
-**Bugs to fix:**
-1. **Client search includes `client_id`** — in `renderClients()` filter (line 353-357), add `(c.client_id || '').includes(term)` to the search terms.
-2. **Profile history searches by phone as fallback** — in `fetchProfileHistory()` (line 561), after fetching by `profile_id`, if no results found AND the profile has a `phone`, do a second query: `db.from('leads').select('*').eq('phone', profile.phone).order('requested_date', { ascending: false })`. Merge and display results.
-3. **`clientForm submit` uniqueness check for client_code** — line 446 generates a random 6-digit code without checking uniqueness. Replace with: generate code → query `db.from('clients').select('id').eq('client_id', code)` → if exists, regenerate → insert. Add a retry limit of 10 attempts.
-4. **Profile modal caching** — in `openProfileModal()`, add a check: if `profileHistory` element already has non-placeholder content, skip `fetchProfileHistory()` call on line 495. Add a `data-loaded` attribute to the history div after first load.
-5. **Client deletion warning** — update line 461 message to: `"Delete this client, all their profiles, and unlink them from leads? This action can be undone by soft-deleting leads."`
+**Bugs fixed:**
+1. ✅ **Client search includes `client_id`** — added `(c.client_id || '').toLowerCase().includes(term)` to the `renderClients()` filter so clients can be searched by their 6-digit lookup code.
+2. ✅ **Profile history searches by phone as fallback** — in `fetchProfileHistory()`, after fetching by `profile_id` returns no results, fetches the profile to get the phone number, then queries `leads` by phone and merges results.
+3. ✅ **Client form uniqueness check for `client_id`** — replaced random 6-digit generation with: generate code → query `clients` table for existing `client_id` → if exists, regenerate. Retry limit of 10 attempts. Shows error toast if all attempts exhausted.
+4. ✅ **Profile modal caching** — in `openProfileModal()`, checks if `profileHistory` element has `data-loaded="true"` attribute before calling `fetchProfileHistory()`. Attribute is set on the element after any successful history render.
+5. ✅ **Client deletion warning** — updated confirmation message to: `"Delete this client, all their profiles, and unlink them from leads? This action can be undone by soft-deleting leads."`
 
-**Polish to add:**
-6. **Search by client code placeholder** — add a visual indicator in the search input: `placeholder="Search by name, phone, email, or client code..."`.
-7. **Upcoming appointments on client cards** — in `renderClients()`, for each client, also fetch leads with `status === 'confirmed'` and `requested_date >= today`. If any exist, show `<div class="client-upcoming">Upcoming: X appointments</div>` on the card. (Use existing `dailyLeads` data if available, otherwise fetch.)
-8. **Last visit date** — calculate from the most recent confirmed lead's `requested_date`. Show on the client card as `<div class="client-last-visit">Last visit: date</div>`.
-9. **Form validation toast** — in `clientForm` submit handler, before the DB call, check `clientName` is not empty and show a toast error if blank. Same for `profileForm`.
+**Polish added:**
+6. ✅ **Search by client code placeholder** — updated `admin.html` search input placeholder to `"Search by name, phone, email, or client code..."`.
+7. ✅ **Upcoming appointments on client cards** — `renderClients()` is now `async`. At the start, fetches all confirmed leads with future `requested_date`, builds a `client_ref_id` → count map, and shows `<div class="client-upcoming">Upcoming: X appointments</div>` on cards with future bookings.
+8. ✅ **Last visit date** — same async fetch builds a `client_ref_id` → date map from most recent confirmed lead. Shows `<div class="client-last-visit">Last visit: MM/DD/YYYY</div>` on each card.
+9. ✅ **Form validation toast** — `clientForm` submit: checks `clientName` is not empty, shows toast error if blank. `profileForm` submit: checks `profName` is not empty, shows toast error if blank.
 
 ---
 

@@ -374,7 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
             clients = clientsResult.data || [];
             var profilesResult = await db.from('client_profiles').select('*');
             clientProfiles = profilesResult.data || [];
-            renderClients();
+            await renderClients();
             populateClientDropdown();
         } catch (err) {
             console.error('Failed to load clients:', err);
@@ -394,7 +394,34 @@ document.addEventListener('DOMContentLoaded', function() {
         select.innerHTML = options;
     }
 
-    function renderClients() {
+  async function renderClients() {
+        var today = new Date().toISOString().split('T')[0];
+        var upcomingMap = {};
+        var lastVisitMap = {};
+        try {
+            var upcomingRes = await db.from('leads').select('client_ref_id, requested_date, status')
+                .eq('status', 'confirmed').gte('requested_date', today);
+            var upcomingLeads = upcomingRes.data || [];
+            upcomingLeads.forEach(function(l) {
+                if (l.client_ref_id) {
+                    upcomingMap[l.client_ref_id] = (upcomingMap[l.client_ref_id] || 0) + 1;
+                }
+            });
+        } catch (e) {
+            console.error('Failed to fetch upcoming appointments:', e);
+        }
+        try {
+            var lastVisitRes = await db.from('leads').select('client_ref_id, requested_date, status')
+                .eq('status', 'confirmed').order('requested_date', { ascending: false });
+            var confirmedLeads = lastVisitRes.data || [];
+            confirmedLeads.forEach(function(l) {
+                if (l.client_ref_id && !lastVisitMap[l.client_ref_id]) {
+                    lastVisitMap[l.client_ref_id] = l.requested_date;
+                }
+            });
+        } catch (e) {
+            console.error('Failed to fetch last visit dates:', e);
+        }
         var grid = document.getElementById('clientGrid');
         var search = document.getElementById('clientSearch');
         var term = (search ? search.value : '') || '';
@@ -402,7 +429,8 @@ document.addEventListener('DOMContentLoaded', function() {
         var filtered = clients.filter(function(c) {
             return (c.owner_name || '').toLowerCase().includes(term) ||
                    (c.phone || '').includes(term) ||
-                   (c.email || '').toLowerCase().includes(term);
+                   (c.email || '').toLowerCase().includes(term) ||
+                   (c.client_id || '').toLowerCase().includes(term);
         });
         grid.innerHTML = '';
         if (!filtered.length) {
@@ -419,6 +447,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<span class="client-profile-notes">' + escapeHtml(shortNotes) + '</span></div></div>';
             }).join('');
             if (!profiles.length) profilesHtml = '<p class="history-empty">No profiles yet.</p>';
+            var upcomingCount = upcomingMap[client.id] || 0;
+            var upcomingHtml = upcomingCount > 0 ? '<div class="client-upcoming">Upcoming: ' + upcomingCount + ' appointment' + (upcomingCount > 1 ? 's' : '') + '</div>' : '';
+            var lastVisit = lastVisitMap[client.id];
+            var lastVisitHtml = lastVisit ? '<div class="client-last-visit">Last visit: ' + new Date(lastVisit + 'T00:00:00').toLocaleDateString() + '</div>' : '';
             var card = document.createElement('div');
             card.className = 'profile-card';
             card.innerHTML =
@@ -427,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<h3>' + escapeHtml(client.owner_name) + '</h3>' +
                     '<div class="owner-contact">' + escapeHtml(client.phone) + (client.email ? ' | ' + escapeHtml(client.email) : '') + '</div>' +
                 '</div>' +
+                (upcomingHtml + lastVisitHtml) +
                 '<div class="client-profiles-list">' + profilesHtml + '</div>' +
                 '<div class="card-actions-row">' +
                     '<button class="action-btn-outline" data-action="edit-client" data-id="' + client.id + '">Edit</button>' +
@@ -478,8 +511,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if (result.data) openClientModal(result.data);
     };
 
-    clientForm.addEventListener('submit', async function(e) {
+   clientForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        var clientName = document.getElementById('clientName').value.trim();
+        if (!clientName) { showToast('Client name is required.', 'error'); return; }
         var phone = document.getElementById('clientPhone').value;
         if (!isValidPhoneNumber(phone)) { showToast('Invalid phone number.', 'error'); return; }
         var id = document.getElementById('clientId').value;
@@ -492,7 +527,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (id) {
                 await db.from('clients').update(payload).eq('id', id);
             } else {
-                payload.client_code = String(Math.floor(100000 + Math.random() * 900000));
+                var newCode = '';
+                var attempts = 0;
+                var codeExists = true;
+                while (codeExists && attempts < 10) {
+                    newCode = String(Math.floor(100000 + Math.random() * 900000));
+                    var check = await db.from('clients').select('id').eq('client_id', newCode).single();
+                    codeExists = !(!check.data || check.error);
+                    attempts++;
+                }
+                if (!codeExists) {
+                    showToast('Failed to generate unique client code. Please try again.', 'error');
+                    return;
+                }
+                payload.client_id = newCode;
                 await db.from('clients').insert([payload]);
             }
             await loadClients();
@@ -507,7 +555,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('deleteClientBtn').addEventListener('click', async function() {
         var id = document.getElementById('clientId').value;
         if (!id) return;
-        var ok = await showConfirm('Delete this client and all their profiles?');
+        var ok = await showConfirm('Delete this client, all their profiles, and unlink them from leads? This action can be undone by soft-deleting leads.');
         if (!ok) return;
         try {
             await db.from('clients').delete().eq('id', id);
@@ -541,8 +589,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('profEmail').value = client.email || profile.email || '';
         document.getElementById('profNotes').value = profile.notes || '';
         document.getElementById('deleteProfileBtn').style.display = profile.id ? 'block' : 'none';
-        if (profile.id) fetchProfileHistory(profile.id);
-        else document.getElementById('profileHistory').innerHTML = '<p class="history-empty">Save profile first to see history.</p>';
+        if (profile.id) {
+            var historyEl = document.getElementById('profileHistory');
+            if (historyEl && historyEl.getAttribute('data-loaded')) {
+                // Skip re-fetching already loaded history
+            } else {
+                fetchProfileHistory(profile.id);
+            }
+        } else {
+            document.getElementById('profileHistory').innerHTML = '<p class="history-empty">Save profile first to see history.</p>';
+        }
         profileModal.style.display = 'block';
     };
 
@@ -553,8 +609,10 @@ document.addEventListener('DOMContentLoaded', function() {
         openProfileModal(p.data, c.data || {});
     };
 
-    profileForm.addEventListener('submit', async function(e) {
+   profileForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        var profName = document.getElementById('profName').value.trim();
+        if (!profName) { showToast('Profile name is required.', 'error'); return; }
         var phone = document.getElementById('profPhone').value;
         if (!isValidPhoneNumber(phone)) { showToast('Invalid phone number.', 'error'); return; }
         var id = document.getElementById('profileId').value;
@@ -612,7 +670,35 @@ document.addEventListener('DOMContentLoaded', function() {
         var data = result.data;
         var error = result.error;
         if (error || !data || !data.length) {
+            var profileRes = await db.from('client_profiles').select('phone').eq('id', profileId).single();
+            var profilePhone = profileRes && profileRes.data ? profileRes.data.phone : null;
+            if (profilePhone) {
+                var phoneRes = await db.from('leads').select('requested_date, confirmed_time, service, message, status')
+                    .eq('phone', profilePhone).order('requested_date', { ascending: false });
+                data = phoneRes.data || [];
+                if (data && data.length) {
+                    historyEl.innerHTML = '';
+                    data.forEach(function(appt) {
+                        var date = appt.requested_date ? new Date(appt.requested_date + 'T00:00:00').toLocaleDateString() : 'N/A';
+                        var time = appt.confirmed_time ? formatTime12(appt.confirmed_time) : 'TBD';
+                        var entry = document.createElement('div');
+                        entry.className = 'history-entry';
+                        entry.innerHTML =
+                            '<div class="history-meta">' +
+                                '<span class="history-date">' + escapeHtml(date) + '</span>' +
+                                '<span class="history-time">' + escapeHtml(time) + '</span>' +
+                                '<span class="service-badge">' + escapeHtml(appt.service || 'N/A') + '</span>' +
+                                '<span class="status-badge status-' + escapeHtml(appt.status || '') + '">' + escapeHtml(appt.status || '') + '</span>' +
+                            '</div>' +
+                            (appt.message ? '<p class="history-notes">' + escapeHtml(appt.message) + '</p>' : '');
+     historyEl.appendChild(entry);
+                    });
+                    historyEl.setAttribute('data-loaded', 'true');
+                    return;
+                }
+            }
             historyEl.innerHTML = '<p class="history-empty">No booking history yet.</p>';
+            historyEl.setAttribute('data-loaded', 'true');
             return;
         }
         historyEl.innerHTML = '';
@@ -631,6 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 (appt.message ? '<p class="history-notes">' + escapeHtml(appt.message) + '</p>' : '');
             historyEl.appendChild(entry);
         });
+        historyEl.setAttribute('data-loaded', 'true');
     }
 
     // --- Scheduler Calendar ---
