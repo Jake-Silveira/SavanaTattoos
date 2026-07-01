@@ -97,6 +97,17 @@
                         <div class="stats-row" id="dashboardStats"></div>
                     </header>
                     <div class="table-card">
+                        <div class="leads-toolbar">
+                            <input type="text" id="leadsSearch" class="search-input" placeholder="Search by name, service, or status...">
+                            <select id="leadsStatusFilter" class="mgmt-input" style="width: 150px;">
+                                <option value="all">All Statuses</option>
+                                <option value="pending">Pending</option>
+                                <option value="new_lead">New Lead</option>
+                                <option value="contacted">Contacted</option>
+                                <option value="confirmed">Confirmed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
                         <table class="leads-table">
                             <thead>
                                 <tr>
@@ -128,6 +139,10 @@
                         </div>
                         <button id="newApptBtn" class="cta-button">+ New Appointment</button>
                     </header>
+                    <div id="schedulerLoading" class="admin-loading" style="display: none; text-align: center; padding: 40px;">
+                        <div class="spinner" style="display: inline-block; border-top-color: var(--primary);"></div>
+                        <p style="color: var(--text-muted); margin-top: 12px;">Loading schedule...</p>
+                    </div>
                     <div id="schedulerContainer" class="scheduler-container"></div>
 
                     <div id="editApptPopover" class="popover-modal" style="display: none;">
@@ -233,6 +248,10 @@
                         <input type="text" id="clientSearch" placeholder="Search by name..." class="search-input">
                     </div>
                     <div id="clientGrid" class="mgmt-card-grid"></div>
+                    <div id="clientsLoading" class="admin-loading" style="display: none; text-align: center; padding: 40px;">
+                        <div class="spinner" style="display: inline-block; border-top-color: var(--primary);"></div>
+                        <p style="color: var(--text-muted); margin-top: 12px;">Loading clients...</p>
+                    </div>
                 </section>
 
                 <section id="site-mgmtPanel" class="admin-panel">
@@ -242,6 +261,10 @@
                             <p>Update gallery, flash, reviews and feedback.</p>
                         </div>
                     </header>
+                    <div id="siteMgmtLoading" class="admin-loading" style="display: none; text-align: center; padding: 40px;">
+                        <div class="spinner" style="display: inline-block; border-top-color: var(--primary);"></div>
+                        <p style="color: var(--text-muted); margin-top: 12px;">Loading site data...</p>
+                    </div>
                     <div class="mgmt-tabs">
                         <button class="tab-btn active" data-tab="gallery">Portfolio</button>
                         <button class="tab-btn" data-tab="flash">Flash Gallery</button>

@@ -1,6 +1,16 @@
 const { createClient } = require('@supabase/supabase-js');
 const { verifyAdmin } = require('./_utils/auth');
 
+function isValidImageUrl(url) {
+    if (!url || typeof url !== 'string' || !url.trim()) return false;
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch {
+        return false;
+    }
+}
+
 module.exports = async (req, res) => {
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -20,6 +30,7 @@ module.exports = async (req, res) => {
 
     const { image_url, title, description, display_order } = req.body;
     if (!image_url) return res.status(400).json({ error: 'Image URL required' });
+    if (!isValidImageUrl(image_url)) return res.status(400).json({ error: 'Invalid image URL format' });
 
     // Get max display_order
     const { data: maxItems } = await supabase
@@ -57,7 +68,10 @@ module.exports = async (req, res) => {
 
     const { id, image_url, title, description, display_order, is_active } = req.body;
     const updates = {};
-    if (image_url) updates.image_url = image_url;
+    if (image_url) {
+        if (!isValidImageUrl(image_url)) return res.status(400).json({ error: 'Invalid image URL format' });
+        updates.image_url = image_url;
+    }
     if (title !== undefined) updates.title = title;
     if (description !== undefined) updates.description = description;
     if (display_order !== undefined) updates.display_order = display_order;

@@ -22,6 +22,9 @@ module.exports = async (req, res) => {
 
   const resendKey = process.env.RESEND_API_KEY;
   const fromEmail = process.env.FROM_EMAIL || 'Savana Tattoos <onboarding@resend.dev>';
+  const studioPhone = process.env.STUDIO_PHONE || '(555) 123-4567';
+  const studioAddress = process.env.STUDIO_ADDRESS || '123 Ink Avenue, Suite 4';
+  const studioHours = process.env.STUDIO_HOURS || 'Tue\u2013Sat 11am\u20137pm | Sun\u2013Mon Closed';
 
   if (!resendKey) {
     console.error('[SEND-EMAIL] Missing RESEND_API_KEY');
@@ -46,6 +49,22 @@ module.exports = async (req, res) => {
       }
 
       const lead = leadData;
+      const rateLimitWindow = 5 * 60 * 1000;
+      const rateLimitMax = 3;
+      if (lead.email) {
+        const fiveMinutesAgo = new Date(Date.now() - rateLimitWindow).toISOString();
+        const { count: recentCount } = await supabase
+          .from('leads')
+          .select('id', { count: 'exact', head: true })
+          .eq('email', lead.email)
+          .gte('created_at', fiveMinutesAgo)
+          .neq('id', submissionId);
+        if (recentCount && recentCount >= rateLimitMax) {
+          console.warn('[SEND-EMAIL] Rate limit exceeded for email:', lead.email);
+          return res.status(429).json({ success: false, error: 'Too many inquiries. Please wait a few minutes before submitting another.' });
+        }
+      }
+
       html = `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
           <div style="text-align: center; padding: 20px 0; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #c9a87c; border-radius: 12px 12px 0 0;">
@@ -64,8 +83,8 @@ module.exports = async (req, res) => {
             <p style="margin-top: 20px; padding: 12px; background: #16213e; border-radius: 8px; border-left: 4px solid #c9a87c;">
               <strong>What's next?</strong> We'll reach out via phone or email to confirm your consultation and finalize the design details.
             </p>
-            <p style="margin-top: 20px; color: #888;">Questions? Call us at <strong>(555) 123-4567</strong></p>
-            <p style="color: #666; font-size: 12px; margin-top: 20px; border-top: 1px solid #333; padding-top: 12px;">Savana Tattoos &mdash; 123 Ink Avenue, Suite 4</p>
+            <p style="margin-top: 20px; color: #888;">Questions? Call us at <strong>${studioPhone}</strong></p>
+            <p style="color: #666; font-size: 12px; margin-top: 20px; border-top: 1px solid #333; padding-top: 12px;">Savana Tattoos &mdash; ${studioAddress}</p>
           </div>
         </div>
       `;
@@ -138,9 +157,9 @@ module.exports = async (req, res) => {
               <p style="margin: 4px 0;"><strong>Duration:</strong> ${durationStr}</p>
             </div>
             <p style="margin-top: 16px;"><strong>Please arrive 10 minutes early</strong> so we can go over your design and prepare the studio.</p>
-            <p style="margin-top: 16px;">Need to reschedule? Call <strong>(555) 123-4567</strong>.</p>
+            <p style="margin-top: 16px;">Need to reschedule? Call <strong>${studioPhone}</strong>.</p>
             <p style="margin-top: 20px; color: #c9a87c; font-weight: bold;">See you soon &mdash; The Savana Tattoos Team</p>
-            <p style="color: #666; font-size: 12px; margin-top: 20px; border-top: 1px solid #333; padding-top: 12px;">Savana Tattoos &mdash; 123 Ink Avenue, Suite 4 &mdash; Open Tue&ndash;Sat 11am&ndash;7pm</p>
+            <p style="color: #666; font-size: 12px; margin-top: 20px; border-top: 1px solid #333; padding-top: 12px;">Savana Tattoos &mdash; ${studioAddress} &mdash; ${studioHours}</p>
           </div>
         </div>
       `;

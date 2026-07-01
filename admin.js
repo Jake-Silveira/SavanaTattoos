@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function fetchLeads() {
         loadingState.style.display = 'block';
         emptyState.style.display = 'none';
-        var result = await db.from('leads').select('*').order('created_at', { ascending: false });
+        var result = await db.from('leads').select('*').neq('status', 'deleted').order('created_at', { ascending: false });
         var data = result.data;
         var error = result.error;
         if (error) { console.error('Leads fetch error:', error); loadingState.style.display = 'none'; return; }
@@ -175,19 +175,41 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderLeads() {
-        if (!leads.length) { emptyState.style.display = 'block'; return; }
+        var searchInput = document.getElementById('leadsSearch');
+        var statusFilter = document.getElementById('leadsStatusFilter');
+        var searchTerm = (searchInput ? searchInput.value || '' : '').toLowerCase();
+        var statusValue = (statusFilter ? statusFilter.value : 'all') || 'all';
+        var filtered = leads.filter(function(lead) {
+            var name = (lead.client_name ? lead.client_name + ' ' + (lead.last_name || '') : (lead.name || '')).toLowerCase();
+            var matchesSearch = !searchTerm || name.includes(searchTerm) ||
+                (lead.service || '').toLowerCase().includes(searchTerm) ||
+                (lead.status || '').toLowerCase().includes(searchTerm);
+            var matchesStatus = statusValue === 'all' || lead.status === statusValue;
+            return matchesSearch && matchesStatus;
+        });
+        if (!filtered.length) { emptyState.style.display = 'block'; return; }
         emptyState.style.display = 'none';
         leadsTableBody.innerHTML = '';
-        leads.forEach(function(lead) {
+        var now = Date.now();
+        filtered.forEach(function(lead) {
             var tr = document.createElement('tr');
-            var submitted = lead.requested_date ? new Date(lead.requested_date).toLocaleDateString() : 'N/A';
+            var submittedDate = lead.requested_date ? new Date(lead.requested_date) : null;
+            var submittedDisplay = 'N/A';
+            if (submittedDate) {
+                var daysAgo = Math.floor((now - submittedDate.getTime()) / 86400000);
+                if (daysAgo < 0) daysAgo = 0;
+                if (daysAgo === 0) submittedDisplay = 'Today';
+                else if (daysAgo === 1) submittedDisplay = '1 day ago';
+                else if (daysAgo < 7) submittedDisplay = daysAgo + ' days ago';
+                else submittedDisplay = submittedDate.toLocaleDateString();
+            }
             var name = lead.client_name ? lead.client_name + ' ' + (lead.last_name || '') : (lead.name || 'Unknown');
             tr.innerHTML =
                 '<td>' + escapeHtml(name) + '</td>' +
                 '<td>' + escapeHtml(lead.service || '-') + '</td>' +
                 '<td>' + escapeHtml(lead.size || '-') + '</td>' +
                 '<td><span class="status-badge status-' + escapeHtml(lead.status) + '">' + escapeHtml(lead.status) + '</span></td>' +
-                '<td>' + escapeHtml(submitted) + '</td>' +
+                '<td>' + escapeHtml(submittedDisplay) + '</td>' +
                 '<td>' +
                     '<select class="status-select" data-action="update-status" data-id="' + lead.id + '">' +
                         '<option value="pending"' + (lead.status === 'pending' ? ' selected' : '') + '>Pending</option>' +
@@ -222,13 +244,16 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function updateLeadStatus(id, status) {
+        if (status === 'cancelled' || status === 'deleted') {
+            var ok = await showConfirm('Change this lead to "' + status + '"?');
+            if (!ok) return;
+        }
         try {
             await db.from('leads').update({ status: status, updated_at: new Date().toISOString() }).eq('id', id);
             var lead = leads.find(function(l) { return l.id === id; });
             if (lead) lead.status = status;
             if (status === 'confirmed') {
-                var leadData = leads.find(function(l) { return l.id === id; });
-                if (leadData) triggerConfirmedEmail(leadData);
+                if (lead) triggerConfirmedEmail(lead);
             }
             renderStats(leads);
             renderLeads();
@@ -240,7 +265,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function viewLead(id) {
         var lead = leads.find(function(l) { return l.id === id; });
-        if (!lead) return;
+        if (!lead) {
+            var fresh = await db.from('leads').select('*').eq('id', id).single();
+            lead = fresh.data;
+            if (!lead) { showToast('Lead not found.', 'error'); return; }
+        }
         activeLeadId = id;
         var modal = document.getElementById('leadModal');
         var modalBody = document.getElementById('modalBody');
@@ -274,35 +303,52 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function attachLeadModalActions(id) {
-        document.querySelectorAll('[data-action="link-profile"]').forEach(function(btn) {
-            btn.onclick = function() {
-                document.getElementById('leadModal').style.display = 'none';
-                activeLeadId = id;
-                switchPanel('client-index');
-            };
-        });
-        document.querySelectorAll('[data-action="confirm-lead"]').forEach(function(btn) {
-            btn.onclick = async function() {
-                await db.from('leads').update({ status: 'confirmed', confirmed_time: new Date().toISOString() }).eq('id', id);
-                var lead = leads.find(function(l) { return l.id === id; });
-                if (lead) lead.status = 'confirmed';
-                if (lead) triggerConfirmedEmail(lead);
-                fetchLeads();
-                showToast('Lead confirmed!', 'success');
-                document.getElementById('leadModal').style.display = 'none';
-            };
-        });
-        document.querySelectorAll('[data-action="archive-lead"]').forEach(function(btn) {
-            btn.onclick = async function() {
-                var ok = await showConfirm('Archive this lead?');
-                if (!ok) return;
-                await db.from('leads').update({ status: 'deleted' }).eq('id', id);
-                leads = leads.filter(function(l) { return l.id !== id; });
-                fetchLeads();
-                showToast('Lead archived.', 'success');
-                document.getElementById('leadModal').style.display = 'none';
-            };
-        });
+        var modal = document.getElementById('leadModal');
+        if (!modal._modalBodyAttached) {
+            modal._modalBodyAttached = true;
+            modal.addEventListener('click', function(e) {
+                var target = e.target.closest('[data-action]');
+                if (!target) return;
+                var action = target.dataset.action;
+                var actionId = target.dataset.id;
+                if (action === 'link-profile' || target.closest('[data-action="link-profile"]')) {
+                    var linkBtn = target.closest('[data-action="link-profile"]');
+                    if (linkBtn) {
+                        document.getElementById('leadModal').style.display = 'none';
+                        activeLeadId = linkBtn.dataset.id;
+                        switchPanel('client-index');
+                    }
+                }
+                if (action === 'confirm-lead' || target.closest('[data-action="confirm-lead"]')) {
+                    var confirmBtn = target.closest('[data-action="confirm-lead"]');
+                    if (confirmBtn) {
+                        (async function() {
+                            await db.from('leads').update({ status: 'confirmed', confirmed_time: new Date().toISOString() }).eq('id', confirmBtn.dataset.id);
+                            var lead = leads.find(function(l) { return l.id === confirmBtn.dataset.id; });
+                            if (lead) lead.status = 'confirmed';
+                            if (lead) triggerConfirmedEmail(lead);
+                            fetchLeads();
+                            showToast('Lead confirmed!', 'success');
+                            document.getElementById('leadModal').style.display = 'none';
+                        })();
+                    }
+                }
+                if (action === 'archive-lead' || target.closest('[data-action="archive-lead"]')) {
+                    var archiveBtn = target.closest('[data-action="archive-lead"]');
+                    if (archiveBtn) {
+                        (async function() {
+                            var ok = await showConfirm('Archive this lead?');
+                            if (!ok) return;
+                            await db.from('leads').update({ status: 'deleted' }).eq('id', archiveBtn.dataset.id);
+                            leads = leads.filter(function(l) { return l.id !== archiveBtn.dataset.id; });
+                            fetchLeads();
+                            showToast('Lead archived.', 'success');
+                            document.getElementById('leadModal').style.display = 'none';
+                        })();
+                    }
+                }
+            });
+        }
     }
 
     // --- Scheduler Panel ---
@@ -316,12 +362,23 @@ document.addEventListener('DOMContentLoaded', function() {
     var blockedDates = {};
 
     async function loadClients() {
-        var clientsResult = await db.from('clients').select('*');
-        clients = clientsResult.data || [];
-        var profilesResult = await db.from('client_profiles').select('*');
-        clientProfiles = profilesResult.data || [];
-        renderClients();
-        populateClientDropdown();
+        var clientsLoading = document.getElementById('clientsLoading');
+        if (clientsLoading) clientsLoading.style.display = 'block';
+        var grid = document.getElementById('clientGrid');
+        if (grid) grid.innerHTML = '';
+        try {
+            var clientsResult = await db.from('clients').select('*');
+            clients = clientsResult.data || [];
+            var profilesResult = await db.from('client_profiles').select('*');
+            clientProfiles = profilesResult.data || [];
+            renderClients();
+            populateClientDropdown();
+        } catch (err) {
+            console.error('Failed to load clients:', err);
+            if (grid) grid.innerHTML = '<div class="empty-state"><p>Failed to load clients. Please refresh.</p></div>';
+        } finally {
+            if (clientsLoading) clientsLoading.style.display = 'none';
+        }
     }
 
     function populateClientDropdown() {
@@ -683,13 +740,23 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     async function renderScheduler() {
-        if (schedulerViewMode === 'month') renderMonthlyView();
-        else if (schedulerViewMode === 'week') renderWeeklyView();
-        else if (schedulerViewMode === 'day') renderDailyView();
+        var schedulerLoading = document.getElementById('schedulerLoading');
+        var schedulerContainer = document.getElementById('schedulerContainer');
+        if (schedulerLoading) schedulerLoading.style.display = 'block';
+        if (schedulerContainer) schedulerContainer.style.display = 'none';
+        
+        try {
+            if (schedulerViewMode === 'month') await renderMonthlyView();
+            else if (schedulerViewMode === 'week') await renderWeeklyView();
+            else if (schedulerViewMode === 'day') await renderDailyView();
+        } finally {
+            if (schedulerLoading) schedulerLoading.style.display = 'none';
+            if (schedulerContainer) schedulerContainer.style.display = 'block';
+        }
     }
 
-    function renderMonthlyView() {
-        fetchSchedulerData();
+    async function renderMonthlyView() {
+        await fetchSchedulerData();
         var container = document.getElementById('schedulerContainer');
         var year = calendarDate.getFullYear();
         var month = calendarDate.getMonth();
@@ -758,8 +825,8 @@ document.addEventListener('DOMContentLoaded', function() {
         hideBlockTimeButton();
     }
 
-    function renderWeeklyView() {
-        fetchSchedulerData(weekStartDate, new Date(weekStartDate.getTime() + 6 * 86400000));
+    async function renderWeeklyView() {
+        await fetchSchedulerData(weekStartDate, new Date(weekStartDate.getTime() + 6 * 86400000));
         var container = document.getElementById('schedulerContainer');
         var weekEnd = new Date(weekStartDate.getTime() + 6 * 86400000);
         var startLabel = weekStartDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -867,8 +934,8 @@ document.addEventListener('DOMContentLoaded', function() {
         hideBlockTimeButton();
     }
 
-    function renderDailyView() {
-        fetchSchedulerData(dayDate, dayDate);
+    async function renderDailyView() {
+        await fetchSchedulerData(dayDate, dayDate);
         var container = document.getElementById('schedulerContainer');
         var dateStr = dayDate.toISOString().split('T')[0];
         var headerDate = dayDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
@@ -1393,6 +1460,22 @@ var html = '<div class="scheduler-header">' +
         clientSearch._listenerAttached = true;
     }
 
+    // Leads search & status filter
+    (function initLeadsSearch() {
+        var leadsSearchInput = document.getElementById('leadsSearch');
+        var leadsStatusFilterEl = document.getElementById('leadsStatusFilter');
+        if (leadsSearchInput) {
+            var searchTimeout;
+            leadsSearchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(function() { renderLeads(); }, 200);
+            });
+        }
+        if (leadsStatusFilterEl) {
+            leadsStatusFilterEl.addEventListener('change', function() { renderLeads(); });
+        }
+    })();
+
     // --- Site Management ---
     var galleryItems = [];
     var flashItems = [];
@@ -1400,10 +1483,27 @@ var html = '<div class="scheduler-header">' +
     var feedbackData = [];
 
     function initSiteMgmt() {
-        loadGalleryItems();
-        loadFlashItems();
-        loadReviews();
-        loadFeedback();
+        var siteMgmtLoading = document.getElementById('siteMgmtLoading');
+        if (siteMgmtLoading) siteMgmtLoading.style.display = 'block';
+        var mgmtTabs = document.querySelector('.mgmt-tabs');
+        var mgmtPanels = document.querySelectorAll('.mgmt-panel');
+        if (mgmtTabs) mgmtTabs.style.display = 'none';
+        mgmtPanels.forEach(function(p) { p.style.display = 'none'; });
+        
+        Promise.all([
+            loadGalleryItems(),
+            loadFlashItems(),
+            loadReviews(),
+            loadFeedback()
+        ]).finally(function() {
+            if (siteMgmtLoading) siteMgmtLoading.style.display = 'none';
+            if (mgmtTabs) mgmtTabs.style.display = 'flex';
+            var activeTab = document.querySelector('.mgmt-tabs .tab-btn.active');
+            if (activeTab) {
+                var panelId = activeTab.dataset.tab + 'Tab';
+                document.getElementById(panelId)?.classList.add('active');
+            }
+        });
     }
 
     // Gallery management

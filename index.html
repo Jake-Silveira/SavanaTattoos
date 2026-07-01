@@ -18,6 +18,16 @@
     <!-- ENV_PLACEHOLDER_END -->
 </head>
 <body>
+    <div id="publicErrorBanner" class="public-error-banner" style="display: none;">
+        <div class="container">
+            <div class="error-banner-content">
+                <span class="error-banner-icon">&#9888;</span>
+                <span id="publicErrorMessage">Something went wrong. Please refresh the page.</span>
+                <button class="error-banner-close" onclick="document.getElementById('publicErrorBanner').style.display='none'">&times;</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="main-nav">
         <div class="nav-container">
             <div class="logo-group">

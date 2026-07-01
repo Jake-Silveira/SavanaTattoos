@@ -245,49 +245,6 @@ window.triggerConfirmation = async function(params) {
     }
 };
 
-// Send appointment confirmation email for a lead
-window.triggerConfirmedEmail = async function(db, lead) {
-    if (!lead || !lead.email) return;
-    try {
-        const headers = await getAuthHeaders(db);
-        await fetch('/api/send-email', {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                action: 'appointment-confirmed',
-                name: lead.name,
-                email: lead.email,
-                service: lead.service,
-                body_placement: lead.body_placement,
-                size: lead.size,
-                confirmed_time: lead.confirmed_time || lead.requested_time,
-                requested_date: lead.requested_date,
-                duration_minutes: lead.duration_minutes
-            })
-        });
-    } catch (err) {
-        console.warn('Confirmed email trigger failed (non-critical):', err.message);
-    }
-};
-
-// Render dashboard stats cards (KPIs)
-window.renderStats = function(leads) {
-    const statsRow = document.getElementById('dashboardStats');
-    if (!statsRow) return;
-
-    const stats = {
-        total: leads.length,
-        pending: leads.filter(l => ['pending', 'new_lead', 'contacted'].includes(l.status)).length,
-        booked: leads.filter(l => l.status === 'confirmed').length
-    };
-
-    statsRow.innerHTML = `
-        <div class="stat-card stat-total"><span>${stats.total}</span><label>Total</label></div>
-        <div class="stat-card stat-pending"><span>${stats.pending}</span><label>Pending</label></div>
-        <div class="stat-card stat-booked"><span>${stats.booked}</span><label>Booked</label></div>
-    `;
-};
-
 // --- Shared Calendar Picker ---
 
 window.createCalendarPicker = function(config) {

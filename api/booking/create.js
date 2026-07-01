@@ -82,6 +82,8 @@ module.exports = async (req, res) => {
     // Send confirmation email
     const resendKey = process.env.RESEND_API_KEY;
     const fromEmail = process.env.FROM_EMAIL || 'Savana Tattoos <onboarding@resend.dev>';
+    const studioPhone = process.env.STUDIO_PHONE || '(555) 123-4567';
+    const studioAddress = process.env.STUDIO_ADDRESS || '123 Ink Avenue, Suite 4';
 
     if (resendKey && (lead.email || process.env.ADMIN_EMAIL)) {
       const resend = new Resend(resendKey);
@@ -109,7 +111,7 @@ module.exports = async (req, res) => {
               <p style="margin: 4px 0;"><strong>Service:</strong> ${service}</p>
               <p style="margin: 4px 0;"><strong>Duration:</strong> ${durationStr}</p>
             </div>
-            <p><strong>Arrive 10 minutes early.</strong> Call <strong>(555) 123-4567</strong> to reschedule.</p>
+            <p><strong>Arrive 10 minutes early.</strong> Call <strong>${studioPhone}</strong> to reschedule.</p>
           </div>
         </div>
       `;

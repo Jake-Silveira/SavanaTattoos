@@ -11,7 +11,24 @@
 
 const db = initSupabase();
 
+function showPublicError(message) {
+    const banner = document.getElementById('publicErrorBanner');
+    const msgEl = document.getElementById('publicErrorMessage');
+    if (banner && msgEl) {
+        msgEl.textContent = message;
+        banner.style.display = 'block';
+        banner.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+if (!db) {
+    document.addEventListener('DOMContentLoaded', () => {
+        showPublicError('The website is currently unavailable due to a configuration error. Please try again later.');
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+    if (!db) return;
     const leadForm = document.getElementById('leadForm');
     const submitBtn = document.getElementById('submitBtn');
     const spinner = document.getElementById('spinner');
@@ -160,6 +177,7 @@ document.addEventListener('DOMContentLoaded', () => {
             reviews = (data && data.length > 0) ? data : fallbackReviews;
         } catch (err) {
             console.warn('Failed to fetch reviews, using fallbacks:', err.message);
+            showPublicError('Failed to load client reviews. Please refresh the page if the issue persists.');
             reviews = fallbackReviews;
         }
         renderReviews();
@@ -254,6 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             startAutoRotateGallery();
         } catch (err) {
             console.warn('Gallery fetch failed:', err.message);
+            showPublicError('Failed to load portfolio gallery. Please refresh the page if the issue persists.');
             gallerySection.style.display = 'none';
         }
     }
@@ -322,6 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderFlash(data);
         } catch (err) {
             console.warn('Flash fetch failed:', err.message);
+            showPublicError('Failed to load flash gallery. Please refresh the page if the issue persists.');
             flashEmpty.style.display = 'block';
         }
     }

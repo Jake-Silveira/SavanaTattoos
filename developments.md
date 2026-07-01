@@ -2,7 +2,7 @@
 
 > Created: 2025-06-25
 > Last updated: 2026-06-30
-> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Ready for Supabase provisioning & deployment.**
+> Status: **Source code complete + validated. Template comparison done (2026-06-26). 4 fixes applied (2026-06-30). Production polish complete (2026-06-30). Ready for Supabase provisioning & deployment.**
 
 ---
 
@@ -90,7 +90,7 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 
 ### ✅ Verified Complete
 - `admin.js` — ends properly (line 1247: closing `});` with year footer)
-- `utils.js` — ends properly (line 490: closing `return { showTimePicker }`)
+- `utils.js` — ends properly (line 458: closing `return { showTimePicker }`)
 - `api/leads/delete.js` — last write completed (25 lines, soft-delete)
 
 ### ✅ Verified & Validated (2026-06-26)
@@ -107,6 +107,16 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 - Removed dead API routes: `api/clients.js`, `api/profiles.js`, `api/feedback.js`
 - Added `AGENTS.md` — tattoo-specific architecture reference
 - Added `README.md` — public-facing documentation
+
+### ✅ Production Polish (2026-06-30)
+1. **Removed dead `triggerConfirmedEmail` from `utils.js`** — shadowed by admin.js version, removed to reduce confusion
+2. **Added error boundary UI to public site** — `script.js`: `showPublicError()` function; `index.html`: `.public-error-banner` element; wrapped all init functions (reviews, gallery, flash); guard for missing Supabase client
+3. **Added loading states to admin sub-panels** — `admin.html`: loading indicators for clients, scheduler, site management panels; `admin.js`: `loadClients()`, `initSiteMgmt()`, `renderScheduler()` now show/hide loading spinners; CSS `.admin-loading` class added
+4. **Added image URL validation** — `api/gallery.js`, `api/flash.js`: `isValidImageUrl()` helper validates URL format on POST and PATCH
+5. **Made studio phone/address configurable** — `api/send-email.js`, `api/booking/create.js`: `STUDIO_PHONE`, `STUDIO_ADDRESS`, `STUDIO_HOURS` env vars; `.env.example` updated
+6. **Added rate limiting to inquiry emails** — `api/send-email.js`: prevents same email from sending >3 confirmations within 5-minute window (HTTP 429)
+7. **All 11 JS files pass `node --check`**
+8. **`npm run build` completes successfully**
 
 ---
 
@@ -154,12 +164,18 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 - ~~`api/clients.js` dead code~~ — Removed 2026-06-26: admin.js uses direct DB calls
 - ~~`api/profiles.js` dead code~~ — Removed 2026-06-26: admin.js uses direct DB calls
 - ~~`api/feedback.js` dead code~~ — Removed 2026-06-26: admin.js uses direct DB calls
-- ~~All JS files fail syntax check~~ — All 8 JS files pass `node --check` ✅
+- ~~All JS files fail syntax check~~ — All 11 JS files pass `node --check` ✅
 - ~~Build fails~~ — `npm run build` completes successfully, `/public/` generated ✅
 - ~~`package-lock.json` missing~~ — Present (created by `npm install`) ✅
-- ~~Sunday/Monday blocks on booking forms~~ — Removed 2026-06-30: both public (`script.js` line 49) and admin (`admin.js` line 1192) now allow bookings on any day
+- ~~Sunday/Monday blocks on booking forms~~ — Removed 2026-06-30: both public (`script.js`) and admin (`admin.js`) now allow bookings on any day
 - ~~Client modal uses household/pet terminology~~ — Removed 2026-06-30: all `household-*/pet-*/pet-mini-*` CSS/JS classes renamed to `client-card-header/client-profiles-list/client-profile-mini/client-icon/client-profile-info/client-profile-name/client-profile-notes`
-- ~~Admin scheduler time blocks not injecting~~ — Fixed 2026-06-30: `showNewApptTimePicker` converted from `.then()` promise chains to `async/await`; `openNewApptFromTimeSlot` now properly awaits time picker before attempting to highlight the selected time slot button
+- ~~Admin scheduler time blocks not injecting~~ — Fixed 2026-06-30: `showNewApptTimePicker` converted from `.then()` promise chains to `async/await`
+- ~~Dead `triggerConfirmedEmail` in utils.js~~ — Removed 2026-06-30: admin.js version is the active one
+- ~~No error boundary on public site~~ — Added 2026-06-30: `.public-error-banner` with `showPublicError()` wrapper on all init functions
+- ~~No loading states on admin panels~~ — Added 2026-06-30: loading spinners for clients, scheduler, site management panels
+- ~~No image URL validation~~ — Added 2026-06-30: `isValidImageUrl()` in gallery.js and flash.js
+- ~~Hardcoded phone/address in emails~~ — Added 2026-06-30: `STUDIO_PHONE`, `STUDIO_ADDRESS`, `STUDIO_HOURS` env vars
+- ~~No rate limiting on inquiry form~~ — Added 2026-06-30: max 3 emails per email per 5 minutes (HTTP 429)
 
 ### Remaining Issues / Notes
 
@@ -183,27 +199,118 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
 11. **`.opencode/`** — Not configured in template either.
 
 ### Improvements Needed (Backlog)
-- [ ] Add loading states to admin panels (currently instant, no spinner)
-- [ ] Add error boundary to public site (currently bare `console.error`)
 - [ ] Add CSRF protection to admin API routes (currently relies on bearer token)
-- [ ] Add rate limiting to public inquiry form (currently unlimited)
-- [ ] Add image validation to gallery/flash upload endpoints
 - [ ] Add pagination to leads and clients panels (currently loads all)
 - [ ] Add export functionality for leads data (CSV/Excel)
 - [ ] Add appointment notifications (email/SMS) for admins
 - [ ] Add `client-welcome` email action — send 6-digit lookup code to new clients
 - [ ] Add `profiles.last_activity` tracking — update after booking
-- [ ] Remove dead `utils.js` `triggerConfirmedEmail` definition to reduce confusion
 
 ### Improvements Needed
-- [ ] Add loading states to admin panels (currently instant, no spinner)
-- [ ] Add error boundary to public site (currently bare `console.error`)
 - [ ] Add CSRF protection to admin API routes (currently relies on bearer token)
-- [ ] Add rate limiting to public inquiry form (currently unlimited)
-- [ ] Add image validation to gallery/flash upload endpoints
 - [ ] Add pagination to leads and clients panels (currently loads all)
 - [ ] Add export functionality for leads data (CSV/Excel)
 - [ ] Add appointment notifications (email/SMS) for admins
+
+---
+
+## Admin Dashboard Audit — Step-by-Step Fixes (2026-06-30)
+
+> Full audit of all 4 admin panels broken into numbered, independent steps. Each step is a self-contained task scoped to fit within ~100k tokens. Complete one step per session, then mark it done and proceed to the next.
+>
+> **IMPORTANT: When you finish ALL steps below, add `✅` to each step's checkbox in this list and update the developments.md header status to "Admin dashboard fixes complete (2026-XX-XX)."**
+
+---
+
+### Step 1 — Leads Panel: Bug Fixes & Core Polish ✅ Done (2026-06-30)
+
+**Scope:** `admin.js` — Leads panel functions only. No CSS changes needed beyond inline styles where noted.
+
+**Bugs fixed:**
+1. ✅ **`fetchLeads()` excludes `deleted` status** — added `.neq('status', 'deleted')` to the Supabase query so archived leads don't clutter the table.
+2. ✅ **`updateLeadStatus()` race condition** — removed the redundant second `leads.find()` on line 230. Now uses the `lead` variable found on line 227.
+3. ✅ **`attachLeadModalActions()` listener leak** — replaced the `querySelectorAll().forEach` pattern with a single event delegation listener on the modal element. Handles `link-profile`, `confirm-lead`, and `archive-lead` actions via `data-action` targeting.
+4. ✅ **Status dropdown confirmation** — added `showConfirm()` call before committing when changing to `cancelled` or `deleted`. For `confirmed`, proceeds without confirmation.
+5. ✅ **`viewLead()` stale data** — before rendering, if `leads` doesn't contain the lead by `id`, does a fresh `.select('*').eq('id', id).single()` fetch.
+
+**Polish added:**
+6. ✅ **Search bar above table** — added `<input id="leadsSearch">` in `admin.html` within a new `.leads-toolbar` div. Filters by name, service, and status. Debounced 200ms on `input` event.
+7. ✅ **Status filter dropdown** — added `<select id="leadsStatusFilter">` with options: All, Pending, New Lead, Contacted, Confirmed, Cancelled. Filters leads array by selected status.
+8. ✅ **Lead age display** — computes relative time: "Today", "1 day ago", "X days ago" for <7 days, otherwise shows the formatted date.
+9. ✅ **Removed duplicate `renderStats()` from utils.js** — kept the admin.js version (Pending/Contacted/Confirmed/Cancelled) which is more granular than the template version.
+
+---
+
+### Step 2 — Scheduler Panel: Bug Fixes & Core Polish
+
+**Scope:** `admin.js` — Scheduler functions only. Add corresponding CSS classes to `styles.css` where noted.
+
+**Bugs to fix:**
+1. **`setupDayViewEvents()` listener accumulation** — move the `_dayEventsAttached` flag to the `schedulerContainer` element and guard the listener attachment. Since `schedulerContainer`'s innerHTML is replaced each render, the element itself is replaced, so the flag on it is naturally reset. Instead, use `schedulerContainer.removeEventListener('click', dayClickHandler)` before re-attaching, or better: define `dayClickHandler` once as a named function and only call `addEventListener` once on initial render.
+2. **`renderTimeGridBackground()` dead function** — remove lines 656-663 entirely. Never called.
+3. **`generateCalendarDays()` today highlight** — add visual distinction in `admin.html`/`styles.css`. Add a `border: 2px solid var(--primary)` to `.scheduler-day.today` in CSS.
+4. **Hardcoded time range 11-19** — extract to a constant `STUDIO_START_HOUR = 11` and `STUDIO_END_HOUR = 19`. Replace all hardcoded 11/19 values in `showNewApptTimePicker()`, `openEditApptPopover()`, `openBlockPopover()`, `populateTimeSelects()` calls. This makes it easy to change later via config/env.
+5. **No confirmation before cancelling** — in the `saveApptBtn` click handler (line 1142), if the new status is `cancelled`, call `showConfirm('Cancel this appointment?')` before proceeding.
+
+**Polish to add:**
+6. **Show duration on appointment cards** — in month view (`generateCalendarDays`), week view (`renderWeeklyView`), and daily view (`renderDailyView`), append a small duration badge to appointment cards. E.g., append `<span class="appt-duration">2hr</span>` derived from `lead.duration_minutes`.
+7. **Show message/notes on daily view cards** — in `renderDailyView()` line 939, add `(lead.message ? '<div class="appt-message">' + escapeHtml(lead.message) + '</div>' : '')` to the appointment card HTML.
+8. **Add `escapeHtml` if missing** — ensure `escapeHtml` is defined before `renderDailyView` uses it (it is, line 205).
+9. **Remove `view-day-link` styling quirk** — the "View Day" links in week view are `<a href="#" class="view-day-link">`. The `#` href causes a brief page jump. Remove `href="#"` and handle the click purely via JS (it's already handled in line 867-875).
+
+---
+
+### Step 3 — Client Profiles Panel: Bug Fixes & Core Polish
+
+**Scope:** `admin.js` — Client profile functions. CSS changes minimal.
+
+**Bugs to fix:**
+1. **Client search includes `client_id`** — in `renderClients()` filter (line 353-357), add `(c.client_id || '').includes(term)` to the search terms.
+2. **Profile history searches by phone as fallback** — in `fetchProfileHistory()` (line 561), after fetching by `profile_id`, if no results found AND the profile has a `phone`, do a second query: `db.from('leads').select('*').eq('phone', profile.phone).order('requested_date', { ascending: false })`. Merge and display results.
+3. **`clientForm submit` uniqueness check for client_code** — line 446 generates a random 6-digit code without checking uniqueness. Replace with: generate code → query `db.from('clients').select('id').eq('client_id', code)` → if exists, regenerate → insert. Add a retry limit of 10 attempts.
+4. **Profile modal caching** — in `openProfileModal()`, add a check: if `profileHistory` element already has non-placeholder content, skip `fetchProfileHistory()` call on line 495. Add a `data-loaded` attribute to the history div after first load.
+5. **Client deletion warning** — update line 461 message to: `"Delete this client, all their profiles, and unlink them from leads? This action can be undone by soft-deleting leads."`
+
+**Polish to add:**
+6. **Search by client code placeholder** — add a visual indicator in the search input: `placeholder="Search by name, phone, email, or client code..."`.
+7. **Upcoming appointments on client cards** — in `renderClients()`, for each client, also fetch leads with `status === 'confirmed'` and `requested_date >= today`. If any exist, show `<div class="client-upcoming">Upcoming: X appointments</div>` on the card. (Use existing `dailyLeads` data if available, otherwise fetch.)
+8. **Last visit date** — calculate from the most recent confirmed lead's `requested_date`. Show on the client card as `<div class="client-last-visit">Last visit: date</div>`.
+9. **Form validation toast** — in `clientForm` submit handler, before the DB call, check `clientName` is not empty and show a toast error if blank. Same for `profileForm`.
+
+---
+
+### Step 4 — Site Management Panel: Bug Fixes & Core Polish
+
+**Scope:** `admin.js` — Site management functions. HTML changes to `admin.html` for new modals. CSS changes to `styles.css`.
+
+**Bugs to fix:**
+1. **Dead "Edit" button on gallery items** — `attachGalleryMgmtEvents()` only binds delete handlers. The "Edit" button (`mgmt-edit-gallery`) is dead code. Either wire it up to an `editGalleryItem` function OR remove the button. Recommendation: wire it up to open a modal for editing title, image_url, display_order, and is_active.
+2. **Flash items missing activate/deactivate toggle** — add an `is_active` toggle button to flash item cards in `renderFlashMgmt()`, matching the review toggle pattern (line 1585). Flash items have `is_active` field in the DB.
+3. **Feedback hard-delete → soft-delete** — change `mgmt-delete-feedback` handler (line 1659) to use `db.from('site_feedback').update({ deleted: true })` instead of `delete()`. Add a `deleted` check in `loadFeedback()` filter: `.neq('deleted', true)`.
+4. **Tab switching loading state race** — in `initSiteMgmt()`, only hide `siteMgmtLoading` in the `finally` block after ALL four loads complete (already done). But add a guard: if the user switches tabs before loading completes, ignore the stale `initSiteMgmt` call. Use a `siteMgmtActive` boolean flag.
+5. **Review star ratings CSS** — wrap star characters in `<span class="stars">` and add CSS: `.stars { letter-spacing: 2px; color: var(--primary); }`.
+
+**Polish to add (replace `prompt()` with modals):**
+6. **Add modals for adding gallery/flash/reviews** — create three new modal HTML blocks in `admin.html`: `#addGalleryModal`, `#addFlashModal`, `#addReviewModal`. Each with proper form fields, file/image URL input, and submit buttons. Replace the `prompt()` calls with `modal.style.display = 'flex'`.
+7. **Image URL validation on add** — before inserting gallery/flash items, validate URL format (reuse `isValidImageUrl` pattern from API routes). Show toast on invalid URL.
+8. **Reorder buttons on each card** — add Up/Down arrow buttons next to each gallery/flash/review card. Clicking Up decrements `display_order` and swaps with the item above. Clicking Down increments and swaps with item below. Simple swap logic.
+9. **Broken image error handling** — add `onerror` handler to gallery/flash images in the management grid. On error, show a placeholder icon and a "Fix URL" button inline.
+
+---
+
+### Step 5 — Global / Cross-Panel Polish
+
+**Scope:** `admin.js` + `admin.html` + `styles.css`. Affects all panels.
+
+**To implement:**
+1. **Toast stacking** — replace `showToast()` (line 9) with stacked toasts. Each toast gets `position: fixed; bottom: 20px; right: 20px;` and stacks upward with `margin-bottom: 8px`. Remove the `if (!container)` branch (always create a container). Add a max of 5 toasts at a time (remove oldest if exceeded).
+2. **Loading states on save buttons** — in every submit handler (clientForm, profileForm, newApptForm, saveApptBtn, saveBlockBtn), disable the submit button and change text to "Saving..." before the async operation. Re-enable in `finally` block.
+3. **Modal focus trapping** — after opening any modal, set focus to the first input or the modal title. On `Escape` key (already handled for confirm modal), close the modal. Add `tabindex="-1"` to modals and trap `Tab` key within the modal content.
+4. **Escape key closes all modals** — add a global keydown listener: if `e.key === 'Escape'`, close any open modal (check `modal.style.display === 'flex'` or `'block'`). Currently only the confirm modal handles Escape.
+5. **Consistent error handling** — standardize all DB operations to use try/catch with toast errors. Add try/catch to `attachGalleryMgmtEvents`, `attachFlashMgmtEvents`, `attachReviewsMgmtEvents`, and `attachFeedbackMgmtEvents` DB calls.
+6. **CSS: responsive modal max-height** — add `@media (max-width: 768px)` rules for all modals: `max-height: 90vh; overflow-y: auto;` to prevent overflow on small screens.
+7. **Add `.status-new_lead` CSS class** — verify CSS has a style for the `new_lead` status badge (used in scheduler pending section line 955). If not, add one matching the other status badges.
+8. **Remove duplicate `renderStats`** — remove the `renderStats()` function from `utils.js` entirely (lines 249-264). The admin.js version (lines 1381-1392) is the one actually used in the leads panel. This eliminates confusion and potential inconsistency.
 
 ---
 
@@ -310,14 +417,42 @@ Architecture intentionally mirrors `Project_Template/` patterns for consistency.
    - Removed all three — admin.js uses direct Supabase DB calls throughout
 
 3. **Add `package-lock.json` to version control** ✅ Done
-    - `npm install` completed, `package-lock.json` present (timestamp 2026-06-26)
+     - `npm install` completed, `package-lock.json` present (timestamp 2026-06-26)
 
 4. **Add `AGENTS.md`** (customized for SavanaTattoos) ✅ Done (2026-06-26)
-   - Provides planning context for future sessions
-   - Architecture reference for the tattoo-specific adaptations
+    - Provides planning context for future sessions
+    - Architecture reference for the tattoo-specific adaptations
 
 5. **Add `README.md`** ✅ Done (2026-06-26)
-    - Public-facing documentation adapted for tattoo studio
+     - Public-facing documentation adapted for tattoo studio
+
+## Production Polish (2026-06-30)
+
+6. **Remove dead `triggerConfirmedEmail` from utils.js** ✅ Done
+   - Shadowed by admin.js version, removed to reduce confusion
+
+7. **Add error boundary UI to public site** ✅ Done
+   - `index.html`: `.public-error-banner` element
+   - `script.js`: `showPublicError()` function, wrapped all init functions
+   - Guard for missing Supabase client initialization
+
+8. **Add loading states to admin sub-panels** ✅ Done
+   - `admin.html`: loading indicators for clients, scheduler, site management
+   - `admin.js`: loading spinners shown/hidden during data fetches
+   - CSS `.admin-loading` class
+
+9. **Add image URL validation** ✅ Done
+   - `api/gallery.js`, `api/flash.js`: `isValidImageUrl()` helper
+   - Validates URL format on POST and PATCH operations
+
+10. **Make studio phone/address configurable** ✅ Done
+    - `STUDIO_PHONE`, `STUDIO_ADDRESS`, `STUDIO_HOURS` env vars
+    - Applied to `api/send-email.js`, `api/booking/create.js`
+    - `.env.example` updated with new vars
+
+11. **Add rate limiting to inquiry emails** ✅ Done
+    - `api/send-email.js`: max 3 emails per email address per 5 minutes
+    - Returns HTTP 429 when rate limit exceeded
 
 ---
 
@@ -478,16 +613,18 @@ When resuming work, the recommended order is:
 
 1. **Set up Supabase** — Create project, run schema SQL (from `SETUP.md`), create RLS policies, storage buckets, admin user
 2. **Create `.env`** — Copy `.env.example` to `.env`, fill in real Supabase credentials
-3. **Verify build** — `npm run build` should regenerate `/public/` with injected env vars (already built once, but needs real env vars for proper `window.__ENV__`)
+3. **Verify build** — `npm run build` should regenerate `/public/` with injected env vars (already built, but needs real env vars for proper `window.__ENV__`)
 4. **Test locally** — `npm start` + admin login + lead creation flow + scheduler + client profiles
 5. **Deploy** — Push to Git, deploy to Vercel, configure prod env vars
 
-### Optional Migration Enhancements (After Core Deployment)
+### Optional Enhancements (After Core Deployment)
 
-> See "Migration Gaps" section above for full details.
+> See "Improvements Needed" section above for full details.
 
 6. **Add `client-welcome` email** — Port `profile-welcome` action from template `send-email.js` + trigger in `booking/create.js`
-7. **Add returning client lookup** — Port client ID lookup flow from template `script.js` (lines 32-241)
+7. **Add returning client lookup** — Port client ID lookup flow from template `script.js`
 8. **Add gallery image upload** — Add multipart handler to `api/gallery.js` + upload UI in admin
 9. **Add `last_activity` tracking** — Update `client_profiles` after booking in `api/booking/create.js`
-10. **Add partial failure handling** — Track `clientFailed`/`adminFailed` in `inquiry-confirmation` email dispatch
+10. **Add pagination** to leads and clients panels
+11. **Add CSRF protection** to admin API routes
+12. **Add export functionality** for leads data (CSV/Excel)
