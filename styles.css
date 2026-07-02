@@ -2349,10 +2349,6 @@ input:focus, select:focus, textarea:focus, .mgmt-input:focus, .mgmt-textarea:foc
 .time-slot-click:hover {
     background: rgba(201, 168, 124, 0.08);
 }
-.appt-overlay {
-    position: relative;
-}
-
 /* Appointment Cards */
 .appt-card {
     border-radius: 6px;

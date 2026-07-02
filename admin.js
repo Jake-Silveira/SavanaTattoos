@@ -1083,7 +1083,7 @@ var html = '<div class="scheduler-header">' +
                 '</div>' +
             '</div>';
         });
-        html += '<div class="appt-overlay">' + apptCards + '</div></div>';
+        html += apptCards + '</div>';
         var pendingLeads = (dailyLeads || []).filter(function(l) { return l.requested_date === dateStr && (l.status === 'pending' || l.status === 'new_lead'); });
         if (pendingLeads.length) {
             html += '<div class="day-pending-section"><h3>Pending Requests for ' + dayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</h3>';
