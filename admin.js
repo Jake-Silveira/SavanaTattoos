@@ -1439,7 +1439,7 @@ var html = '<div class="scheduler-header">' +
                 }
             }
             var disabled = overlaps ? 'disabled' : '';
-            var label = formatTime12(t);
+            var label = minutesToTime12(t);
             slotsHtml += '<button type="button" class="time-slot-btn ' + (disabled ? 'disabled' : '') + '" data-time="' + String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + '">' + label + '</button>';
         }
 
