@@ -53,7 +53,10 @@ module.exports = async (req, res) => {
 
     // Insert lead as confirmed
     const leadData = {
-      client_name: name || 'Walk-in',
+      name: name || 'Walk-in',
+      owner_name: name || 'Walk-in',
+      phone: phone || 'N/A',
+      email: email || null,
       service: service,
       size: size,
       body_placement: body_placement || null,
@@ -63,13 +66,9 @@ module.exports = async (req, res) => {
       message: message || null,
       confirmed_time: requested_time,
       status: 'confirmed',
-      client_id: finalClientId
+      client_ref_id: finalClientId,
+      profile_id: finalProfileId || null
     };
-
-    // Add profile_id if linking to existing profile
-    if (finalProfileId) {
-      leadData.profile_id = finalProfileId;
-    }
 
     const { data: lead, error: leadError } = await supabase
       .from('leads')
@@ -103,7 +102,7 @@ module.exports = async (req, res) => {
             <p style="color: #a8885c; margin: 4px 0 0;">Appointment Confirmed!</p>
           </div>
           <div style="padding: 25px; background: #fafafa; border-radius: 0 0 12px 12px;">
-            <p>Hi <strong>${lead.owner_name || lead.client_name}</strong>,</p>
+            <p>Hi <strong>${lead.owner_name || lead.name}</strong>,</p>
             <p>Your appointment has been confirmed:</p>
             <div style="background: white; padding: 16px; border-radius: 8px; margin: 16px 0; border-left: 3px solid #c9a87c;">
               <p style="margin: 4px 0;"><strong>Date:</strong> ${formattedDate}</p>
@@ -128,7 +127,7 @@ module.exports = async (req, res) => {
         try {
           await resend.emails.send({
             from: fromEmail, to: process.env.ADMIN_EMAIL,
-            subject: 'Appointment confirmed (no client email): ' + (lead.client_name || 'Walk-in'),
+            subject: 'Appointment confirmed (no client email): ' + (lead.owner_name || 'Walk-in'),
             html: '<p>Appointment created but client email was missing.</p>'
           });
         } catch (err) { console.error('[CREATE] Admin fallback failed:', err.message); }
