@@ -1184,6 +1184,8 @@ var html = '<div class="scheduler-header">' +
         var timeSection = document.getElementById('newApptTimeSection');
         initNewApptPickers();
         dateInput.value = dateStr;
+        newApptCalendarPicker.setSelectedDate(dateStr);
+        newApptCalendarPicker.render();
         timeInput.value = timeStr;
         timeSection.style.display = 'block';
         newApptSelectedTime = timeStr;
@@ -1516,7 +1518,18 @@ var html = '<div class="scheduler-header">' +
                     headers: await getAuthHeaders(db),
                     body: JSON.stringify(payload)
                 });
-                var result = await resp.json();
+                var text;
+                try {
+                    text = await resp.text();
+                } catch (e) {
+                    throw new Error('Failed to read booking response.');
+                }
+                var result;
+                try {
+                    result = text ? JSON.parse(text) : {};
+                } catch (e) {
+                    throw new Error('Server returned an invalid response.');
+                }
                 if (!resp.ok) throw new Error(result.error || 'Booking failed');
                 showToast('Appointment confirmed!', 'success');
                 document.getElementById('newApptModal').style.display = 'none';
