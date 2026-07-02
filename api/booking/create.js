@@ -1,7 +1,7 @@
 const { createClient } = require('@supabase/supabase-js');
-const { verifyAdmin } = require('./_utils/auth');
-const { calculateDuration } = require('./_utils/duration');
-const { formatTime12 } = require('./_utils/time');
+const { verifyAdmin } = require('../_utils/auth');
+const { calculateDuration } = require('../_utils/duration');
+const { formatTime12 } = require('../_utils/time');
 
 module.exports = async (req, res) => {
   const supabaseUrl = process.env.SUPABASE_URL;
